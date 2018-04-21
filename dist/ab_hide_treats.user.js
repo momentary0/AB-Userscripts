@@ -7,7 +7,7 @@
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
-/* === Script generated at 2018-04-21T16:45:41.214885 === */
+/* === Script generated at 2018-04-21T16:53:46.168905 === */
 
 
 // Hide treats by Alpha

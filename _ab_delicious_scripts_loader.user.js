@@ -130,7 +130,7 @@ Version history (TheFallingMan)
 
     // Keyboard shortcuts by Alpha, mod by Megure
     // Enables keyboard shortcuts for forum (new post and edit) and PM
-    if (GM_getValue('deliciouskeyboard') === 'true' && document.querySelector('textarea') !== null) {
+    if (GM_getValue('deliciouskeyboard') === 'true') {
         importScriptFile('ab_keyboard_shortcuts.user.js');
     }
 
