@@ -5,6 +5,8 @@
 // @include     https://animebytes.tv/*
 // @version     0.1
 // @icon        http://animebytes.tv/favicon.ico
+// @grant       GM_getValue
+// @grant       GM_setValue
 // ==/UserScript==
 
 /* === Inserted from _delicious_common.js === */
