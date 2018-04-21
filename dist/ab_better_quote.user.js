@@ -7,7 +7,7 @@
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
-/* === Script generated at 2018-04-21T16:36:42.310907 === */
+/* === Script generated at 2018-04-21T16:45:41.111404 === */
 
 /* === Inserted from _delicious_common.js === */
 // Common functions used by many scripts.

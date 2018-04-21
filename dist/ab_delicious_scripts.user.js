@@ -1,25 +1,25 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 1.967
-// @downloadURL https://pastebin.com/raw/79WAyU12
-// @updateURL https://pastebin.com/raw/79WAyU12
+// @version 1.968
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
-/* === Script generated at 2018-04-21T16:36:42.300403 === */
+/* === Script generated at 2018-04-21T16:45:41.101162 === */
 
 
 /*
 Version history (TheFallingMan)
-2018-04-15  1.964  Fixed capping seeding duration bonus to user's age. (start of changelog)
-2018-04-15  1.965  Fixed compatibility with non-ES2015 compatible browsers.
-2018-04-20  1.966  Updated to recognise and use IEC (KiB, MiB, etc.) byte prefixes.
-2018-04-20  1.967  Fixed inserting (CTRL + ALT + Y) too many times on Youtube buttons.
-                   Refactored code of keyboard shortcuts (near function 'insert').
+2018-04-15  1.964   Fixed capping seeding duration bonus to user's age. (start of changelog)
+2018-04-15  1.965   Fixed compatibility with non-ES2015 compatible browsers.
+2018-04-20  1.966   Updated to recognise and use IEC (KiB, MiB, etc.) byte prefixes.
+2018-04-20  1.967   Fixed inserting (CTRL + ALT + Y) too many times on Youtube buttons.
+                    Refactored code of keyboard shortcuts (near function 'insert').
+2018-04-21  1.968   Uploaded to GitLab. Split into individual userscripts which are
+                    assembled into the delicious bundle by a Python script.                   
 */
 
 (function AnimeBytesDeliciousUserScripts() {
