@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 1.968
+// @version 2.0.0
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
@@ -16,7 +16,8 @@ Version history (TheFallingMan)
 2018-04-20  1.967   Fixed inserting (CTRL + ALT + Y) too many times on Youtube buttons.
                     Refactored code of keyboard shortcuts (near function 'insert').
 2018-04-21  1.968   Uploaded to GitLab. Split into individual userscripts which are
-                    assembled into the delicious bundle by a Python script.                   
+                    assembled into the delicious bundle by a Python script.
+            2.0.0+  See https://gitlab.com/momentary/ab-userscripts/tree/master/delicious-userscripts
 */
 
 (function AnimeBytesDeliciousUserScripts() {
@@ -1376,8 +1377,8 @@ Version history (TheFallingMan)
 
 
     // Enhanced Torrent View by Megure
-    // Shows how much yen you would receive if you seeded torrents; 
-    // shows required seeding time; allows sorting and filtering of torrent tables; 
+    // Shows how much yen you would receive if you seeded torrents;
+    // shows required seeding time; allows sorting and filtering of torrent tables;
     // dynamic loading of transfer history tables
     /* === Inserted from ab_enhanced_torrent_view.user.js === */
     // ==UserScript==
@@ -2262,7 +2263,7 @@ Version history (TheFallingMan)
     }).call(this);
     /* === End ab_enhanced_torrent_view.user.js === */
 
-    
+
     // Forum search enhancement by Megure
     // Load posts into search results; highlight search terms; filter authors; slide through posts
     /* === Inserted from ab_forum_search_enhancement.user.js === */

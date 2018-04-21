@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 1.968
+// @version 2.0.0
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
@@ -17,7 +17,7 @@ Version history (TheFallingMan)
                     Refactored code of keyboard shortcuts (near function 'insert').
 2018-04-21  1.968   Uploaded to GitLab. Split into individual userscripts which are
                     assembled into the delicious bundle by a Python script.
-            1.969+  See https://gitlab.com/momentary/ab-userscripts/tree/master/delicious-userscripts
+            2.0.0+  See https://gitlab.com/momentary/ab-userscripts/tree/master/delicious-userscripts
 */
 
 (function AnimeBytesDeliciousUserScripts() {
