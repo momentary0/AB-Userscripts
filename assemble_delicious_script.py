@@ -55,8 +55,8 @@ class ScriptAssembler:
             else:
                 if not (date_inserted or trimmed.startswith('//')):
                     date_inserted = True
-                    self.output_file.write('\n')
-                    self.comment('Script generated at ' + dt.now().isoformat())
+                    #self.output_file.write('\n')
+                    #self.comment('Script generated at ' + dt.now().isoformat())
                     self.output_file.write('\n')
                     if (self.insert_common):
                         self.insert_extra_script('_delicious_common.js')
