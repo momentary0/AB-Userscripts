@@ -9,7 +9,6 @@
 // @grant none
 // ==/UserScript==
 
-
 // Forums title inverter by Potatoe
 // Inverts the forums titles.
 (function ABTitleInverter() {

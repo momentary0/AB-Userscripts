@@ -7,7 +7,6 @@
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
-
 // Title Notifications by Megure
 // Will prepend the number of notifications to the title
 (function ABTitleNotifications() {

@@ -7,7 +7,6 @@
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
-
 // Hide treats by Alpha
 // Hide treats on profile.
 (function ABHideTreats(){
