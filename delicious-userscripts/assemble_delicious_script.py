@@ -43,7 +43,7 @@ class ScriptAssembler:
             assembler2.write_script()
 
     def write_script(self):
-        date_inserted = False
+        common_inserted = False
         for line in self.input_file:
             trimmed = line.lstrip()
             if trimmed: # if trimmed is non-empty
@@ -53,12 +53,12 @@ class ScriptAssembler:
 
                 self.insert_extra_script(script_name)
             else:
-                if not (date_inserted or trimmed.startswith('//')):
-                    date_inserted = True
+                if not (common_inserted or trimmed.startswith('//')):
+                    common_inserted = True
                     #self.output_file.write('\n')
                     #self.comment('Script generated at ' + dt.now().isoformat())
-                    self.output_file.write('\n')
                     if (self.insert_common):
+                        self.output_file.write('\n')
                         self.insert_extra_script('_delicious_common.js')
                 self.output_file.write(line)
 
