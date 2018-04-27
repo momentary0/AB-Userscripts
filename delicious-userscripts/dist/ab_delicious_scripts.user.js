@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1
+// @version 2.0.1.1
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
@@ -115,7 +115,7 @@ Version history (TheFallingMan)
         var tabsNode = document.getElementById('tabs');
         var linksNode = document.getElementsByClassName('ue_tabs')[0];
         if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
-        addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
+        //addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
         addCheckbox("Delicious HYPER Quote", "Enable/Disable experimental HYPER quoting: select text and press CTRL+V to instant-quote. [EXPERIMENTAL]", 'delicioushyperquote');
         addCheckbox("Delicious Title Flip", "Enable/Disable delicious flipping of Forum title tags.", 'delicioustitleflip');
         addCheckbox("Disgusting Treats", "Hide/Unhide those hideous treats!", 'delicioustreats');
