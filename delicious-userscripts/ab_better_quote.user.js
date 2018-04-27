@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        AnimeBytes - Better quote
+// @name        AnimeBytes - Better quote (unused)
 // @author      Potatoe, Megure
 // @description Makes the quoting feature on AnimeBytes better by including links back to posts and the posted date.
 // @include     https://animebytes.tv/forums.php*action=viewthread*

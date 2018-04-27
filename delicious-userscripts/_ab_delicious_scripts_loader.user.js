@@ -100,13 +100,7 @@ Version history (TheFallingMan)
     var gm_delicousnavbarpiechart = initGM('delicousnavbarpiechart', 'false', false);
     var gm_deliciousdynamicstylesheets = initGM('deliciousdynamicstylesheets', 'false', false);
 
-    // Better quote by Potatoe, multi-quote by Megure
-    // Makes the quoting feature on AnimeBytes better by including links back to posts and the posted date.
-    // Depends on injectScript
-    if (GM_getValue('deliciousquote') === 'true') {
-        importScriptFile('ab_better_quote.user.js');
-    }
-
+    // Better Quote no longer necessary.
 
     // HYPER QUOTE by Megure
     // Select text and press CTRL+V to quote
