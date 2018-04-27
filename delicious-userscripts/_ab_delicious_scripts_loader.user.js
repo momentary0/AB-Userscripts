@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.0
+// @version 2.0.1
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
