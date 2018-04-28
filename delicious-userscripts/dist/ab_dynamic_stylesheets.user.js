@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AB - Dynamic stylesheets
 // @author      Megure
-// @description Hide treats on profile.
+// @description Changes stylesheets base on time of day.
 // @include     https://animebytes.tv/*
 // @version     0.1
 // @icon        http://animebytes.tv/favicon.ico
