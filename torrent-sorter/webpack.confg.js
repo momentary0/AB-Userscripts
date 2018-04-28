@@ -1,9 +1,24 @@
 const path = require('path');
+const fs = require('fs');
+const webpack = require('webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+
+
+const scriptFile = 'ab_torrent_sorter.user.js';
+
+const headerDoc = fs.readFileSync('./src/' + scriptFile, 'utf8');
+let userscriptHeader = '';
+for (const line of headerDoc.split('\n')) {
+  console.log(line);
+  if (!line.startsWith('//'))
+    break;
+  userscriptHeader += line + '\n';
+}
 
 module.exports = {
-  entry: ['.\\src\\ab_torrent_sorter.user.js'],
+  entry: './src/' + scriptFile,
   output: {
-    filename: 'ab_torrent_sorter.user.js',
+    filename: scriptFile,
     path: path.resolve(__dirname, 'dist')
   },
   module: {
@@ -12,5 +27,16 @@ module.exports = {
     ]
   },
   mode: 'development',
-  devtool: 'source-map'
+  devtool: 'source-map',
+  plugins: [
+    /*new UglifyJsPlugin({
+      test: scriptFile
+    }),*/
+    new webpack.BannerPlugin({
+      raw: true,
+      banner: userscriptHeader,
+      entryOnly: true
+    }),
+
+  ]
 };

@@ -1,3 +1,12 @@
+// ==UserScript==
+// @name AnimeBytes Torrent Sorter
+// @author TheFallingMan
+// @version 0.0.1
+// @description Sorts torrents on torrent pages in order of quality.
+// @match https://*.animebytes.tv/*
+// @icon http://animebytes.tv/favicon.ico
+// ==/UserScript==
+
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -66,7 +75,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/ab_torrent_sorter.user.js");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -1236,18 +1245,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sort_table(torrent_tables[t]);
     }
 })();
-
-/***/ }),
-
-/***/ 0:
-/*!*********************************************!*\
-  !*** multi ./src/ab_torrent_sorter.user.js ***!
-  \*********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! .\src\ab_torrent_sorter.user.js */"./src/ab_torrent_sorter.user.js");
-
 
 /***/ })
 
