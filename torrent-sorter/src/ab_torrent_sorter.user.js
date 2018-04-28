@@ -163,12 +163,7 @@
      * @param {string} x Field value
      */
     function get_weight(x) {
-        let weight = field_mapping[x];
-        if (weight) {
-            return weight;
-        } else {
-            return null;
-        }
+        return field_mapping[x];
     }
 
     /**

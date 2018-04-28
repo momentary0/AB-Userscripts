@@ -1099,12 +1099,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
      * @param {string} x Field value
      */
     function get_weight(x) {
-        var weight = field_mapping[x];
-        if (weight) {
-            return weight;
-        } else {
-            return null;
-        }
+        return field_mapping[x];
     }
 
     /**
