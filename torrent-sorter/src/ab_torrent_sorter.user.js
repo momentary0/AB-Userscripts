@@ -183,13 +183,20 @@
         let a_iter = row_to_field_list(a);
         let b_iter = row_to_field_list(b);
 
-        for (let a_value of a_iter) {
+        // Kick start the loop. Cannot use normal for loop due to iter.
+        let first = true;
+        let a_object = {}
+        while (first || !a_object.done) {
+            if (first) first = false;
+
+            a_object = a_iter.next();
             var b_object = b_iter.next();
             if (b_object.done) {
                 // In case of one string being shorter than the other,
                 // we sort the shorter one first.
                 return 1;
             }
+            let a_value = a_object.value;
             let b_value = b_object.value;
             if (a_value === b_value) {
                 continue;

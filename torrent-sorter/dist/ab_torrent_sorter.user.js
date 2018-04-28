@@ -1118,54 +1118,39 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         var a_iter = row_to_field_list(a);
         var b_iter = row_to_field_list(b);
 
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        // Kick start the loop. Cannot use normal for loop due to iter.
+        var first = true;
+        var a_object = {};
+        while (first || !a_object.done) {
+            if (first) first = false;
 
-        try {
-            for (var _iterator = a_iter[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var a_value = _step.value;
-
-                var b_object = b_iter.next();
-                if (b_object.done) {
-                    // In case of one string being shorter than the other,
-                    // we sort the shorter one first.
-                    return 1;
-                }
-                var b_value = b_object.value;
-                if (a_value === b_value) {
-                    continue;
-                }
-                var a_weight = get_weight(a_value);
-                var b_weight = get_weight(b_value);
-                //_debug && (`a: ${a_value} ${a_weight}; b: ${b_value} ${b_weight}`)
-                // Doing an arithmetic comparison only makes sense when both
-                // a and b have defined weights.
-                if (a_weight && b_weight) {
-                    // This integer subtraction results in the correct sorting.
-                    return a_weight - b_weight;
-                } else {
-                    // Use string (alphabetical) sort on the original strings.
-                    return a_value < b_value ? -1 : 1;
-                }
+            a_object = a_iter.next();
+            var b_object = b_iter.next();
+            if (b_object.done) {
+                // In case of one string being shorter than the other,
+                // we sort the shorter one first.
+                return 1;
             }
-            // If a and b have the same number of elements, they will finish at
-            // the same time and are equal.
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
+            var a_value = a_object.value;
+            var b_value = b_object.value;
+            if (a_value === b_value) {
+                continue;
+            }
+            var a_weight = get_weight(a_value);
+            var b_weight = get_weight(b_value);
+            //_debug && (`a: ${a_value} ${a_weight}; b: ${b_value} ${b_weight}`)
+            // Doing an arithmetic comparison only makes sense when both
+            // a and b have defined weights.
+            if (a_weight && b_weight) {
+                // This integer subtraction results in the correct sorting.
+                return a_weight - b_weight;
+            } else {
+                // Use string (alphabetical) sort on the original strings.
+                return a_value < b_value ? -1 : 1;
             }
         }
-
+        // If a and b have the same number of elements, they will finish at
+        // the same time and are equal.
         if (b_object.done) return 0;
         // Otherwise, a < b.
         return -1;
