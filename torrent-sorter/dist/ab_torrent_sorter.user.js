@@ -1115,12 +1115,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         var a_iter = row_to_field_list(a);
         var b_iter = row_to_field_list(b);
 
-        // Kick start the loop. Cannot use normal for loop due to iter.
-        var first = true;
         var a_object = {};
-        while (first || !a_object.done) {
-            if (first) first = false;
-
+        while (!a_object.done) {
             a_object = a_iter.next();
             var b_object = b_iter.next();
             if (b_object.done) {

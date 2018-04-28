@@ -179,12 +179,8 @@
         let a_iter = row_to_field_list(a);
         let b_iter = row_to_field_list(b);
 
-        // Kick start the loop. Cannot use normal for loop due to iter.
-        let first = true;
         let a_object = {}
-        while (first || !a_object.done) {
-            if (first) first = false;
-
+        while (!a_object.done) {
             a_object = a_iter.next();
             var b_object = b_iter.next();
             if (b_object.done) {
