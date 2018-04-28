@@ -5,6 +5,7 @@
 // @description Sorts torrents on torrent pages in order of quality.
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
+// @licence GPL-3.0+; http://www.gnu.org/licenses/gpl-3.0.txt
 // ==/UserScript==
 
 (function ABTorrentSorter() {
