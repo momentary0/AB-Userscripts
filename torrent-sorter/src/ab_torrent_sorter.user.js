@@ -40,7 +40,7 @@
         'OGM':25,
         'WMV':26,
         'MPG':23,
-        'MPEG':23,
+        'MPEG':22,
         'VOB':43,
         'TS':49,
 
@@ -58,7 +58,7 @@
         "DivX": 25,
         //"WMV": 26,
         "MPEG-TS": 23,
-        "MPEG": 22,
+        //"MPEG": 22,
         "VC-1": 24,
 
         '480p': 30,
@@ -216,12 +216,18 @@
 
     /**
      * Sorts the torrent_rows, considering info rows.
+     * Skips torrent groups when 3 or less torrents.
      *
      * @param {Array<HTMLTableRowElement} torrent_rows
      *
      * @returns {DocumentFragment} Fragment containing sorted row elements.
      */
     function sort_rows(torrent_rows) {
+        // Skips small groups.
+        if (torrent_rows.length <= 3) {
+            _debug && console.log('too short');
+            return null;
+        }
         // Sort with our custom sort function.
         torrent_rows.sort(sort_comparer);
         let docFrag = document.createDocumentFragment();
@@ -272,14 +278,11 @@
             } else if (!row.classList.contains('pad')
                     && current_torrent_group.length) {
                 ///console.log('sorting!');
-                // Skip small torrent groups, e.g. single manga or game torrents.
-                if (current_torrent_group.length <= 3) {
-                    current_torrent_group = [];
-                    continue;
-                }
                 let docFrag = sort_rows(current_torrent_group);
-                // Inserts the sorted docFrag before the header.
-                tbody.insertBefore(docFrag, row);
+                if (docFrag) {
+                    // Inserts the sorted docFrag before the header.
+                    tbody.insertBefore(docFrag, row);
+                }
                 current_torrent_group = [];
             }
         }
@@ -288,7 +291,8 @@
         // that's left and just append it.
         if (current_torrent_group.length) {
             let docFrag = sort_rows(current_torrent_group);
-            tbody.appendChild(docFrag);
+            if (docFrag)
+                tbody.appendChild(docFrag);
         }
     }
 

@@ -893,8 +893,6 @@ var _regenerator2 = _interopRequireDefault(_regenerator);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 // ==UserScript==
 // @name AnimeBytes Torrent Sorter
 // @author TheFallingMan
@@ -906,8 +904,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 // ==/UserScript==
 
 (function ABTorrentSorter() {
-    var _field_mapping;
-
     var _marked = /*#__PURE__*/_regenerator2.default.mark(row_to_field_list);
 
     /** Enables/disables logging to console. */
@@ -919,7 +915,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
      *
      * @type {Object<string, number>}
      */
-    var field_mapping = (_field_mapping = {
+    var field_mapping = {
         "Blu-ray": 10,
         "Web": 34,
         "TV": 35,
@@ -941,7 +937,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         'OGM': 25,
         'WMV': 26,
         'MPG': 23,
-        'MPEG': 23,
+        'MPEG': 22,
         'VOB': 43,
         'TS': 49,
 
@@ -958,8 +954,46 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         "XviD": 25,
         "DivX": 25,
         //"WMV": 26,
-        "MPEG-TS": 23
-    }, _defineProperty(_field_mapping, "MPEG", 22), _defineProperty(_field_mapping, "VC-1", 24), _defineProperty(_field_mapping, '480p', 30), _defineProperty(_field_mapping, '720p', 20), _defineProperty(_field_mapping, '1080p', 15), _defineProperty(_field_mapping, '1080i', 16), _defineProperty(_field_mapping, '4K', 10), _defineProperty(_field_mapping, '2560x1440', 13), _defineProperty(_field_mapping, "FLAC", 10), _defineProperty(_field_mapping, "AAC", 20), _defineProperty(_field_mapping, "AC3", 19), _defineProperty(_field_mapping, "MP3", 30), _defineProperty(_field_mapping, "Vorbis", 21), _defineProperty(_field_mapping, "Opus", 21), _defineProperty(_field_mapping, "TrueHD", 11), _defineProperty(_field_mapping, "DTS", 17), _defineProperty(_field_mapping, "DTS-ES", 14), _defineProperty(_field_mapping, "PCM", 5), _defineProperty(_field_mapping, "WMA", 22), _defineProperty(_field_mapping, "Real Audio", 23), _defineProperty(_field_mapping, "DTS-HD MA", 12), _defineProperty(_field_mapping, "DTS-HD", 13), _defineProperty(_field_mapping, '7.1', 1), _defineProperty(_field_mapping, '6.1', 5), _defineProperty(_field_mapping, '6.0', 6), _defineProperty(_field_mapping, '5.1', 10), _defineProperty(_field_mapping, '5.0', 11), _defineProperty(_field_mapping, '2.1', 20), _defineProperty(_field_mapping, '2.0', 21), _defineProperty(_field_mapping, '1.0', 30), _defineProperty(_field_mapping, 'Dual Audio', 5), _defineProperty(_field_mapping, 'Softsubs', 10), _defineProperty(_field_mapping, 'Hardsubs', 12), _defineProperty(_field_mapping, 'RAW', 15), _field_mapping);
+        "MPEG-TS": 23,
+        //"MPEG": 22,
+        "VC-1": 24,
+
+        '480p': 30,
+        '720p': 20,
+        '1080p': 15,
+        '1080i': 16,
+        '4K': 10,
+        '2560x1440': 13,
+
+        "FLAC": 10,
+        "AAC": 20,
+        "AC3": 19,
+        "MP3": 30,
+        "Vorbis": 21,
+        "Opus": 21,
+        "TrueHD": 11,
+        "DTS": 17,
+        "DTS-ES": 14,
+        "PCM": 5,
+        "WMA": 22,
+        "Real Audio": 23,
+        "DTS-HD MA": 12,
+        "DTS-HD": 13,
+
+        '7.1': 1,
+        '6.1': 5,
+        '6.0': 6,
+        '5.1': 10,
+        '5.0': 11,
+        '2.1': 20,
+        '2.0': 21,
+        '1.0': 30,
+
+        'Dual Audio': 5,
+        'Softsubs': 10,
+        'Hardsubs': 12,
+        'RAW': 15
+    };
 
     /**
      * Returns a generator iterating over the properties of the given
@@ -1151,12 +1185,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     /**
      * Sorts the torrent_rows, considering info rows.
+     * Skips torrent groups when 3 or less torrents.
      *
      * @param {Array<HTMLTableRowElement} torrent_rows
      *
      * @returns {DocumentFragment} Fragment containing sorted row elements.
      */
     function sort_rows(torrent_rows) {
+        // Skips small groups.
+        if (torrent_rows.length <= 3) {
+            _debug && console.log('too short');
+            return null;
+        }
         // Sort with our custom sort function.
         torrent_rows.sort(sort_comparer);
         var docFrag = document.createDocumentFragment();
@@ -1204,14 +1244,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 // and we sort all torrents above this header.
             } else if (!row.classList.contains('pad') && current_torrent_group.length) {
                 ///console.log('sorting!');
-                // Skip small torrent groups, e.g. single manga or game torrents.
-                if (current_torrent_group.length <= 3) {
-                    current_torrent_group = [];
-                    continue;
-                }
                 var docFrag = sort_rows(current_torrent_group);
-                // Inserts the sorted docFrag before the header.
-                tbody.insertBefore(docFrag, row);
+                if (docFrag) {
+                    // Inserts the sorted docFrag before the header.
+                    tbody.insertBefore(docFrag, row);
+                }
                 current_torrent_group = [];
             }
         }
@@ -1220,7 +1257,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         // that's left and just append it.
         if (current_torrent_group.length) {
             var _docFrag = sort_rows(current_torrent_group);
-            tbody.appendChild(_docFrag);
+            if (_docFrag) tbody.appendChild(_docFrag);
         }
     }
 
