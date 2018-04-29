@@ -179,7 +179,7 @@
         let a_iter = row_to_field_list(a);
         let b_iter = row_to_field_list(b);
 
-        let a_object = {}
+        let a_object = {};
         while (!a_object.done) {
             a_object = a_iter.next();
             var b_object = b_iter.next();
@@ -209,7 +209,7 @@
         // If a and b have the same number of elements, they will finish at
         // the same time and are equal.
         if (b_object.done)
-            return 0
+            return 0;
         // Otherwise, a < b.
         return -1;
     }
