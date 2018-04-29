@@ -76,7 +76,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/ab_torrent_sorter.user.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./torrent-sorter/src/ab_torrent_sorter.user.js");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -877,10 +877,10 @@ if (hadRuntime) {
 
 /***/ }),
 
-/***/ "./src/ab_torrent_sorter.user.js":
-/*!***************************************!*\
-  !*** ./src/ab_torrent_sorter.user.js ***!
-  \***************************************/
+/***/ "./torrent-sorter/src/ab_torrent_sorter.user.js":
+/*!******************************************************!*\
+  !*** ./torrent-sorter/src/ab_torrent_sorter.user.js ***!
+  \******************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 

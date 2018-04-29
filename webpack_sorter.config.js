@@ -5,8 +5,9 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 
 const scriptFile = 'ab_torrent_sorter.user.js';
+const root = './torrent-sorter';
 
-const headerDoc = fs.readFileSync('./src/' + scriptFile, 'utf8');
+const headerDoc = fs.readFileSync(root+'/src/' + scriptFile, 'utf8');
 let userscriptHeader = '';
 for (const line of headerDoc.split('\n')) {
   console.log(line);
@@ -16,10 +17,10 @@ for (const line of headerDoc.split('\n')) {
 }
 
 module.exports = {
-  entry: './src/' + scriptFile,
+  entry: root+'/src/' + scriptFile,
   output: {
     filename: scriptFile,
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(root, 'dist')
   },
   module: {
     rules: [
