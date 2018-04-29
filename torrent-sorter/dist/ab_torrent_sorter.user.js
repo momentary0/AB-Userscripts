@@ -1149,6 +1149,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return -1;
     }
 
+    /**
+     * Sorts the torrent_rows, considering info rows.
+     *
+     * @param {Array<HTMLTableRowElement} torrent_rows
+     *
+     * @returns {DocumentFragment} Fragment containing sorted row elements.
+     */
     function sort_rows(torrent_rows) {
         // Sort with our custom sort function.
         torrent_rows.sort(sort_comparer);
