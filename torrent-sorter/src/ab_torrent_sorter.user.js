@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes Torrent Sorter
 // @author TheFallingMan
-// @version 0.0.1
+// @version 0.0.2
 // @description Sorts torrents on torrent pages in order of quality.
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
@@ -214,6 +214,27 @@
         return -1;
     }
 
+    function sort_rows(torrent_rows) {
+        // Sort with our custom sort function.
+        torrent_rows.sort(sort_comparer);
+        let docFrag = document.createDocumentFragment();
+        for (let s = 0; s < torrent_rows.length; s++) {
+            let elem = torrent_rows[s];
+            // Stores element after this row, checking if it is this
+            // row's information row.
+            // IMPORTANT: this must be before 'elem' is inserted
+            // elsewhere.
+            let next = elem.nextElementSibling;
+            // Append torrent row.
+            docFrag.appendChild(elem);
+            //console.log(s.textContent);
+            // Checks if 'next' is an info row.
+            if (next && next.classList.contains('pad'))
+                docFrag.appendChild(next);
+        }
+        return docFrag;
+    }
+
     /**
      * Sorts a whole table element. Capable of understanding subheadings inside
      * the table, and will not sort rows across them.
@@ -249,23 +270,7 @@
                     current_torrent_group = [];
                     continue;
                 }
-                // Sort with our custom sort function.
-                current_torrent_group.sort(sort_comparer);
-                let docFrag = document.createDocumentFragment();
-                for (let s = 0; s < current_torrent_group.length; s++) {
-                    let elem = current_torrent_group[s];
-                    // Stores element after this row, checking if it is this
-                    // row's information row.
-                    // IMPORTANT: this must be before 'elem' is inserted
-                    // elsewhere.
-                    let next = elem.nextElementSibling;
-                    // Append torrent row.
-                    docFrag.appendChild(elem);
-                    //console.log(s.textContent);
-                    // Checks if 'next' is an info row.
-                    if (next && next.classList.contains('pad'))
-                        docFrag.appendChild(next);
-                }
+                let docFrag = sort_rows(current_torrent_group);
                 // Inserts the sorted docFrag before the header.
                 tbody.insertBefore(docFrag, row);
                 current_torrent_group = [];
@@ -275,15 +280,8 @@
         // is no subheading there. In that case, we sort everything
         // that's left and just append it.
         if (current_torrent_group.length) {
-            current_torrent_group.sort(sort_comparer);
-            for (let s = 0; s < current_torrent_group.length; s++) {
-                let elem = current_torrent_group[s];
-                let next = elem.nextElementSibling;
-                tbody.appendChild(elem);
-                //console.log(s.textContent);
-                if (next && next.classList.contains('pad'))
-                    tbody.appendChild(next);
-            }
+            let docFrag = sort_rows(current_torrent_group);
+            tbody.appendChild(docFrag);
         }
     }
 
