@@ -13,6 +13,7 @@
 // Shows current freeleech pool status in navbar with a pie-chart
 // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
 (function ABFLStatus() {
+    importDeliciousCommon();
 
     function niceNumber(num) {
         var res = '';

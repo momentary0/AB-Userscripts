@@ -11,6 +11,9 @@
 
 // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
 (function DynamicStylesheets() {
+
+    importDeliciousCommon();
+
     function updateSettings() {
         var rules = document.querySelectorAll('li.deliciousdynamicstylesheetsrule');
         var result = [];

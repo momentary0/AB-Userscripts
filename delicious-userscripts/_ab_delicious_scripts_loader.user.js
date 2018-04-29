@@ -30,7 +30,7 @@ Version history (TheFallingMan)
     }
 
     // Some GM_ functions and Javascript polyfills
-    importScriptFile('_delicious_common.js');
+    importDeliciousCommon();
 
     function createSettingsPage() {
         function addCheckbox(title, description, varName, onValue, offValue) {

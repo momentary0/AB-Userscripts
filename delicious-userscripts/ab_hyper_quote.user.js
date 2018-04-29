@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        AB - HYPER QUOTE!
-// @author      Megure 
+// @author      Megure
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
 // @version     0.1
@@ -14,7 +14,9 @@
     {
         return;
     }
-    
+
+    importDeliciousCommon();
+
     function formattedUTCString(date, timezone) {
         var creation = new Date(date);
         if (isNaN(creation.getTime()))

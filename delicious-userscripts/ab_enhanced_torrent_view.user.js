@@ -12,6 +12,8 @@
 // Enhanced Torrent View by Megure
 // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 (function EnhancedTorrentView() {
+    importDeliciousCommon();
+
     var days_per_year = 365.256363;
     var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
     var show_required_time = GM_getValue('ABTorrentsReqTime', 'true') === 'true';
