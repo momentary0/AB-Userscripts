@@ -76,28 +76,405 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./torrent-sorter/src/ab_torrent_sorter.user.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ "./node_modules/babel-runtime/regenerator/index.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/babel-runtime/regenerator/index.js ***!
-  \*********************************************************/
-/*! no static exports found */
+/******/ ([
+/* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! regenerator-runtime */ "./node_modules/regenerator-runtime/runtime-module.js");
+"use strict";
+
+
+var _regenerator = __webpack_require__(1);
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// ==UserScript==
+// @name AnimeBytes Torrent Sorter
+// @author TheFallingMan
+// @version 0.0.2
+// @description Sorts torrents on torrent pages in order of quality.
+// @match https://*.animebytes.tv/*
+// @icon http://animebytes.tv/favicon.ico
+// @licence GPL-3.0+; http://www.gnu.org/licenses/gpl-3.0.txt
+// ==/UserScript==
+
+(function ABTorrentSorter() {
+    var _marked = /*#__PURE__*/_regenerator2.default.mark(row_to_field_list);
+
+    /** Enables/disables logging to console. */
+    var _debug = false;
+
+    /**
+     * Mapping between field properties and their relative
+     * 'quality'. Lower numbers will be sorted first.
+     *
+     * @type {Object<string, number>}
+     */
+    var field_mapping = {
+        "Blu-ray": 10,
+        "Web": 34,
+        "TV": 35,
+        "DVD": 30,
+        "UHD Blu-ray": 9,
+        'DVD5': 31,
+        'DVD9': 32,
+        "HD DVD": 29,
+        "VHS": 50,
+        "VCD": 50,
+        "LD": 50,
+
+        'MKV': 5,
+        'M2TS': 50,
+        'ISO': 40,
+        'AVI': 20,
+        'VOB IFO': 42,
+        'MP4': 22,
+        'OGM': 25,
+        'WMV': 26,
+        'MPG': 23,
+        'MPEG': 22,
+        'VOB': 43,
+        'TS': 49,
+
+        "16:9": 5,
+        "4:3": 6,
+        "1.85:1": 4,
+        "2.39:1": 3,
+        "2.4:1": 2,
+
+        "h264": 21,
+        "h264 10-bit": 20,
+        "h265": 11,
+        "h265 10-bit": 10,
+        "XviD": 25,
+        "DivX": 25,
+        //"WMV": 26,
+        "MPEG-TS": 23,
+        //"MPEG": 22,
+        "VC-1": 24,
+
+        '480p': 30,
+        '720p': 20,
+        '1080p': 15,
+        '1080i': 16,
+        '4K': 10,
+        '2560x1440': 13,
+
+        "FLAC": 10,
+        "AAC": 20,
+        "AC3": 19,
+        "MP3": 30,
+        "Vorbis": 21,
+        "Opus": 21,
+        "TrueHD": 11,
+        "DTS": 17,
+        "DTS-ES": 14,
+        "PCM": 5,
+        "WMA": 22,
+        "Real Audio": 23,
+        "DTS-HD MA": 12,
+        "DTS-HD": 13,
+
+        '7.1': 1,
+        '6.1': 5,
+        '6.0': 6,
+        '5.1': 10,
+        '5.0': 11,
+        '2.1': 20,
+        '2.0': 21,
+        '1.0': 30,
+
+        'Dual Audio': 5,
+        'Softsubs': 10,
+        'Hardsubs': 12,
+        'RAW': 15
+    };
+
+    /**
+     * Returns a generator iterating over the properties of the given
+     * <tr>, from left to right.
+     *
+     * @example
+     *      var iter = row_to_field_list($('tr'));
+     *      iter.next().value; // Blu-ray
+     *      iter.next().value; // MKV
+     *      iter.next().value; // h265
+     *
+     * @param {HTMLTableRowElement} torrent_row Row element to parse
+     */
+    function row_to_field_list(torrent_row) {
+        var link, spans, i, split_fields, _i, field, s, _s;
+
+        return _regenerator2.default.wrap(function row_to_field_list$(_context) {
+            while (1) {
+                switch (_context.prev = _context.next) {
+                    case 0:
+                        /* Structure is something like:
+                        <tr>
+                            <td>
+                                <span>[DL | RP]</span>
+                                <a>Blu-ray | MKV | h265 | ... </a>
+                            </td>
+                        </tr>
+                        */
+                        link = torrent_row.firstElementChild.children[1];
+                        //console.log(torrent_row);
+                        ///console.log(link);
+
+                        // (Experimental) compatibility with eva's torrent highlighter.
+                        // We check if the link contains spans.
+
+                        if (!(link.firstElementChild && link.firstElementChild.tagName === 'SPAN')) {
+                            _context.next = 13;
+                            break;
+                        }
+
+                        // In this case, our work is done and we just need to return
+                        // each span's text.
+                        _debug && console.log('span');
+                        spans = link.children;
+                        i = 0;
+
+                    case 5:
+                        if (!(i < spans.length)) {
+                            _context.next = 11;
+                            break;
+                        }
+
+                        _context.next = 8;
+                        return spans[i].textContent;
+
+                    case 8:
+                        i++;
+                        _context.next = 5;
+                        break;
+
+                    case 11:
+                        _context.next = 39;
+                        break;
+
+                    case 13:
+                        // Otherwise, we split and return the fields ourselves.
+                        _debug && console.log('textContent');
+                        split_fields = link.textContent.replace('»', '').trim().split(' | ');
+                        _i = 0;
+
+                    case 16:
+                        if (!(_i < split_fields.length)) {
+                            _context.next = 39;
+                            break;
+                        }
+
+                        field = split_fields[_i];
+                        // This handles sub groups and region codes.
+                        // Will work incorrectly if a sub group contains |
+
+                        if (!(field.indexOf('(') !== -1 && field.charAt(field.length - 1) === ')')) {
+                            _context.next = 26;
+                            break;
+                        }
+
+                        s = field.split(' (');
+                        _context.next = 22;
+                        return s[0];
+
+                    case 22:
+                        _context.next = 24;
+                        return s[1].trim(')');
+
+                    case 24:
+                        _context.next = 36;
+                        break;
+
+                    case 26:
+                        if (!(field.charAt(field.length - 2) === '.')) {
+                            _context.next = 34;
+                            break;
+                        }
+
+                        // If the second last char is a . we assume it's an
+                        // audio channel field.
+                        _s = field.split(' ');
+                        _context.next = 30;
+                        return _s.slice(0, -1).join(' ');
+
+                    case 30:
+                        _context.next = 32;
+                        return _s[_s.length - 1];
+
+                    case 32:
+                        _context.next = 36;
+                        break;
+
+                    case 34:
+                        _context.next = 36;
+                        return field;
+
+                    case 36:
+                        _i++;
+                        _context.next = 16;
+                        break;
+
+                    case 39:
+                    case "end":
+                        return _context.stop();
+                }
+            }
+        }, _marked, this);
+    }
+
+    /**
+     * Gets the sorting weight of the value `x` from the defined field mapping.
+     * @param {string} x Field value
+     */
+    function get_weight(x) {
+        return field_mapping[x];
+    }
+
+    /**
+     * Iterates through each property of a and b from left to right,
+     * comparing each property in turn using get_weight().
+     *
+     * For use as a comparison function in the .sort() method. Returns a positive
+     * number when b < a, negative for a < b, and 0 if a = b.
+     * @param {HTMLTableRowElement} a
+     * @param {HTMLTableRowElement} b
+     */
+    function sort_comparer(a, b) {
+        var a_iter = row_to_field_list(a);
+        var b_iter = row_to_field_list(b);
+
+        var a_object = {};
+        while (!a_object.done) {
+            a_object = a_iter.next();
+            var b_object = b_iter.next();
+            if (b_object.done) {
+                // In case of one string being shorter than the other,
+                // we sort the shorter one first.
+                return 1;
+            }
+            var a_value = a_object.value;
+            var b_value = b_object.value;
+            if (a_value === b_value) {
+                continue;
+            }
+            var a_weight = get_weight(a_value);
+            var b_weight = get_weight(b_value);
+            //_debug && (`a: ${a_value} ${a_weight}; b: ${b_value} ${b_weight}`)
+            // Doing an arithmetic comparison only makes sense when both
+            // a and b have defined weights.
+            if (a_weight && b_weight) {
+                // This integer subtraction results in the correct sorting.
+                return a_weight - b_weight;
+            } else {
+                // Use string (alphabetical) sort on the original strings.
+                return a_value < b_value ? -1 : 1;
+            }
+        }
+        // If a and b have the same number of elements, they will finish at
+        // the same time and are equal.
+        if (b_object.done) return 0;
+        // Otherwise, a < b.
+        return -1;
+    }
+
+    /**
+     * Sorts the torrent_rows, considering info rows.
+     * Skips torrent groups when 3 or less torrents.
+     *
+     * @param {Array<HTMLTableRowElement} torrent_rows
+     *
+     * @returns {DocumentFragment} Fragment containing sorted row elements.
+     */
+    function sort_rows(torrent_rows) {
+        // Skips small groups.
+        if (torrent_rows.length <= 3) {
+            _debug && console.log('too short');
+            return null;
+        }
+        // Sort with our custom sort function.
+        torrent_rows.sort(sort_comparer);
+        var docFrag = document.createDocumentFragment();
+        for (var s = 0; s < torrent_rows.length; s++) {
+            var elem = torrent_rows[s];
+            // Stores element after this row, checking if it is this
+            // row's information row.
+            // IMPORTANT: this must be before 'elem' is inserted
+            // elsewhere.
+            var next = elem.nextElementSibling;
+            // Append torrent row.
+            docFrag.appendChild(elem);
+            //console.log(s.textContent);
+            // Checks if 'next' is an info row.
+            if (next && next.classList.contains('pad')) docFrag.appendChild(next);
+        }
+        return docFrag;
+    }
+
+    /**
+     * Sorts a whole table element. Capable of understanding subheadings inside
+     * the table, and will not sort rows across them.
+     * @param {HTMLTableElement} table
+     */
+    function sort_table(table) {
+        var tbody = table.firstElementChild;
+        var is_first_link = true;
+        var num_children = tbody.children.length;
+        var current_torrent_group = [];
+        for (var r = 0; r < num_children; r++) {
+            var row = tbody.children[r];
+            ///console.log(row);
+            // If this row is a torrent link
+            if (row.classList.contains('group_torrent')) {
+                // We skip sorting torrents2.php links, as they are music
+                // and not nearly as varied as anime torrents.
+                if (is_first_link && row.firstElementChild.children[1].href.indexOf('torrents.php?') === -1) {
+                    break;
+                }
+                is_first_link = false;
+                current_torrent_group.push(row);
+                // We use 'pad' class to check for the torrent information rows.
+                // (There must be a better way.)
+                // If it is not a pad or group_torrent, then it is a subheading
+                // and we sort all torrents above this header.
+            } else if (!row.classList.contains('pad') && current_torrent_group.length) {
+                ///console.log('sorting!');
+                var docFrag = sort_rows(current_torrent_group);
+                if (docFrag) {
+                    // Inserts the sorted docFrag before the header.
+                    tbody.insertBefore(docFrag, row);
+                }
+                current_torrent_group = [];
+            }
+        }
+        // This will fall through the bottom of the table, because there
+        // is no subheading there. In that case, we sort everything
+        // that's left and just append it.
+        if (current_torrent_group.length) {
+            var _docFrag = sort_rows(current_torrent_group);
+            if (_docFrag) tbody.appendChild(_docFrag);
+        }
+    }
+
+    var torrent_tables = document.querySelectorAll('table.torrent_table');
+    for (var t = 0; t < torrent_tables.length; t++) {
+        sort_table(torrent_tables[t]);
+    }
+})();
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(2);
 
 
 /***/ }),
-
-/***/ "./node_modules/regenerator-runtime/runtime-module.js":
-/*!************************************************************!*\
-  !*** ./node_modules/regenerator-runtime/runtime-module.js ***!
-  \************************************************************/
-/*! no static exports found */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -122,7 +499,7 @@ var oldRuntime = hadRuntime && g.regeneratorRuntime;
 // Force reevalutation of runtime.js.
 g.regeneratorRuntime = undefined;
 
-module.exports = __webpack_require__(/*! ./runtime */ "./node_modules/regenerator-runtime/runtime.js");
+module.exports = __webpack_require__(3);
 
 if (hadRuntime) {
   // Restore the original runtime.
@@ -138,12 +515,7 @@ if (hadRuntime) {
 
 
 /***/ }),
-
-/***/ "./node_modules/regenerator-runtime/runtime.js":
-/*!*****************************************************!*\
-  !*** ./node_modules/regenerator-runtime/runtime.js ***!
-  \*****************************************************/
-/*! no static exports found */
+/* 3 */
 /***/ (function(module, exports) {
 
 /**
@@ -875,399 +1247,6 @@ if (hadRuntime) {
 );
 
 
-/***/ }),
-
-/***/ "./torrent-sorter/src/ab_torrent_sorter.user.js":
-/*!******************************************************!*\
-  !*** ./torrent-sorter/src/ab_torrent_sorter.user.js ***!
-  \******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _regenerator = __webpack_require__(/*! babel-runtime/regenerator */ "./node_modules/babel-runtime/regenerator/index.js");
-
-var _regenerator2 = _interopRequireDefault(_regenerator);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// ==UserScript==
-// @name AnimeBytes Torrent Sorter
-// @author TheFallingMan
-// @version 0.0.2
-// @description Sorts torrents on torrent pages in order of quality.
-// @match https://*.animebytes.tv/*
-// @icon http://animebytes.tv/favicon.ico
-// @licence GPL-3.0+; http://www.gnu.org/licenses/gpl-3.0.txt
-// ==/UserScript==
-
-(function ABTorrentSorter() {
-    var _marked = /*#__PURE__*/_regenerator2.default.mark(row_to_field_list);
-
-    /** Enables/disables logging to console. */
-    var _debug = false;
-
-    /**
-     * Mapping between field properties and their relative
-     * 'quality'. Lower numbers will be sorted first.
-     *
-     * @type {Object<string, number>}
-     */
-    var field_mapping = {
-        "Blu-ray": 10,
-        "Web": 34,
-        "TV": 35,
-        "DVD": 30,
-        "UHD Blu-ray": 9,
-        'DVD5': 31,
-        'DVD9': 32,
-        "HD DVD": 29,
-        "VHS": 50,
-        "VCD": 50,
-        "LD": 50,
-
-        'MKV': 5,
-        'M2TS': 50,
-        'ISO': 40,
-        'AVI': 20,
-        'VOB IFO': 42,
-        'MP4': 22,
-        'OGM': 25,
-        'WMV': 26,
-        'MPG': 23,
-        'MPEG': 22,
-        'VOB': 43,
-        'TS': 49,
-
-        "16:9": 5,
-        "4:3": 6,
-        "1.85:1": 4,
-        "2.39:1": 3,
-        "2.4:1": 2,
-
-        "h264": 21,
-        "h264 10-bit": 20,
-        "h265": 11,
-        "h265 10-bit": 10,
-        "XviD": 25,
-        "DivX": 25,
-        //"WMV": 26,
-        "MPEG-TS": 23,
-        //"MPEG": 22,
-        "VC-1": 24,
-
-        '480p': 30,
-        '720p': 20,
-        '1080p': 15,
-        '1080i': 16,
-        '4K': 10,
-        '2560x1440': 13,
-
-        "FLAC": 10,
-        "AAC": 20,
-        "AC3": 19,
-        "MP3": 30,
-        "Vorbis": 21,
-        "Opus": 21,
-        "TrueHD": 11,
-        "DTS": 17,
-        "DTS-ES": 14,
-        "PCM": 5,
-        "WMA": 22,
-        "Real Audio": 23,
-        "DTS-HD MA": 12,
-        "DTS-HD": 13,
-
-        '7.1': 1,
-        '6.1': 5,
-        '6.0': 6,
-        '5.1': 10,
-        '5.0': 11,
-        '2.1': 20,
-        '2.0': 21,
-        '1.0': 30,
-
-        'Dual Audio': 5,
-        'Softsubs': 10,
-        'Hardsubs': 12,
-        'RAW': 15
-    };
-
-    /**
-     * Returns a generator iterating over the properties of the given
-     * <tr>, from left to right.
-     *
-     * @example
-     *      var iter = row_to_field_list($('tr'));
-     *      iter.next().value; // Blu-ray
-     *      iter.next().value; // MKV
-     *      iter.next().value; // h265
-     *
-     * @param {HTMLTableRowElement} torrent_row Row element to parse
-     */
-    function row_to_field_list(torrent_row) {
-        var link, spans, i, split_fields, _i, field, s, _s;
-
-        return _regenerator2.default.wrap(function row_to_field_list$(_context) {
-            while (1) {
-                switch (_context.prev = _context.next) {
-                    case 0:
-                        /* Structure is something like:
-                        <tr>
-                            <td>
-                                <span>[DL | RP]</span>
-                                <a>Blu-ray | MKV | h265 | ... </a>
-                            </td>
-                        </tr>
-                        */
-                        link = torrent_row.firstElementChild.children[1];
-                        //console.log(torrent_row);
-                        ///console.log(link);
-
-                        // (Experimental) compatibility with eva's torrent highlighter.
-                        // We check if the link contains spans.
-
-                        if (!(link.firstElementChild && link.firstElementChild.tagName === 'SPAN')) {
-                            _context.next = 13;
-                            break;
-                        }
-
-                        // In this case, our work is done and we just need to return
-                        // each span's text.
-                        _debug && console.log('span');
-                        spans = link.children;
-                        i = 0;
-
-                    case 5:
-                        if (!(i < spans.length)) {
-                            _context.next = 11;
-                            break;
-                        }
-
-                        _context.next = 8;
-                        return spans[i].textContent;
-
-                    case 8:
-                        i++;
-                        _context.next = 5;
-                        break;
-
-                    case 11:
-                        _context.next = 39;
-                        break;
-
-                    case 13:
-                        // Otherwise, we split and return the fields ourselves.
-                        _debug && console.log('textContent');
-                        split_fields = link.textContent.replace('»', '').trim().split(' | ');
-                        _i = 0;
-
-                    case 16:
-                        if (!(_i < split_fields.length)) {
-                            _context.next = 39;
-                            break;
-                        }
-
-                        field = split_fields[_i];
-                        // This handles sub groups and region codes.
-                        // Will work incorrectly if a sub group contains |
-
-                        if (!(field.indexOf('(') !== -1 && field.charAt(field.length - 1) === ')')) {
-                            _context.next = 26;
-                            break;
-                        }
-
-                        s = field.split(' (');
-                        _context.next = 22;
-                        return s[0];
-
-                    case 22:
-                        _context.next = 24;
-                        return s[1].trim(')');
-
-                    case 24:
-                        _context.next = 36;
-                        break;
-
-                    case 26:
-                        if (!(field.charAt(field.length - 2) === '.')) {
-                            _context.next = 34;
-                            break;
-                        }
-
-                        // If the second last char is a . we assume it's an
-                        // audio channel field.
-                        _s = field.split(' ');
-                        _context.next = 30;
-                        return _s.slice(0, -1).join(' ');
-
-                    case 30:
-                        _context.next = 32;
-                        return _s[_s.length - 1];
-
-                    case 32:
-                        _context.next = 36;
-                        break;
-
-                    case 34:
-                        _context.next = 36;
-                        return field;
-
-                    case 36:
-                        _i++;
-                        _context.next = 16;
-                        break;
-
-                    case 39:
-                    case "end":
-                        return _context.stop();
-                }
-            }
-        }, _marked, this);
-    }
-
-    /**
-     * Gets the sorting weight of the value `x` from the defined field mapping.
-     * @param {string} x Field value
-     */
-    function get_weight(x) {
-        return field_mapping[x];
-    }
-
-    /**
-     * Iterates through each property of a and b from left to right,
-     * comparing each property in turn using get_weight().
-     *
-     * For use as a comparison function in the .sort() method. Returns a positive
-     * number when b < a, negative for a < b, and 0 if a = b.
-     * @param {HTMLTableRowElement} a
-     * @param {HTMLTableRowElement} b
-     */
-    function sort_comparer(a, b) {
-        var a_iter = row_to_field_list(a);
-        var b_iter = row_to_field_list(b);
-
-        var a_object = {};
-        while (!a_object.done) {
-            a_object = a_iter.next();
-            var b_object = b_iter.next();
-            if (b_object.done) {
-                // In case of one string being shorter than the other,
-                // we sort the shorter one first.
-                return 1;
-            }
-            var a_value = a_object.value;
-            var b_value = b_object.value;
-            if (a_value === b_value) {
-                continue;
-            }
-            var a_weight = get_weight(a_value);
-            var b_weight = get_weight(b_value);
-            //_debug && (`a: ${a_value} ${a_weight}; b: ${b_value} ${b_weight}`)
-            // Doing an arithmetic comparison only makes sense when both
-            // a and b have defined weights.
-            if (a_weight && b_weight) {
-                // This integer subtraction results in the correct sorting.
-                return a_weight - b_weight;
-            } else {
-                // Use string (alphabetical) sort on the original strings.
-                return a_value < b_value ? -1 : 1;
-            }
-        }
-        // If a and b have the same number of elements, they will finish at
-        // the same time and are equal.
-        if (b_object.done) return 0;
-        // Otherwise, a < b.
-        return -1;
-    }
-
-    /**
-     * Sorts the torrent_rows, considering info rows.
-     * Skips torrent groups when 3 or less torrents.
-     *
-     * @param {Array<HTMLTableRowElement} torrent_rows
-     *
-     * @returns {DocumentFragment} Fragment containing sorted row elements.
-     */
-    function sort_rows(torrent_rows) {
-        // Skips small groups.
-        if (torrent_rows.length <= 3) {
-            _debug && console.log('too short');
-            return null;
-        }
-        // Sort with our custom sort function.
-        torrent_rows.sort(sort_comparer);
-        var docFrag = document.createDocumentFragment();
-        for (var s = 0; s < torrent_rows.length; s++) {
-            var elem = torrent_rows[s];
-            // Stores element after this row, checking if it is this
-            // row's information row.
-            // IMPORTANT: this must be before 'elem' is inserted
-            // elsewhere.
-            var next = elem.nextElementSibling;
-            // Append torrent row.
-            docFrag.appendChild(elem);
-            //console.log(s.textContent);
-            // Checks if 'next' is an info row.
-            if (next && next.classList.contains('pad')) docFrag.appendChild(next);
-        }
-        return docFrag;
-    }
-
-    /**
-     * Sorts a whole table element. Capable of understanding subheadings inside
-     * the table, and will not sort rows across them.
-     * @param {HTMLTableElement} table
-     */
-    function sort_table(table) {
-        var tbody = table.firstElementChild;
-        var is_first_link = true;
-        var num_children = tbody.children.length;
-        var current_torrent_group = [];
-        for (var r = 0; r < num_children; r++) {
-            var row = tbody.children[r];
-            ///console.log(row);
-            // If this row is a torrent link
-            if (row.classList.contains('group_torrent')) {
-                // We skip sorting torrents2.php links, as they are music
-                // and not nearly as varied as anime torrents.
-                if (is_first_link && row.firstElementChild.children[1].href.indexOf('torrents.php?') === -1) {
-                    break;
-                }
-                is_first_link = false;
-                current_torrent_group.push(row);
-                // We use 'pad' class to check for the torrent information rows.
-                // (There must be a better way.)
-                // If it is not a pad or group_torrent, then it is a subheading
-                // and we sort all torrents above this header.
-            } else if (!row.classList.contains('pad') && current_torrent_group.length) {
-                ///console.log('sorting!');
-                var docFrag = sort_rows(current_torrent_group);
-                if (docFrag) {
-                    // Inserts the sorted docFrag before the header.
-                    tbody.insertBefore(docFrag, row);
-                }
-                current_torrent_group = [];
-            }
-        }
-        // This will fall through the bottom of the table, because there
-        // is no subheading there. In that case, we sort everything
-        // that's left and just append it.
-        if (current_torrent_group.length) {
-            var _docFrag = sort_rows(current_torrent_group);
-            if (_docFrag) tbody.appendChild(_docFrag);
-        }
-    }
-
-    var torrent_tables = document.querySelectorAll('table.torrent_table');
-    for (var t = 0; t < torrent_tables.length; t++) {
-        sort_table(torrent_tables[t]);
-    }
-})();
-
 /***/ })
-
-/******/ });
+/******/ ]);
 //# sourceMappingURL=ab_torrent_sorter.user.js.map
