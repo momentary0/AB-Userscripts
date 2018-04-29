@@ -61,8 +61,7 @@ class ScriptAssembler:
                 #self.comment('Script generated at ' + dt.now().isoformat())
                 self.output_file.write(self.global_indent + line)
 
-
-if __name__ == '__main__':
+def _main():
     os.chdir(os.path.dirname(__file__))
     with open('_ab_delicious_scripts_loader.user.js', encoding='utf-8') as in_file, \
         open('dist/ab_delicious_scripts.user.js', 'w', encoding='utf-8') as out_file:
@@ -72,3 +71,6 @@ if __name__ == '__main__':
             'dist'
         )
         assembler.write_script()
+
+if __name__ == '__main__':
+    _main()
