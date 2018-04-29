@@ -27,7 +27,7 @@ class ScriptAssembler:
                 self.output_file,
                 self.out_dir,
                 self.common_inserted,
-                self.indent_str
+                self.global_indent+self.indent_str
             ).write_script()
         self.output_file.write('\n')
         self.comment('End ' + script_name)
