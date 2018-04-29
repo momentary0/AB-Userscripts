@@ -155,7 +155,7 @@ Version history (TheFallingMan)
         /* === Inserted from ab_hyper_quote.user.js === */
         // ==UserScript==
         // @name        AB - HYPER QUOTE!
-        // @author      Megure 
+        // @author      Megure
         // @description Select text and press CTRL+V to quote
         // @include     https://animebytes.tv/*
         // @version     0.1
@@ -169,7 +169,9 @@ Version history (TheFallingMan)
             {
                 return;
             }
-            
+        
+            /* === _delicious_common.js already inserted. === */
+        
             function formattedUTCString(date, timezone) {
                 var creation = new Date(date);
                 if (isNaN(creation.getTime()))
@@ -628,6 +630,7 @@ Version history (TheFallingMan)
         // Shows current freeleech pool status in navbar with a pie-chart
         // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
         (function ABFLStatus() {
+            /* === _delicious_common.js already inserted. === */
         
             function niceNumber(num) {
                 var res = '';
@@ -934,7 +937,8 @@ Version history (TheFallingMan)
         
         // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
         (function ABYenStats() {
-            
+            /* === _delicious_common.js already inserted. === */
+        
             function compoundInterest(years) {
                 return (Math.pow(2, years) - 1) / Math.log(2);
             }
@@ -1117,6 +1121,9 @@ Version history (TheFallingMan)
     
     // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
     (function DynamicStylesheets() {
+    
+        /* === _delicious_common.js already inserted. === */
+    
         function updateSettings() {
             var rules = document.querySelectorAll('li.deliciousdynamicstylesheetsrule');
             var result = [];
@@ -1285,6 +1292,8 @@ Version history (TheFallingMan)
     // Enhanced Torrent View by Megure
     // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     (function EnhancedTorrentView() {
+        /* === _delicious_common.js already inserted. === */
+    
         var days_per_year = 365.256363;
         var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
         var show_required_time = GM_getValue('ABTorrentsReqTime', 'true') === 'true';
@@ -2170,6 +2179,8 @@ Version history (TheFallingMan)
     
     if ((/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL)) && !/action=viewthread/i.test(document.URL)) {
         (function ForumSearchEnhancement() {
+            /* === _delicious_common.js already inserted. === */
+    
             var a, allResults, background_color, button, cb, filterPost, forumIds, forumid, getFirstTagParent, hideSubSelection, i, index, input, len, linkbox1, loadPost, loadText, loadThreadPage, loadingText, myCell, myLINK, newCheckbox, newLinkBox, patt, processThreadPage, quickLink, quickLinkSubs, result, sR, searchForums, searchForumsCB, searchForumsNew, showFastSearchLinks, showPost, strong, tP, textReplace, text_color, toggleText, toggleVisibility, user_filter, user_td, user_tr, workInForumSearch, workInRestOfForum;
     
             background_color = GM_getValue('ABForumSearchHighlightBG', '#FFC000');
