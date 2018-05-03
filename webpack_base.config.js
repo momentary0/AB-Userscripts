@@ -28,19 +28,26 @@ module.exports = function(scriptName, scriptExt, scriptRoot, minify=false) {
         devtool: 'source-map',
         plugins: (minify?[
             new UglifyJsPlugin({
+                cache: true,
                 uglifyOptions: {
+                    warnings: true,
                     compress: {
+                        'booleans': false,
                         'unused': true,
                         'dead_code': true,
                         'conditionals': true,
                         'passes': 2,
                         'evaluate': true,
                         'inline': true,
-                        'pure_funcs': ['console.log', 'Date.now', '_log'],
-                        'unsafe': true
+                        'pure_funcs': ['Date.now'],
+                        'pure_getters': true,
+                        'unsafe': true,
+                        global_defs: {
+
+                        }
                     },
                     mangle: {
-                        keep_fnames: false,
+                        keep_fnames: true,
                     }
                 }
             })]:[
