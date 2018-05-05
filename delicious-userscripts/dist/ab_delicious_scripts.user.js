@@ -1,8 +1,11 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.1
+// @version 2.0.1.2
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
+// @grant GM_getValue
+// @grant GM_setValue
+// @grant GM_deleteValue
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
@@ -32,7 +35,7 @@ Version history (TheFallingMan)
     // Some GM_ functions and Javascript polyfills
     /* === Inserted from _delicious_common.js === */
     // Common functions used by many scripts.
-    // Will be inserted once into the delicious bundle, 
+    // Will be inserted once into the delicious bundle,
     // and prepended to each individual userscript.
     
     // Debug flag. Used to enable/disable some verbose console logging.
@@ -53,11 +56,42 @@ Version history (TheFallingMan)
         document.body.appendChild(script);
         return script;
     }
-    if (!this.GM_getValue || (this.GM_getValue.toString && this.GM_getValue.toString().indexOf("not supported") > -1)) {
+    if (typeof GM_getValue === 'undefined'
+            || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") > -1)) {
+        _debug && console.log('Setting fallback localStorage GM_* functions');
+        // There is some difference between this.GM_getValue and just GM_getValue.
+        _debug && console.log(this.GM_getValue);
+        _debug && typeof GM_getValue !== 'undefined' && console.log(GM_getValue.toString());
+        // Previous versions lacked a @grant GM_getValue header, which resulted
+        // in these being used when they shouldn't have been.
         this.GM_getValue = function (key, def) { return localStorage[key] || def; };
         this.GM_setValue = function (key, value) { return localStorage[key] = value; };
         this.GM_deleteValue = function (key) { return delete localStorage[key]; };
+        // We set this when we have used localStorage so if in future we switch,
+        // it will be imported.
+        GM_setValue('deliciousSettingsImported', 'false');
+        _debug && console.log(GM_getValue);
+    } else {
+        _debug&& console.log('Using default GM_* functions.');
+        // For backwards compatibility,
+        // we'll implement migrating localStorage to GM settings.
+        // However, we can't implement the reverse because when localStorage is
+        // used, GM_getValue isn't even defined so we obviously can't import.
+        if (GM_getValue('deliciousSettingsImported', 'false') !== 'true') {
+            _debug && console.log('Importing localStorage to GM settings');
+            GM_setValue('deliciousSettingsImported', 'true');
+            var keys = Object.keys(localStorage);
+            keys.forEach(function(key){
+                if (GM_getValue(key, 'undefined') === 'undefined') {
+                    _debug && console.log('Imported ' + key);
+                    GM_setValue(key, localStorage[key]);
+                } else {
+                    _debug && console.log('Key exists ' + key);
+                }
+            });
+        }
     }
+    
     function initGM(gm, def, json, overwrite) {
         if (typeof def === "undefined") throw "shit";
         if (typeof overwrite !== "boolean") overwrite = true;
@@ -158,7 +192,7 @@ Version history (TheFallingMan)
         // @author      Megure
         // @description Select text and press CTRL+V to quote
         // @include     https://animebytes.tv/*
-        // @version     0.1
+        // @version     0.1.1.1
         // @icon        http://animebytes.tv/favicon.ico
         // ==/UserScript==
         
@@ -170,7 +204,7 @@ Version history (TheFallingMan)
                 return;
             }
         
-            /* === _delicious_common.js already inserted. === */
+            var _debug = false;
         
             function formattedUTCString(date, timezone) {
                 var creation = new Date(date);
@@ -252,16 +286,24 @@ Version history (TheFallingMan)
         
                 var posts = copy.querySelectorAll('div[id^="post"],div[id^="msg"]');
                 for (var i = 0; i < posts.length; i++)
+                {
+                    _debug && console.log(posts[i]);
                     QUOTEONE(posts[i]);
+                }
             }
         
         
             function QUOTEONE(post) {
                 function HTMLtoBB(str) {
-                    // Order is somewhat relevant
-                    var ret = str.replace(/<br.*?>/ig, '').
+                    // Order is somewhat relevant.
+                    // We can be certain that < and > denote HTML tags because 'str'
+                    // is obtained from .innerHTML; < and similar are HTML escaped.
+                        // Eliminates insignificant whitespace between HTML elements.
+                    var ret = str.replace(/>\s+</ig, '><').
+                        // Quotes of a specific user.
                         replace(/<strong><a.*?>.*?<\/a><\/strong> <a.*?href="(.*?)#(?:msg|post)(.*?)".*?>wrote(?: on )?(.*?)<\/a>:?\s*<blockquote class="blockquote">([\s\S]*?)<\/blockquote>/ig, function (html, href, id, dateString, quote) {
                             var type = '';
+                            _debug && console.log('inner quote href: ' +href);
                             if (/\/forums\.php/i.test(href)) type = '#';
                             if (/\/user\.php/i.test(href)) type = '*';
                             if (/\/torrents\.php/i.test(href)) type = '-1';
@@ -274,24 +316,29 @@ Version history (TheFallingMan)
                         replace(/<strong>Added on (.*?):?<\/strong>/ig, function (html, dateString) {
                             return html.replace(dateString, formattedUTCString(dateString));
                         }).
+                        // Currently only :shitpizza:
+                        replace(/<img.* alt="(:[^:]+:)" .*class="bbcode_smiley">/ig, '$1').
+                        // Searches for BBCode input buttons to find string to insert.
                         replace(/<span class="smiley-.+?" title="(.+?)"><\/span>/ig, function (html, smiley) {
-                            var smileyNode = document.querySelector('img[alt="' + smiley + '"]');
+                            var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
                             if (smileyNode === null)
-                                smileyNode = document.querySelector('img[src$="' + smiley + '.png"]');
+                                smileyNode = document.querySelector('span[style*="/' + smiley + '.png"]');
                             if (smileyNode === null)
-                                smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_') + '.png"]');
+                                smileyNode = document.querySelector('span[style*="/' + smiley.replace(/-/g, '_') + '.png"]');
                             if (smileyNode === null)
-                                smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
+                                smileyNode = document.querySelector('span[style*="/' +
+                                    smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
                             if (smileyNode === null)
-                                smileyNode = document.querySelector('img[src$="' + smiley.replace(/face/g, '~_~') + '.png"]');
+                                smileyNode = document.querySelector('span[style*="/' + smiley.replace(/face/g, '~_~') + '.png"]');
                             if (smileyNode !== null && smileyNode.parentNode !== null) {
-                                smileyNode = smileyNode.parentNode.getAttribute('onclick').match(/'(.+?)'/i);
+                                smileyNode = smileyNode.getAttribute('onclick').match(/'(.+?)'/i);
                                 if (smileyNode !== null)
                                     return smileyNode[1];
                             }
                             return ':' + smiley + ':';
                         }).
                         replace(/<iframe.*?src="([^?"]*).*?".*?><\/iframe>/ig, '[youtube]$1[/youtube]').
+                        // Eliminates empty HTML tags.
                         replace(/<([^\s>\/]+)[^>]*>\s*<\/([^>]+)>/ig, function (html, match1, match2) {
                             if (match1 === match2)
                                 return '';
@@ -321,18 +368,31 @@ Version history (TheFallingMan)
                             else
                                 return '[hide]' + content + '[/hide]';
                         }).
-                        replace(/<div.*?class=".*?spoilerContainer.*?".*?><input.*?><div.*?class=".*?spoiler.*?".*?>([\s\S]*?)<\/div><\/div>/ig, '[spoiler]$1[/spoiler]').
+                        replace(/<div class="spoilerContainer"><input type="button" class="spoilerButton" value="(?:Show|Hide) ([^"]+) spoiler"><div class="spoiler"[^>]*>([^<]*)<\/div><\/div>/ig, function (html, button, content) {
+                            if (button !== '')
+                                return '[spoiler=' + button + ']' + content + '[/spoiler]';
+                            else
+                                return '[spoiler]' + content + '[/spoiler]';
+                        }).
                         replace(/<img.*?src="(.*?)".*?>/ig, '[img]$1[/img]').
+                        replace(/<div class="codeBox"><pre>([^<]*)<\/pre><\/div>/ig, '[code]$1[/code]').
                         replace(/<span class="last-edited">[\s\S]*$/ig, '');
                     if (ret !== str) return HTMLtoBB(ret);
                     else {
+                        // We cannot replace <br> earlier because the \n
+                        // would be deleted by the whitespace replacement.
+                        ret = ret.replace(/<br[^>]*>/ig, '\n');
+                        _debug && console.log(ret);
                         // Decode HTML
                         var tempDiv = document.createElement('div');
                         tempDiv.innerHTML = ret;
+                        // Note: textContent has the effect of removing all unmatched
+                        // HTML tags from the string.
                         return tempDiv.textContent.trim();
                     }
                 }
         
+                _debug && console.log(post.querySelector('div.post,div.body').innerHTML);
                 var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
                     author, creation, postid, type = '';
                 if (res === '') return;
@@ -620,7 +680,7 @@ Version history (TheFallingMan)
         // @author      Megure (inspired by Lemma, Alpha, NSC)
         // @description Shows current freeleech pool status in navbar with a pie-chart
         // @include     https://animebytes.tv/*
-        // @version     0.1
+        // @version     0.1.1
         // @icon        http://animebytes.tv/favicon.ico
         // @grant       GM_getValue
         // @grant       GM_setValue
@@ -721,7 +781,14 @@ Version history (TheFallingMan)
                     parseFLInfo(document);
                 else if (Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', '0'), 10) > 3600000 && locked === false) {
                     locked = true;
-                    var xhr = new XMLHttpRequest(), parser = new DOMParser();
+                    // Fix suggested by https://animebytes.tv/user/profile/oregano
+                    // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
+                    try {
+                        var xhr = XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
+                    } catch (exc) {
+                        var xhr = new XMLHttpRequest();
+                    }
+                    parser = new DOMParser();
                     xhr.open('GET', "https://animebytes.tv/konbini/pool", true);
                     xhr.send();
                     xhr.onreadystatechange = function () {
