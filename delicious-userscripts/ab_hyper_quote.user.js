@@ -15,8 +15,6 @@
         return;
     }
 
-    importDeliciousCommon();
-
     function formattedUTCString(date, timezone) {
         var creation = new Date(date);
         if (isNaN(creation.getTime()))
@@ -178,7 +176,7 @@
                     else
                         return '[hide]' + content + '[/hide]';
                 }).
-                replace(/<div class="spoilerContainer"><input type="button" class="spoilerButton" value="(?:Show|Hide) ([^"]+) spoiler"><div class="spoiler">([^<]*)<\/div><\/div>/ig, function (html, button, content) {
+                replace(/<div class="spoilerContainer"><input type="button" class="spoilerButton" value="(?:Show|Hide) ([^"]+) spoiler"><div class="spoiler"[^>]*>([^<]*)<\/div><\/div>/ig, function (html, button, content) {
                     if (button !== '')
                         return '[spoiler=' + button + ']' + content + '[/spoiler]';
                     else
@@ -196,6 +194,8 @@
                 // Decode HTML
                 var tempDiv = document.createElement('div');
                 tempDiv.innerHTML = ret;
+                // Note: textContent has the effect of removing all unmatched
+                // HTML tags from the string.
                 return tempDiv.textContent.trim();
             }
         }
