@@ -36,7 +36,7 @@ if (typeof GM_getValue === 'undefined'
     GM_setValue('deliciousSettingsImported', 'false');
     _debug && console.log(GM_getValue);
 } else {
-    _debug&& console.log('Using default GM_* functions.')
+    _debug&& console.log('Using default GM_* functions.');
     // For backwards compatibility,
     // we'll implement migrating localStorage to GM settings.
     // However, we can't implement the reverse because when localStorage is
