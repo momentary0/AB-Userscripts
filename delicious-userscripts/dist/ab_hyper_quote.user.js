@@ -3,7 +3,7 @@
 // @author      Megure
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
-// @version     0.1
+// @version     0.1.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -15,54 +15,7 @@
         return;
     }
 
-    /* === Inserted from _delicious_common.js === */
-    // Common functions used by many scripts.
-    // Will be inserted once into the delicious bundle, 
-    // and prepended to each individual userscript.
-    
-    // Debug flag. Used to enable/disable some verbose console logging.
     var _debug = false;
-    
-    // Super duper important functions
-    // Do not delete or something might break and stuff!! :(
-    HTMLCollection.prototype.each = function (f) { for (var i = 0, e = null; e = this[i]; i++) f.call(e, e); return this; };
-    HTMLElement.prototype.clone = function (o) { var n = this.cloneNode(); n.innerHTML = this.innerHTML; if (o !== undefined) for (var e in o) n[e] = o[e]; return n; };
-    // Thank firefox for this ugly shit. Holy shit firefox get your fucking shit together >:(
-    function forEach(arr, fun) { return HTMLCollection.prototype.each.call(arr, fun); }
-    function clone(ele, obj) { return HTMLElement.prototype.clone.call(ele, obj); }
-    
-    function injectScript(content, id) {
-        var script = document.createElement('script');
-        if (id) script.setAttribute('id', id);
-        script.textContent = content.toString();
-        document.body.appendChild(script);
-        return script;
-    }
-    if (!this.GM_getValue || (this.GM_getValue.toString && this.GM_getValue.toString().indexOf("not supported") > -1)) {
-        this.GM_getValue = function (key, def) { return localStorage[key] || def; };
-        this.GM_setValue = function (key, value) { return localStorage[key] = value; };
-        this.GM_deleteValue = function (key) { return delete localStorage[key]; };
-    }
-    function initGM(gm, def, json, overwrite) {
-        if (typeof def === "undefined") throw "shit";
-        if (typeof overwrite !== "boolean") overwrite = true;
-        if (typeof json !== "boolean") json = true;
-        var that = GM_getValue(gm);
-        if (that != null) {
-            var err = null;
-            try { that = ((json) ? JSON.parse(that) : that); }
-            catch (e) { if (e.message.match(/Unexpected token .*/)) err = e; }
-            if (!err && Object.prototype.toString.call(that) === Object.prototype.toString.call(def)) { return that; }
-            else if (overwrite) {
-                GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-                return def;
-            } else { if (err) { throw err; } else { return that; } }
-        } else {
-            GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-            return def;
-        }
-    }
-    /* === End _delicious_common.js === */
 
     function formattedUTCString(date, timezone) {
         var creation = new Date(date);
@@ -144,16 +97,24 @@
 
         var posts = copy.querySelectorAll('div[id^="post"],div[id^="msg"]');
         for (var i = 0; i < posts.length; i++)
+        {
+            _debug && console.log(posts[i]);
             QUOTEONE(posts[i]);
+        }
     }
 
 
     function QUOTEONE(post) {
         function HTMLtoBB(str) {
-            // Order is somewhat relevant
-            var ret = str.replace(/<br.*?>/ig, '').
+            // Order is somewhat relevant.
+            // We can be certain that < and > denote HTML tags because 'str'
+            // is obtained from .innerHTML; < and similar are HTML escaped.
+                // Eliminates insignificant whitespace between HTML elements.
+            var ret = str.replace(/>\s+</ig, '><').
+                // Quotes of a specific user.
                 replace(/<strong><a.*?>.*?<\/a><\/strong> <a.*?href="(.*?)#(?:msg|post)(.*?)".*?>wrote(?: on )?(.*?)<\/a>:?\s*<blockquote class="blockquote">([\s\S]*?)<\/blockquote>/ig, function (html, href, id, dateString, quote) {
                     var type = '';
+                    _debug && console.log('inner quote href: ' +href);
                     if (/\/forums\.php/i.test(href)) type = '#';
                     if (/\/user\.php/i.test(href)) type = '*';
                     if (/\/torrents\.php/i.test(href)) type = '-1';
@@ -166,24 +127,29 @@
                 replace(/<strong>Added on (.*?):?<\/strong>/ig, function (html, dateString) {
                     return html.replace(dateString, formattedUTCString(dateString));
                 }).
+                // Currently only :shitpizza:
+                replace(/<img.* alt="(:[^:]+:)" .*class="bbcode_smiley">/ig, '$1').
+                // Searches for BBCode input buttons to find string to insert.
                 replace(/<span class="smiley-.+?" title="(.+?)"><\/span>/ig, function (html, smiley) {
-                    var smileyNode = document.querySelector('img[alt="' + smiley + '"]');
+                    var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_') + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley.replace(/-/g, '_') + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' +
+                            smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/face/g, '~_~') + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley.replace(/face/g, '~_~') + '.png"]');
                     if (smileyNode !== null && smileyNode.parentNode !== null) {
-                        smileyNode = smileyNode.parentNode.getAttribute('onclick').match(/'(.+?)'/i);
+                        smileyNode = smileyNode.getAttribute('onclick').match(/'(.+?)'/i);
                         if (smileyNode !== null)
                             return smileyNode[1];
                     }
                     return ':' + smiley + ':';
                 }).
                 replace(/<iframe.*?src="([^?"]*).*?".*?><\/iframe>/ig, '[youtube]$1[/youtube]').
+                // Eliminates empty HTML tags.
                 replace(/<([^\s>\/]+)[^>]*>\s*<\/([^>]+)>/ig, function (html, match1, match2) {
                     if (match1 === match2)
                         return '';
@@ -213,18 +179,31 @@
                     else
                         return '[hide]' + content + '[/hide]';
                 }).
-                replace(/<div.*?class=".*?spoilerContainer.*?".*?><input.*?><div.*?class=".*?spoiler.*?".*?>([\s\S]*?)<\/div><\/div>/ig, '[spoiler]$1[/spoiler]').
+                replace(/<div class="spoilerContainer"><input type="button" class="spoilerButton" value="(?:Show|Hide) ([^"]+) spoiler"><div class="spoiler"[^>]*>([^<]*)<\/div><\/div>/ig, function (html, button, content) {
+                    if (button !== '')
+                        return '[spoiler=' + button + ']' + content + '[/spoiler]';
+                    else
+                        return '[spoiler]' + content + '[/spoiler]';
+                }).
                 replace(/<img.*?src="(.*?)".*?>/ig, '[img]$1[/img]').
+                replace(/<div class="codeBox"><pre>([^<]*)<\/pre><\/div>/ig, '[code]$1[/code]').
                 replace(/<span class="last-edited">[\s\S]*$/ig, '');
             if (ret !== str) return HTMLtoBB(ret);
             else {
+                // We cannot replace <br> earlier because the \n
+                // would be deleted by the whitespace replacement.
+                ret = ret.replace(/<br[^>]*>/ig, '\n');
+                _debug && console.log(ret);
                 // Decode HTML
                 var tempDiv = document.createElement('div');
                 tempDiv.innerHTML = ret;
+                // Note: textContent has the effect of removing all unmatched
+                // HTML tags from the string.
                 return tempDiv.textContent.trim();
             }
         }
 
+        _debug && console.log(post.querySelector('div.post,div.body').innerHTML);
         var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
             author, creation, postid, type = '';
         if (res === '') return;
