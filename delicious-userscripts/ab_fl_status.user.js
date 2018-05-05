@@ -3,7 +3,7 @@
 // @author      Megure (inspired by Lemma, Alpha, NSC)
 // @description Shows current freeleech pool status in navbar with a pie-chart
 // @include     https://animebytes.tv/*
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_getValue
 // @grant       GM_setValue
