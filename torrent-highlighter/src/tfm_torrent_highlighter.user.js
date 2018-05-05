@@ -171,7 +171,7 @@
         [MusicStates.BITRATE]: newCaptureHandler('bitrate', MusicStates.SOURCE),
         [MusicStates.SOURCE]: newCaptureHandler('source', MusicStates.LOG),
         [MusicStates.LOG]: newFlagHandler('Log', 'log', MusicStates.CUE),
-        [MusicStates.CUE]: newFlagHandler('Cue', 'cue1', GlobalStates.COMMON_TRAILING_FIELDS)
+        [MusicStates.CUE]: newFlagHandler('Cue', 'cue', GlobalStates.COMMON_TRAILING_FIELDS)
     });
 
     const AnimeStates = Object.freeze({
