@@ -10,7 +10,7 @@
 
 (function ABTorrentSorter() {
     /** Enables/disables logging to console. */
-    const _debug = false;
+    function isDebug(){ return false; }
 
     /**
      * Mapping between field properties and their relative
@@ -128,14 +128,14 @@
         if (link.firstElementChild && link.firstElementChild.tagName === 'SPAN') {
             // In this case, our work is done and we just need to return
             // each span's text.
-            _debug && console.log('span');
+            isDebug() && console.log('span');
             let spans = link.children;
             for (let i = 0; i < spans.length; i++) {
                 yield (spans[i].textContent);
             }
         } else {
             // Otherwise, we split and return the fields ourselves.
-            _debug && console.log('textContent');
+            isDebug() && console.log('textContent');
             let split_fields = link.textContent.replace('»', '').trim().split(' | ');
             for (let i = 0; i < split_fields.length; i++) {
                 let field = split_fields[i];
@@ -225,7 +225,7 @@
     function sort_rows(torrent_rows) {
         // Skips small groups.
         if (torrent_rows.length <= 3) {
-            _debug && console.log('too short');
+            isDebug() && console.log('too short');
             return null;
         }
         // Sort with our custom sort function.
