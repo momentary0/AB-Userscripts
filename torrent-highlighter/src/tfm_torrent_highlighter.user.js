@@ -442,7 +442,7 @@
                 break;
             default:
                 this.index++;
-                if (node === ' - Snatched') {
+                if (node.indexOf('- Snatched') !== -1) {
                     this.appendText(' - ');
                     this.appendSpan('Snatched', 'snatched', '');
                 } else {
@@ -501,7 +501,8 @@
         let yearIndex = bbcodeString.indexOf('\xa0\xa0[');
         let leftDocFrag = document.createDocumentFragment();
         _debug() && console.log('yearIndex: ' + yearIndex);
-        if (yearIndex !== -1) {
+        if (yearIndex === -1) continue;
+        else {
             let leftString = bbcodeString.substr(0, yearIndex);
             let year = bbcodeString.substr(yearIndex+3, 4);
             let dashIndex = torrents1 ? leftString.lastIndexOf(' - ') : leftString.indexOf(' - ');
