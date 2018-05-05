@@ -104,7 +104,14 @@
             parseFLInfo(document);
         else if (Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', '0'), 10) > 3600000 && locked === false) {
             locked = true;
-            var xhr = new XMLHttpRequest(), parser = new DOMParser();
+            // Fix suggested by https://animebytes.tv/user/profile/oregano
+            // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
+            try {
+                var xhr = XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
+            } catch (exc) {
+                var xhr = new XMLHttpRequest();
+            }
+            parser = new DOMParser();
             xhr.open('GET', "https://animebytes.tv/konbini/pool", true);
             xhr.send();
             xhr.onreadystatechange = function () {
