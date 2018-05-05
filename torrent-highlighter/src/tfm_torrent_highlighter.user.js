@@ -297,7 +297,6 @@
     const BookStates = Object.freeze({
         TRANSLATION: 1,
         FORMAT: 2,
-        DIGITAL: 3,
         ONGOING: 4,
     });
 
@@ -319,7 +318,7 @@
             }
             return BookStates.FORMAT;
         },
-        [BookStates.FORMAT]: newListHandler(['Archived Scans', 'EPUB', 'PDF', 'Unarchived'], 'format', BookStates.ONGOING),
+        [BookStates.FORMAT]: newListHandler(['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'], 'format', BookStates.ONGOING),
         [BookStates.ONGOING]: newFlagHandler('Ongoing', 'ongoing', GlobalStates.COMMON_TRAILING_FIELDS),
 
     };
@@ -343,7 +342,7 @@
             for (let i = 0; i < this.oldNodes.length; i++) {
                 let child = this.oldNodes[i];
                 if (child.nodeType === Node.TEXT_NODE) {
-                    _debug() && console.log('x' + child.nodeValue + 'x');
+                    _debug() && console.log('Handling text node: x' + child.nodeValue + 'x');
                     if (child.nodeValue.indexOf(this.delim) !== -1) {
                         let str = child.nodeValue;
                         if (i === 0) {
@@ -441,7 +440,7 @@
                 }
                 return GlobalStates.COMMON_TRAILING_FIELDS;
                 break;
-            case undefined:
+            default:
                 this.index++;
                 if (node === ' - Snatched') {
                     this.appendText(' - ');
@@ -451,9 +450,9 @@
                     this.appendDelim();
                     this.appendSpan(node, 'misc', node);
                 }
+                return GlobalStates.COMMON_TRAILING_FIELDS;
                 break;
             }
-            return GlobalStates.INSERT_DOCFRAG;
         },
         [GlobalStates.INSERT_DOCFRAG]: function INSERT_DOCFRAG() {
             _debug() && console.log('appending');
@@ -492,7 +491,7 @@
     for (let t = 0; t < bbcodeTorrents.length; t++) {
         let linkElement = bbcodeTorrents[t];
         linkElement.classList.add('userscript-highlight');
-        linkElement.classList.add('torrent-page');
+        linkElement.classList.add('torrent-bbcode');
         let textNode = linkElement.firstChild;
         let torrents1 = linkElement.href.indexOf('torrents.php') !== -1;
         p.linkElement = linkElement;
@@ -501,6 +500,7 @@
         let bbcodeString = textNode.nodeValue.trim();
         let yearIndex = bbcodeString.indexOf('\xa0\xa0[');
         let leftDocFrag = document.createDocumentFragment();
+        _debug() && console.log('yearIndex: ' + yearIndex);
         if (yearIndex !== -1) {
             let leftString = bbcodeString.substr(0, yearIndex);
             let year = bbcodeString.substr(yearIndex+3, 4);
