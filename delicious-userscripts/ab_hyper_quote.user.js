@@ -3,7 +3,7 @@
 // @author      Megure
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -97,14 +97,21 @@
 
         var posts = copy.querySelectorAll('div[id^="post"],div[id^="msg"]');
         for (var i = 0; i < posts.length; i++)
+        {
+            _debug && console.log(posts[i]);
             QUOTEONE(posts[i]);
+        }
     }
 
 
     function QUOTEONE(post) {
         function HTMLtoBB(str) {
-            // Order is somewhat relevant
-            var ret = str.replace(/<br.*?>/ig, '').
+            // Order is somewhat relevant.
+            // We can be certain that < and > denote HTML tags because 'str'
+            // is obtained from .innerHTML; < and similar are HTML escaped.
+                // Eliminates insignificant whitespace between HTML elements.
+            var ret = str.replace(/>\s+</ig, '><').
+                // Quotes of a specific user.
                 replace(/<strong><a.*?>.*?<\/a><\/strong> <a.*?href="(.*?)#(?:msg|post)(.*?)".*?>wrote(?: on )?(.*?)<\/a>:?\s*<blockquote class="blockquote">([\s\S]*?)<\/blockquote>/ig, function (html, href, id, dateString, quote) {
                     var type = '';
                     if (/\/forums\.php/i.test(href)) type = '#';
@@ -119,24 +126,29 @@
                 replace(/<strong>Added on (.*?):?<\/strong>/ig, function (html, dateString) {
                     return html.replace(dateString, formattedUTCString(dateString));
                 }).
+                // Currently only :shitpizza:
+                replace(/<img.* alt="(:[^:]+:)" .*class="bbcode_smiley">/ig, '$1').
+                // Searches for BBCode input buttons to find string to insert.
                 replace(/<span class="smiley-.+?" title="(.+?)"><\/span>/ig, function (html, smiley) {
-                    var smileyNode = document.querySelector('img[alt="' + smiley + '"]');
+                    var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_') + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley.replace(/-/g, '_') + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' +
+                            smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
                     if (smileyNode === null)
-                        smileyNode = document.querySelector('img[src$="' + smiley.replace(/face/g, '~_~') + '.png"]');
+                        smileyNode = document.querySelector('span[style*="/' + smiley.replace(/face/g, '~_~') + '.png"]');
                     if (smileyNode !== null && smileyNode.parentNode !== null) {
-                        smileyNode = smileyNode.parentNode.getAttribute('onclick').match(/'(.+?)'/i);
+                        smileyNode = smileyNode.getAttribute('onclick').match(/'(.+?)'/i);
                         if (smileyNode !== null)
                             return smileyNode[1];
                     }
                     return ':' + smiley + ':';
                 }).
                 replace(/<iframe.*?src="([^?"]*).*?".*?><\/iframe>/ig, '[youtube]$1[/youtube]').
+                // Eliminates empty HTML tags.
                 replace(/<([^\s>\/]+)[^>]*>\s*<\/([^>]+)>/ig, function (html, match1, match2) {
                     if (match1 === match2)
                         return '';
@@ -168,9 +180,12 @@
                 }).
                 replace(/<div.*?class=".*?spoilerContainer.*?".*?><input.*?><div.*?class=".*?spoiler.*?".*?>([\s\S]*?)<\/div><\/div>/ig, '[spoiler]$1[/spoiler]').
                 replace(/<img.*?src="(.*?)".*?>/ig, '[img]$1[/img]').
+                replace(/<div class="codeBox"><pre>([^<]*)<\/pre><\/div>/ig, '[code]$1[/code]').
                 replace(/<span class="last-edited">[\s\S]*$/ig, '');
             if (ret !== str) return HTMLtoBB(ret);
             else {
+                ret = ret.replace(/<br[^>]*>/ig, '\n');
+                _debug && console.log(ret);
                 // Decode HTML
                 var tempDiv = document.createElement('div');
                 tempDiv.innerHTML = ret;
@@ -178,6 +193,7 @@
             }
         }
 
+        _debug && console.log(post.querySelector('div.post,div.body').innerHTML);
         var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
             author, creation, postid, type = '';
         if (res === '') return;
