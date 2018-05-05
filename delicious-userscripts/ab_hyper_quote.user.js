@@ -178,12 +178,19 @@
                     else
                         return '[hide]' + content + '[/hide]';
                 }).
-                replace(/<div.*?class=".*?spoilerContainer.*?".*?><input.*?><div.*?class=".*?spoiler.*?".*?>([\s\S]*?)<\/div><\/div>/ig, '[spoiler]$1[/spoiler]').
+                replace(/<div class="spoilerContainer"><input type="button" class="spoilerButton" value="(?:Show|Hide) ([^"]+) spoiler"><div class="spoiler">([^<]*)<\/div><\/div>/ig, function (html, button, content) {
+                    if (button !== '')
+                        return '[spoiler=' + button + ']' + content + '[/spoiler]';
+                    else
+                        return '[spoiler]' + content + '[/spoiler]';
+                }).
                 replace(/<img.*?src="(.*?)".*?>/ig, '[img]$1[/img]').
                 replace(/<div class="codeBox"><pre>([^<]*)<\/pre><\/div>/ig, '[code]$1[/code]').
                 replace(/<span class="last-edited">[\s\S]*$/ig, '');
             if (ret !== str) return HTMLtoBB(ret);
             else {
+                // We cannot replace <br> earlier because the \n
+                // would be deleted by the whitespace replacement.
                 ret = ret.replace(/<br[^>]*>/ig, '\n');
                 _debug && console.log(ret);
                 // Decode HTML
