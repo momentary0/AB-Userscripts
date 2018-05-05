@@ -114,6 +114,7 @@
                 // Quotes of a specific user.
                 replace(/<strong><a.*?>.*?<\/a><\/strong> <a.*?href="(.*?)#(?:msg|post)(.*?)".*?>wrote(?: on )?(.*?)<\/a>:?\s*<blockquote class="blockquote">([\s\S]*?)<\/blockquote>/ig, function (html, href, id, dateString, quote) {
                     var type = '';
+                    _debug && console.log('inner quote href: ' +href);
                     if (/\/forums\.php/i.test(href)) type = '#';
                     if (/\/user\.php/i.test(href)) type = '*';
                     if (/\/torrents\.php/i.test(href)) type = '-1';
