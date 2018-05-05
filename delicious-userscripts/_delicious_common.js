@@ -46,8 +46,12 @@ if (typeof GM_getValue === 'undefined'
         GM_setValue('deliciousSettingsImported', 'true');
         var keys = Object.keys(localStorage);
         keys.forEach(function(key){
-            _debug && console.log('Imported ' + key);
-            GM_setValue(key, localStorage[key]);
+            if (GM_getValue(key, 'undefined') === 'undefined') {
+                _debug && console.log('Imported ' + key);
+                GM_setValue(key, localStorage[key]);
+            } else {
+                _debug && console.log('Key exists ' + key);
+            }
         });
     }
 }
