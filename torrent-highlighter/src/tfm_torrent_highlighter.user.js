@@ -23,6 +23,7 @@
         }
 
         parse() {
+            _debug() && console.log(this.linkElement.textContent);
             this.fields = [];
             this.index = 0;
             this.handlers = {};
@@ -35,8 +36,23 @@
                 if (!func)
                     func = GlobalHandlers[state];
 
-                state = func.call(this);
+                try {
+                    state = func.call(this);
+                } catch (e) {
+                    console.error(e);
+                    _debug() && console.log(this.linkElement)
+                    _debug() && console.log(this.index);
+                    _debug() && console.log(this.fields);
+                    _debug() && console.log(state);
+                    throw e;
+                }
+                if (this.index >= this.fields.length) {
+                    if (state !== GlobalStates.FINISHED) {
+                        state = GlobalHandlers[GlobalStates.INSERT_DOCFRAG].call(this);
+                    }
+                }
             }
+
 
             _debug() && console.log(state);
             _debug() && console.log(this.docFrag);
@@ -150,12 +166,12 @@
      */
     null;
 
-    let MusicHandlers = Object.freeze({
+    let MusicHandlers = ({
         [GlobalStates.BEGIN]: newCaptureHandler('encoding', MusicStates.BITRATE, false),
         [MusicStates.BITRATE]: newCaptureHandler('bitrate', MusicStates.SOURCE),
         [MusicStates.SOURCE]: newCaptureHandler('source', MusicStates.LOG),
         [MusicStates.LOG]: newFlagHandler('Log', 'log', MusicStates.CUE),
-        [MusicStates.CUE]: newFlagHandler('Cue', 'log', GlobalStates.COMMON_TRAILING_FIELDS)
+        [MusicStates.CUE]: newFlagHandler('Cue', 'cue1', GlobalStates.COMMON_TRAILING_FIELDS)
     });
 
     const AnimeStates = Object.freeze({
@@ -174,7 +190,7 @@
     /**
      * @type {Object<number, transitionHandler>}
      */
-    let AnimeHandlers = Object.freeze({
+    let AnimeHandlers = ({
         [GlobalStates.BEGIN]: newCaptureHandler('source', AnimeStates.CONTAINER, false),
         [AnimeStates.CONTAINER]: function CONTAINER() {
             let field = this.getNext();
@@ -220,7 +236,7 @@
         [AnimeStates.DUAL_AUDIO]: newFlagHandler('Dual Audio', 'dualAudio', AnimeStates.REMASTER),
         [AnimeStates.REMASTER]: function REMASTER() {
             let node = this.peekNext();
-            if (typeof node !== 'string' && node.tagName === 'IMG'
+            if (node.tagName === 'IMG'
             && node.alt === 'Remastered') {
                 this.index++;
                 this.appendDelim();
@@ -233,7 +249,10 @@
             if (simpleSubbingHandler.call(this)) {
                 return GlobalStates.COMMON_TRAILING_FIELDS;
             } else {
-                let field = this.getNext().trim();
+                let field = this.getNext();
+                if (field.nodeType)
+                    return;
+                field = field.trim();
                 let left = field.substr(0, field.indexOf(' '));
                 if (left === 'Softsubs' || left === 'Hardsubs' || left === 'RAW') {
                     this.appendDelim();
@@ -241,6 +260,7 @@
                     this.appendText(' (');
                     let groupString = field.substr(field.indexOf(' (')+2);
                     while (!groupString.endsWith(')') && this.index < this.fields.length) {
+                        groupString += this.delim;
                         groupString += this.getNext();
                     }
                     groupString = groupString.substr(0, groupString.length-1);
@@ -263,7 +283,7 @@
         SCENE: 5
     }
 
-    let GameHandlers = Object.freeze({
+    let GameHandlers = ({
         [GlobalStates.BEGIN]: newCaptureHandler('type', GameStates.PLATFORM, false),
         [GameStates.PLATFORM]: newCaptureHandler('platform', GameStates.REGION),
         [GameStates.REGION]: newListHandler(
@@ -282,10 +302,29 @@
     });
 
     let BookHandlers = {
-        [GlobalStates.BEGIN]: function() {return GlobalStates.FINISHED},
+        [GlobalStates.BEGIN]: function() {
+            let field = this.getNext()
+            if (field.indexOf('  (') !== -1) {
+                let translation = field.substr(0, field.indexOf('  ('));
+                let group = field.slice(field.indexOf('  (')+3,
+                    -1);
+                this.appendSpan(translation, 'translation', translation);
+                this.appendText(' (');
+                this.appendSpan(group, 'group', group);
+                this.appendText(')');
+
+            } else {
+                let translation = field.replace(' ', '');
+                this.appendSpan(translation, 'translation', translation);
+            }
+            return BookStates.FORMAT;
+        },
+        [BookStates.FORMAT]: newListHandler(['Archived Scans', 'EPUB', 'PDF', 'Unarchived'], 'format', BookStates.ONGOING),
+        [BookStates.ONGOING]: newFlagHandler('Ongoing', 'ongoing', GlobalStates.COMMON_TRAILING_FIELDS),
+
     };
 
-    let FirstFields = Object.freeze({
+    let FirstFields = ({
         "Blu-ray":AnimeHandlers,"Web":AnimeHandlers,"TV":AnimeHandlers,
         "DVD":AnimeHandlers,"UHD Blu-ray":AnimeHandlers,"DVD5":AnimeHandlers,
         "DVD9":AnimeHandlers,"HD DVD":AnimeHandlers,"VHS":AnimeHandlers,
@@ -298,7 +337,7 @@
         "Raw":BookHandlers,"Translated":BookHandlers,
     });
 
-    let GlobalHandlers = Object.freeze({
+    let GlobalHandlers = ({
         [GlobalStates.INITIALISE]: function INITIALISE() {
             this.oldNodes = this.linkElement.childNodes;
             for (let i = 0; i < this.oldNodes.length; i++) {
@@ -340,15 +379,16 @@
         },
         [GlobalStates.DETECTING]: function DETECTING() {
             let f = this.peekNext();
+            _debug() && console.log('detecting: x'+f+'x');
             let handler = FirstFields[f];
             if (handler !== undefined)
                 this.handlers = handler;
             else {
-                let left = f.substr(0, f.indexOf('  ('));
+                let left = f.substr(0, f.indexOf(' '));
                 this.handlers = FirstFields[left];
                 if (this.handlers === undefined) {
                     this.handlers = {};
-                    console.info('No first field match for: ' + f);
+                    console.info('No first field match for: x' + f+'x');
                     return GlobalStates.ERROR;
                 }
             }
@@ -368,6 +408,7 @@
         },
         [GlobalStates.COMMON_TRAILING_FIELDS]: function COMMON_TRAILING() {
             let node = this.peekNext();
+            _debug() && console.log('trailing fields');
             _debug() && console.log(node);
             if (!node) return GlobalStates.INSERT_DOCFRAG;
             switch (node.nodeType) {
@@ -415,6 +456,7 @@
             return GlobalStates.INSERT_DOCFRAG;
         },
         [GlobalStates.INSERT_DOCFRAG]: function INSERT_DOCFRAG() {
+            _debug() && console.log('appending');
             this.clearChildren();
             this.linkElement.appendChild(this.docFrag);
             return GlobalStates.FINISHED;
@@ -424,13 +466,14 @@
     const torrentPageTorrents = document.querySelectorAll(
         '.group_torrent>td>a[href*="&torrentid="]'
     );
+    let p = new TorrentPropertyParser();
     for (let t = 0; t < torrentPageTorrents.length; t++) {
         let link = torrentPageTorrents[t];
         link.classList.add('userscript-highlight');
         link.classList.add('torrent-page');
-        (new TorrentPropertyParser(
-            link,
-            link.href.indexOf('torrents.php') !== -1?' | ':' / ')).parse();
+        p.linkElement = link;
+        p.delim = link.href.indexOf('torrents.php') !== -1?' | ':' / ';
+        p.parse();
     }
 
     const searchResultTorrents = document.querySelectorAll(
@@ -438,9 +481,9 @@
     );
     for (let t = 0; t < searchResultTorrents.length; t++) {
         searchResultTorrents[t].className += 'userscript-highlight torrent-page';
-        (new TorrentPropertyParser(
-            searchResultTorrents[t],
-            ' | ')).parse();
+        p.linkElement = searchResultTorrents[t];
+        p.delim = ' | ';
+        p.parse();
     }
 
     const bbcodeTorrents = document.querySelectorAll(
@@ -452,9 +495,9 @@
         linkElement.classList.add('torrent-page');
         let textNode = linkElement.firstChild;
         let torrents1 = linkElement.href.indexOf('torrents.php') !== -1;
-        let parser = (new TorrentPropertyParser(
-            linkElement,
-            torrents1 ? ' | ':' / '));
+        p.linkElement = linkElement;
+        p.delim =torrents1 ? ' | ':' / ';
+
         let bbcodeString = textNode.nodeValue.trim();
         let yearIndex = bbcodeString.indexOf('\xa0\xa0[');
         let leftDocFrag = document.createDocumentFragment();
@@ -466,13 +509,13 @@
             let album = leftString.substr(dashIndex+3);
 
             leftDocFrag.appendChild(
-                parser.newSpan(artist, torrents1?'title':'artist', artist));
+                p.newSpan(artist, torrents1?'title':'artist', artist));
             leftDocFrag.appendChild(
                 document.createTextNode(' - '));
             leftDocFrag.appendChild(
-                parser.newSpan(album, torrents1?'type':'album', album));
+                p.newSpan(album, torrents1?'type':'album', album));
             leftDocFrag.appendChild(document.createTextNode('\xa0\xa0['));
-            leftDocFrag.appendChild(parser.newSpan(year, 'year', year));
+            leftDocFrag.appendChild(p.newSpan(year, 'year', year));
             leftDocFrag.appendChild(document.createTextNode('] ['));
             if (bbcodeString.charAt(bbcodeString.length-1) === ']') {
                 textNode.nodeValue = bbcodeString.substr(0, bbcodeString.length-1);
@@ -483,12 +526,13 @@
             textNode.splitText(leftString.length+10);
             linkElement.removeChild(textNode);
         }
-        parser.parse();
+        p.parse();
         linkElement.insertBefore(
             leftDocFrag,
             linkElement.firstChild
         );
-        linkElement.appendChild(document.createTextNode(']'));
+        if (yearIndex !== -1)
+            linkElement.appendChild(document.createTextNode(']'));
 
 
     }
