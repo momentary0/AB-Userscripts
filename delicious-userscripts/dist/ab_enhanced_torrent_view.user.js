@@ -14,7 +14,7 @@
 (function EnhancedTorrentView() {
     /* === Inserted from _delicious_common.js === */
     // Common functions used by many scripts.
-    // Will be inserted once into the delicious bundle, 
+    // Will be inserted once into the delicious bundle,
     // and prepended to each individual userscript.
     
     // Debug flag. Used to enable/disable some verbose console logging.
@@ -35,11 +35,42 @@
         document.body.appendChild(script);
         return script;
     }
-    if (!this.GM_getValue || (this.GM_getValue.toString && this.GM_getValue.toString().indexOf("not supported") > -1)) {
+    if (typeof GM_getValue === 'undefined'
+            || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") > -1)) {
+        _debug && console.log('Setting fallback localStorage GM_* functions');
+        // There is some difference between this.GM_getValue and just GM_getValue.
+        _debug && console.log(this.GM_getValue);
+        _debug && typeof GM_getValue !== 'undefined' && console.log(GM_getValue.toString());
+        // Previous versions lacked a @grant GM_getValue header, which resulted
+        // in these being used when they shouldn't have been.
         this.GM_getValue = function (key, def) { return localStorage[key] || def; };
         this.GM_setValue = function (key, value) { return localStorage[key] = value; };
         this.GM_deleteValue = function (key) { return delete localStorage[key]; };
+        // We set this when we have used localStorage so if in future we switch,
+        // it will be imported.
+        GM_setValue('deliciousSettingsImported', 'false');
+        _debug && console.log(GM_getValue);
+    } else {
+        _debug&& console.log('Using default GM_* functions.');
+        // For backwards compatibility,
+        // we'll implement migrating localStorage to GM settings.
+        // However, we can't implement the reverse because when localStorage is
+        // used, GM_getValue isn't even defined so we obviously can't import.
+        if (GM_getValue('deliciousSettingsImported', 'false') !== 'true') {
+            _debug && console.log('Importing localStorage to GM settings');
+            GM_setValue('deliciousSettingsImported', 'true');
+            var keys = Object.keys(localStorage);
+            keys.forEach(function(key){
+                if (GM_getValue(key, 'undefined') === 'undefined') {
+                    _debug && console.log('Imported ' + key);
+                    GM_setValue(key, localStorage[key]);
+                } else {
+                    _debug && console.log('Key exists ' + key);
+                }
+            });
+        }
     }
+    
     function initGM(gm, def, json, overwrite) {
         if (typeof def === "undefined") throw "shit";
         if (typeof overwrite !== "boolean") overwrite = true;
