@@ -15,6 +15,8 @@
         return;
     }
 
+    var _debug = false;
+
     function formattedUTCString(date, timezone) {
         var creation = new Date(date);
         if (isNaN(creation.getTime()))
