@@ -196,11 +196,12 @@
             let field = this.getNext();
             if (field.charAt(field.length-1) === ')') {
                 let left = field.substr(0, field.indexOf(' ('));
-                let right = field.substr(field.indexOf(' (')+2, field.length-1);
+                let right = field.slice(field.indexOf(' (')+2, -1);
                 this.appendDelim();
                 this.appendSpan(left, 'container', left);
                 this.appendText(' (');
                 this.appendSpan(right, 'region', right);
+                this.appendText(')');
                 return AnimeStates.ASPECT_RATIO;
             } else {
                 this.appendDelim();
