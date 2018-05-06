@@ -1,216 +1,216 @@
 /* ==UserStyle==
-@name AnimeBytes Torrent Page Stylesheet (eva)
+@name TFM's Torrent Page Stylesheet (eva's highlighter version)
 @author TheFallingMan
 @namespace TheFallingMan
 @description Compatible with eva's torrent highlighter.
-@version 0.1.0
+@version 0.1.1
 ==/UserStyle== */
 
 @-moz-document domain("animebytes.tv") {
-.group_torrent .userscript-highlight > span {
-    border-radius: 3px;
-    padding-left: 1px;
-    padding-right: 1px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    background-color: #ececec;
-    color: #000;
-    border: 1px solid #d9d9d9;
-    word-spacing: normal;
-}
-.group_torrent > td:first-child {
-    word-spacing: -0.6ex;
-}
+    .group_torrent .userscript-highlight > span {
+        border-radius: 3px;
+        padding-left: 1px;
+        padding-right: 1px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        background-color: #ececec;
+        color: #000;
+        border: 1px solid #d9d9d9;
+        word-spacing: normal;
+    }
+    .group_torrent > td:first-child {
+        word-spacing: -0.6ex;
+    }
 
-.group_torrent .userscript-highlight > span[data-audio-codec] {
-    margin-left: -0.03ex;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
+    .group_torrent .userscript-highlight > span[data-audio-codec] {
+        margin-left: -0.03ex;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
 
-.group_torrent .userscript-highlight > span[data-group], .group_torrent .userscript-highlight > span[data-region] {
-    margin-left: 0;
-    margin-right: 0;
-}
+    .group_torrent .userscript-highlight > span[data-group], .group_torrent .userscript-highlight > span[data-region] {
+        margin-left: 0;
+        margin-right: 0;
+    }
 
-.group_torrent .userscript-highlight > span[data-media="Blu-ray"] {
-    background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-media="Web"],.group_torrent .userscript-highlight > span[data-media="TV"]  {
-    background-color: #ffc08f;
-    border-color: #ffc08f;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-media="UHD Blu-ray"] {
+    .group_torrent .userscript-highlight > span[data-source="Blu-ray"] {
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-source="Web"],.group_torrent .userscript-highlight > span[data-source="TV"]  {
+        background-color: #ffc08f;
+        border-color: #ffc08f;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-source="UHD Blu-ray"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-source="DVD"] {
+        background-color: #fea5a5;
+        border-color: #f8a8a8;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-container] {
+        background-color: #fea5a5;
+        border-color: #f8a8a8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-container="MKV"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-codec="h264 10-bit"] {
+        background-color: #ffc08f;
+        border-color: #ffc08f;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-codec="h264"] {
+        background-color: #fea5a5;
+        border-color: #f8a8a8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-codec="h265"] {
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-codec="h265 10-bit"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-resolution] {
+        background-color: #fea5a5;
+        border-color: #f8a8a8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-resolution="1080p"], .group_torrent .userscript-highlight > span[data-resolution="4K"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-resolution="720p"] {
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-resolution="480p"] {
+        background-color: #abe4b0;
+        border-color: #abe4b0;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-audio-codec="FLAC"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-audio-codec^="DTS"], .group_torrent .userscript-highlight > span[data-audio-codec="AC3"],
+    .group_torrent .userscript-highlight > span[data-audio-codec="TrueHD"]{
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-audio-codec="AAC"] {
+        background-color: #abe4b0;
+        border-color: #abe4b0;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-audio-channels] {
+        background-color: #abe4b0;
+        border-color: #abe4b0;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-audio-channels="5.1"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-audio-channels="2.0"]{
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-audio-channels] {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: 0.8px;
+        border-left-style: solid;
+        margin-left: -0.03ex;
+        border-left-color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-dual-audio]{
+        background-color: #abe4b0;
+        border-color: #abe4b0;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-subbing="Softsubs"] {
+        background-color: #ecc2ec;
+        border-color: #ecc2ec;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-subbing="Hardsubs"] {
+        background-color: #ffc08f;
+        border-color: #ffc08f;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > span[data-subbing="RAW"]{
+        background-color: #fea5a5;
+        border-color: #f8a8a8;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-group]{
+        background-color: #6a6a6a;
+        border-color: #6a6a6a;
+        color: white;
+    }
+    .group_torrent .userscript-highlight > span[data-group="HorribleSubs"]{
+        background-color: #ffc08f;
+        border-color: #ffc08f;
+        color: black;
+    }
+
+    .group_torrent .userscript-highlight > span[data-freeleech] > img {
+        display:none;
+    }
+    .group_torrent .userscript-highlight > span[data-freeleech]::after {
+        content: "FL!";
+    }
+    .group_torrent .userscript-highlight > span[data-freeleech] {
+        background-color: #fbefab;
+        border-color: #fbefab;
+        color: black;
+    }
+    .group_torrent .userscript-highlight[data-snatched] {
+        opacity: 0.35;
+    }
+    .group_torrent .userscript-highlight[data-snatched]:hover {
+        opacity: 1;
+    }
+    .group_torrent .userscript-highlight > [data-encoding="MP3"], .group_torrent .userscript-highlight > [data-media="CD"] {
+        background-color: #abe4b0;
+        border-color: #abe4b0;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > [data-encoding="FLAC"], .group_torrent .userscript-highlight > [data-bitrate="V0 (VBR)"], .group_torrent .userscript-highlight > [data-bitrate="320"], .group_torrent .userscript-highlight > [data-bitrate="Lossless"] {
+        background-color: #a8ccf8;
+        border-color:#a8ccf8;
+        color: black;
+    }
+    .group_torrent .userscript-highlight > [data-bitrate="Lossless 24-bit"], .group_torrent .userscript-highlight > [data-log], .group_torrent .userscript-highlight > [data-cue] {
     background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-media="DVD"] {
-    background-color: #fea5a5;
-    border-color: #f8a8a8;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-container] {
-    background-color: #fea5a5;
-    border-color: #f8a8a8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-container="MKV"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-codec="h264 10-bit"] {
-    background-color: #ffc08f;
-    border-color: #ffc08f;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-codec="h264"] {
-    background-color: #fea5a5;
-    border-color: #f8a8a8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-codec="h265"] {
-    background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-codec="h265 10-bit"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-resolution] {
-    background-color: #fea5a5;
-    border-color: #f8a8a8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-resolution="1080p"], .group_torrent .userscript-highlight > span[data-resolution="4K"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-resolution="720p"] {
-    background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-resolution="480p"] {
-    background-color: #abe4b0;
-    border-color: #abe4b0;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-audio-codec="FLAC"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-audio-codec^="DTS"], .group_torrent .userscript-highlight > span[data-audio-codec="AC3"],
-.group_torrent .userscript-highlight > span[data-audio-codec="TrueHD"]{
-    background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-audio-codec="AAC"] {
-    background-color: #abe4b0;
-    border-color: #abe4b0;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-audio-channels] {
-    background-color: #abe4b0;
-    border-color: #abe4b0;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-audio-channels="5.1"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-audio-channels="2.0"]{
-    background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-audio-channels] {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: 0.8px;
-    border-left-style: solid;
-    margin-left: -0.03ex;
-    border-left-color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-dual-audio]{
-    background-color: #abe4b0;
-    border-color: #abe4b0;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-subbing="Softsubs"] {
-    background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-subbing="Hardsubs"] {
-    background-color: #ffc08f;
-    border-color: #ffc08f;
-    color: black;
-}
-.group_torrent .userscript-highlight > span[data-subbing="RAW"]{
-    background-color: #fea5a5;
-    border-color: #f8a8a8;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-group]{
-    background-color: #6a6a6a;
-    border-color: #6a6a6a;
-    color: white;
-}
-.group_torrent .userscript-highlight > span[data-group="HorribleSubs"]{
-    background-color: #ffc08f;
-    border-color: #ffc08f;
-    color: black;
-}
-
-.group_torrent .userscript-highlight > span[data-freeleech] > img {
-	display:none;
-}
-.group_torrent .userscript-highlight > span[data-freeleech]::after {
-    content: "FL!";
-}
-.group_torrent .userscript-highlight > span[data-freeleech] {
-    background-color: #fbefab;
-    border-color: #fbefab;
-    color: black;
-}
-.group_torrent .userscript-highlight[data-type="Snatched"] {
-    opacity: 0.35;
-}
-.group_torrent .userscript-highlight[data-type="Snatched"]:hover {
-    opacity: 1;
-}
-.group_torrent .userscript-highlight > [data-encoding="MP3"], .group_torrent .userscript-highlight > [data-media="CD"] {
-    background-color: #abe4b0;
-    border-color: #abe4b0;
-    color: black;
-}
-.group_torrent .userscript-highlight > [data-encoding="FLAC"], .group_torrent .userscript-highlight > [data-bitrate="V0 (VBR)"], .group_torrent .userscript-highlight > [data-bitrate="320"], .group_torrent .userscript-highlight > [data-bitrate="Lossless"] {
-	background-color: #a8ccf8;
-    border-color:#a8ccf8;
-    color: black;
-}
-.group_torrent .userscript-highlight > [data-bitrate="Lossless 24-bit"], .group_torrent .userscript-highlight > [data-log], .group_torrent .userscript-highlight > [data-cue] {
-background-color: #ecc2ec;
-    border-color: #ecc2ec;
-    color: black;
-}
-}
+        border-color: #ecc2ec;
+        color: black;
+    }
+    }
