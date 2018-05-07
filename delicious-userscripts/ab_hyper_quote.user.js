@@ -3,7 +3,7 @@
 // @author      Megure, TheFallingMan
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
-// @version     0.2
+// @version     0.2.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -161,9 +161,6 @@
         return bbcodeChildren(postDiv).trim();
     }
 
-    var leftSpace = /^\s+/;
-    var rightSpace = /\s+$/;
-
     /**
      *
      * @param {Node} parentNode
@@ -180,11 +177,11 @@
                 var text = thisNode.nodeValue;
                 if (i > 0 && parentNode.childNodes[i-1].nodeType === Node.ELEMENT_NODE
                     && parentNode.childNodes[i-1].tagName.toUpperCase() === 'BR')
-                    text = text.replace(leftSpace, '');
+                    text = text.replace(/^\s+/, '');
                 if (i+1 < parentNode.childNodes.length
                     && parentNode.childNodes[i+1].nodeType === Node.ELEMENT_NODE
                     && parentNode.childNodes[i+1].tagName.toUpperCase() === 'BR')
-                    text = text.replace(rightSpace, '');
+                    text = text.replace(/\s+$/, '');
                 bbcodeString += text;
                 continue;
             }
@@ -212,14 +209,11 @@
                     parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
                 i += 4;
             } else {
-                bbcodeString += bbcodeOneNode(thisNode);
+                bbcodeString += bbcodeOneElement(thisNode);
             }
         }
         return bbcodeString;
     }
-
-    var postNumRegex = /#(?:msg|post)?(\d+)$/;
-
     /**
      *
      * @param {HTMLElement} strongNode
@@ -233,13 +227,13 @@
         else if (href.indexOf('/user.php') !== -1) quoteType = '*';
         else if (href.indexOf('/torrents.php') !== -1) quoteType = '-1';
         else if (href.indexOf('/torrents2.php') !== -1) quoteType = '-2';
-        if (quoteType !== '')
-        {
-            var id = postNumRegex.exec(href);
+        if (quoteType !== '') {
+            var id = /#(?:msg|post)?(\d+)$/.exec(href);
             if (id)
                 return '[quote=' + quoteType + id[1] + ']' + bbcodeChildren(quoteNode) + '[/quote]\n';
         }
-        return '|quote|'+bbcodeChildren(quoteNode)+'|/quote|';
+        return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
+            +bbcodeChildren(quoteNode)+'[/quote]');
     }
 
     function bbcodeStrong(strongNode) {
@@ -300,6 +294,8 @@
         var str = '';
         for (var c = 0; c < listNode.childElementCount; c++) {
             str += bbcodeTag + bbcodeChildren(listNode.children[c]);
+            if (c < listNode.childElementCount-1)
+                str += '\n';
         }
         return str;
     }
@@ -383,18 +379,25 @@
         return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
     }
 
-    var endWhiteSpace = /[^\S\n]+\n[^\S\n]+$/;
-    var startWhiteSpace = /^[^\S\n]+\n[^\S\n]+/;
-    function bbcodeText(textNode) {
-        var text = textNode.nodeValue;
-        if (text === ' ') return ' ';
-        text = text.replace(endWhiteSpace, '\n').replace(startWhiteSpace, '\n');
-        return text;
+    var youtubeRegex = /\/embed\/([^?]+)\?/i;
+    var soundcloudRegex = /\/player\/\?url=([^&]+)&/i;
+
+    /**
+     *
+     * @param {HTMLIFrameElement} iframeNode
+     */
+    function bbcodeIframe(iframeNode) {
+        var src = iframeNode.src;
+        if (src.indexOf('youtube.com/embed') !== -1) {
+            return '[youtube]https://youtube.com/watch?v='+youtubeRegex.exec(src)[1]+'[/youtube]';
+        }
+        if (src.indexOf('soundcloud.com/player') !== -1) {
+            return '[soundcloud]'+decodeURIComponent(soundcloudRegex.exec(src)[1])+'[/soundcloud]';
+        }
+        return 'Embedded media: ' + src;
     }
 
-    function bbcodeOneNode(node) {
-        if (node.nodeType === Node.TEXT_NODE)
-            return bbcodeText(node);
+    function bbcodeOneElement(node) {
         if (node.nodeType !== Node.ELEMENT_NODE)
             return '';
         switch (node.tagName.toUpperCase()) {
@@ -409,11 +412,10 @@
             case 'UL': return bbcodeList(node, '[*]');
             case 'A': return bbcodeLink(node);
             case 'IMG': return bbcodeImage(node);
-            case 'IFRAME':
-                return '|iframe|' + node.src + '|/iframe|';
+            case 'IFRAME': return bbcodeIframe(node);
             case 'BLOCKQUOTE': return '[quote]'+bbcodeChildren(node)+'[/quote]\n';
             default:
-                return node.tagName + bbcodeChildren(node) + '/'+node.tagName;
+                return node.tagName+': ' + bbcodeChildren(node);
         }
     }
 
