@@ -185,6 +185,7 @@
                 bbcodeString += text;
                 continue;
             }
+
             var isQuote = false;
             try {
                 // We fully expect this to throw exceptions if the element
@@ -205,12 +206,32 @@
             } catch (exception) { _debug && console.log(exception); }
             _debug && console.log('isQuote: ' + isQuote);
             if (isQuote) {
-                bbcodeString += bbcodeQuote(thisNode,
+                bbcodeString += bbcodeSmartQuote(thisNode,
                     parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
                 i += 4;
-            } else {
-                bbcodeString += bbcodeOneElement(thisNode);
+                continue;
             }
+
+            var isSimpleQuote = false;
+            try {
+                isSimpleQuote = (
+                    (i+2 < parentNode.childNodes.length)
+                    && thisNode.nodeType === Node.ELEMENT_NODE
+                    && thisNode.tagName.toUpperCase() === 'STRONG'
+                    && thisNode.childNodes.length === 1
+                    && thisNode.firstChild.nodeType === Node.TEXT_NODE
+                    && parentNode.childNodes[i+1].nodeValue.trim() === 'wrote:'
+                    && parentNode.childNodes[i+2].classList.contains('blockquote')
+                );
+            } catch (exception) { _debug && console.log(exception); }
+            if (isSimpleQuote) {
+                bbcodeString += ('[quote='+thisNode.firstChild.nodeValue+']\n'
+                    +bbcodeChildren(parentNode.childNodes[i+2])+'\n[/quote]');
+                i += 2;
+                continue;
+            }
+
+            bbcodeString += bbcodeOneElement(thisNode);
         }
         return bbcodeString;
     }
@@ -220,7 +241,7 @@
      * @param {HTMLAnchorElement} wroteLink
      * @param {HTMLQuoteElement} quoteNode
      */
-    function bbcodeQuote(strongNode, wroteLink, quoteNode) {
+    function bbcodeSmartQuote(strongNode, wroteLink, quoteNode) {
         var quoteType = '';
         var href = wroteLink.href;
         if (href.indexOf('/forums.php') !== -1) quoteType = '#';
@@ -230,7 +251,7 @@
         if (quoteType !== '') {
             var id = /#(?:msg|post)?(\d+)$/.exec(href);
             if (id)
-                return '[quote=' + quoteType + id[1] + ']' + bbcodeChildren(quoteNode) + '[/quote]\n';
+                return '[quote=' + quoteType + id[1] + ']' + bbcodeChildren(quoteNode) + '\n[/quote]';
         }
         return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
             +bbcodeChildren(quoteNode)+'[/quote]');
@@ -239,10 +260,10 @@
     function bbcodeStrong(strongNode) {
         if (strongNode.childNodes.length === 1
             && strongNode.firstChild.nodeType === Node.TEXT_NODE
-            && strongNode.firstChild.nodeValue.startsWith('Added on ')) {
+            && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
             var dateString = strongNode.firstChild.nodeValue.slice(9);
             var end = '';
-            if (dateString.charAt(dateString.length-1) === ':') {
+            if (dateString.slice(-1) === ':') {
                 dateString = dateString.slice(0, -1);
                 end = ':';
             }
@@ -259,10 +280,10 @@
     function bbcodeDiv(divNode) {
         if (divNode.style.textAlign) {
             var align = divNode.style.textAlign;
-            return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]\n';
+            return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]';
         }
         if (divNode.classList.contains('codeBox')) {
-            return '[code]'+divNode.firstElementChild.firstChild.nodeValue+'[/code]\n';
+            return '[code]\n'+divNode.firstElementChild.firstChild.nodeValue+'\n[/code]';
         }
         if (divNode.classList.contains('spoilerContainer')) {
             return bbcodeSpoiler(divNode);
@@ -274,16 +295,17 @@
      * @param {HTMLDivElement} spoilerDiv
      */
     function bbcodeSpoiler(spoilerDiv) {
+        if (spoilerDiv.children.length < 2) return '';
         var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
         var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
         var label = spoilerDiv.firstElementChild.value.replace(/(Hide|Show)/, '');
         if (label.length !== 0) {
             if (isSpoiler)
                label = label.replace(/ spoiler$/, '');
-            label = label.substr(1);
+            label = label.slice(1);
         }
-        return '['+bbcodeTag + (label.length!==0 ? '='+label : '') + ']' +
-            bbcodeChildren(spoilerDiv.children[1]) + '[/'+bbcodeTag+']';
+        return '['+bbcodeTag + (label.length!==0 ? '='+label : '') + ']\n' +
+            bbcodeChildren(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
     }
 
     /**
@@ -294,8 +316,7 @@
         var str = '';
         for (var c = 0; c < listNode.childElementCount; c++) {
             str += bbcodeTag + bbcodeChildren(listNode.children[c]);
-            if (c < listNode.childElementCount-1)
-                str += '\n';
+            if (str.slice(-1) !== '\n') str += '\n';
         }
         return str;
     }
@@ -326,7 +347,7 @@
                 +parseInt(rgbMatch[3]).toString(16));
             return '[color='+colour+']' + bbcodeChildren(spanNode) + '[/color]';
         }
-        if (spanNode.className.startsWith('size')) {
+        if (spanNode.className.slice(0, 4) === 'size') {
             var size = spanNode.className.replace('size', '');
             return '[size='+size+']'+bbcodeChildren(spanNode)+'[/size]';
         }
@@ -359,7 +380,7 @@
     }
 
 
-    var userRegex = /\/user\.php\?id=(\d+)$/;
+    var userRegex = /^\/user\.php\?id=(\d+)$/;
     var torrentRegex = /^torrents2?\.php\?id=\d+&torrentid=(\d+)$/;
 
     /**
@@ -367,14 +388,20 @@
      * @param {HTMLAnchorElement} linkElement
      */
     function bbcodeLink(linkElement) {
+        if (linkElement.classList.contains('scaledImg')) {
+            return '[img]'+linkElement.href+'[/img]';
+        }
         var href = linkElement.href;
         var realHref = linkElement.getAttribute('href');
-        var userMatch = userRegex.exec(href);
+        var userMatch = userRegex.exec(realHref);
         if (userMatch)
-            return '[user]'+linkElement.textContent+'[/user]';
+            return '[user='+href+']'+bbcodeChildren(linkElement)+'[/user]';
         var torrentMatch = torrentRegex.exec(realHref);
         if (torrentMatch) {
-            return '[torrent]'+href+'[/torrent]';
+            if (linkElement.textContent.indexOf('\xa0\xa0[') !== -1)
+                return '[torrent]'+href+'[/torrent]';
+            else
+                return '[torrent='+href+']'+bbcodeChildren(linkElement)+'[/torrent]';
         }
         return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
     }
@@ -398,8 +425,10 @@
     }
 
     function bbcodeOneElement(node) {
-        if (node.nodeType !== Node.ELEMENT_NODE)
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
             return '';
+        }
         switch (node.tagName.toUpperCase()) {
             case 'DIV': return bbcodeDiv(node);
             case 'SPAN': return bbcodeSpan(node);
@@ -408,12 +437,12 @@
             case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
             case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
             case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
-            case 'OL': return bbcodeList(node, '[#]');
-            case 'UL': return bbcodeList(node, '[*]');
+            case 'OL': return bbcodeList(node, '[#] ');
+            case 'UL': return bbcodeList(node, '[*] ');
             case 'A': return bbcodeLink(node);
             case 'IMG': return bbcodeImage(node);
             case 'IFRAME': return bbcodeIframe(node);
-            case 'BLOCKQUOTE': return '[quote]'+bbcodeChildren(node)+'[/quote]\n';
+            case 'BLOCKQUOTE': return '[quote]'+bbcodeChildren(node)+'[/quote]';
             default:
                 return node.tagName+': ' + bbcodeChildren(node);
         }
@@ -469,7 +498,7 @@
     }
 
     document.addEventListener('keydown', function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.keyCode === 'V'.charCodeAt(0))
+        if ((e.ctrlKey) && (e.keyCode === 'V'.charCodeAt(0)))
             QUOTEALL();
     });
 })();
