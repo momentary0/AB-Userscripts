@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.2
+// @version 2.0.1.3
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @grant GM_getValue
 // @grant GM_setValue
@@ -10,18 +10,6 @@
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
 // ==/UserScript==
-
-/*
-Version history (TheFallingMan)
-2018-04-15  1.964   Fixed capping seeding duration bonus to user's age. (start of changelog)
-2018-04-15  1.965   Fixed compatibility with non-ES2015 compatible browsers.
-2018-04-20  1.966   Updated to recognise and use IEC (KiB, MiB, etc.) byte prefixes.
-2018-04-20  1.967   Fixed inserting (CTRL + ALT + Y) too many times on Youtube buttons.
-                    Refactored code of keyboard shortcuts (near function 'insert').
-2018-04-21  1.968   Uploaded to GitLab. Split into individual userscripts which are
-                    assembled into the delicious bundle by a Python script.
-            2.0.0+  See https://gitlab.com/momentary/ab-userscripts/tree/master/delicious-userscripts
-*/
 
 (function AnimeBytesDeliciousUserScripts() {
 
@@ -254,9 +242,7 @@ Version history (TheFallingMan)
             addBooleanSetting('ABSortTorrents', 'Sort torrents', 'Allows torrent tables to be sorted.', 'true', 'false', 'true');
             addBooleanSetting('ABHistDynLoad', 'Dynamic history tables', 'Dynamically load more pages into transfer history tables.', 'true', 'false', 'true');
             document.getElementById('pose_list').appendChild(document.createElement('hr'));
-            addBooleanSetting('ABForumEnhFastSearch', 'Create links to search forums', 'Add links to search forums (including or excluding direct subforums) at the top of a forums page.', 'true', 'false', 'true');
             addBooleanSetting('ABForumSearchWorkInFS', 'Load posts into search results', 'Allows you to load posts and threads into search results, slide through posts and filter for authors.', 'true', 'false', 'true');
-            addBooleanSetting('ABForumSearchHideSubfor', 'Hide subforum selection in search', 'This will hide the subforum selection in the search until a checkbox is clicked.', 'true', 'false', 'true');
             addColorSetting('ABForumSearchHighlightBG', 'Color for search terms', 'Background color for search terms within posts and headers.', '#FFC000', 'true', 'none');
             addColorSetting('ABForumSearchHighlightFG', 'Color for search terms', 'Text color for search terms within posts and headers.', '#000000', 'true', 'none');
             addBooleanSetting('ABForumEnhWorkInRest', 'Load posts into forum view', 'Allows you to load posts and threads into the general forum view.', 'true', 'false', 'false');
