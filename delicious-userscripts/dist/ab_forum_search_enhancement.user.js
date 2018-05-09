@@ -4,7 +4,7 @@
 // @description Load posts into search results; highlight search terms; filter authors; slide through posts
 // @include     http*://animebytes.tv/forums.php*
 // @exclude     *action=viewthread*
-// @version     0.72
+// @version     0.72.1
 // @grant       GM_getValue
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
@@ -453,58 +453,6 @@ if ((/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL)) && !/action=
                     return results;
                 }
             }, true);
-            if (hideSubSelection) {
-                searchForumsNew = searchForums.cloneNode(true);
-                searchForums.style.visibility = 'collapse';
-                searchForumsCB = searchForumsNew.cells[1];
-                while (searchForumsCB.hasChildNodes()) {
-                    searchForumsCB.removeChild(searchForumsCB.lastChild);
-                }
-                newCheckbox = document.createElement('input');
-                newCheckbox.type = 'checkbox';
-                searchForumsCB.appendChild(newCheckbox);
-                searchForumsCB.appendChild(document.createTextNode(' Show forum selection: select (sub-) forums to search in.'));
-                searchForums.parentNode.insertBefore(searchForumsNew, searchForums);
-                newCheckbox.addEventListener('change', function (event) {
-                    searchForums.style.visibility = 'visible';
-                    return searchForumsNew.style.visibility = 'collapse';
-                }, true);
-            }
         }
-
-        if (showFastSearchLinks) {
-            forumid = document.URL.match(/forumid=(\d+)/i);
-            if (forumid != null) {
-                forumid = parseInt(forumid[1], 10);
-                quickLink = document.createElement('a');
-                quickLink.textContent = ' [Search this forum] ';
-                quickLink.href = "/forums.php?action=search&forums[]=" + forumid;
-                linkbox1 = document.querySelector('div.linkbox');
-                newLinkBox = linkbox1.cloneNode(true);
-                while (newLinkBox.hasChildNodes()) {
-                    newLinkBox.removeChild(newLinkBox.lastChild);
-                }
-                linkbox1.parentNode.insertBefore(newLinkBox, linkbox1);
-                newLinkBox.appendChild(quickLink);
-                forumIds = document.querySelectorAll('table a[href^="/forums.php?action=viewforum&forumid="]');
-                forumIds = (function () {
-                    var j, len1, results;
-                    results = [];
-                    for (j = 0, len1 = forumIds.length; j < len1; j++) {
-                        myLINK = forumIds[j];
-                        results.push(parseInt((myLINK.href.match(/forumid=(\d*)/i))[1], 10));
-                    }
-                    return results;
-                })();
-                if (forumIds.length > 0) {
-                    forumIds.push(forumid);
-                    quickLinkSubs = document.createElement('a');
-                    quickLinkSubs.textContent = ' [Search this forum and all direct subforums] ';
-                    quickLinkSubs.href = "/forums.php?action=search&forums[]=" + forumIds.join('&forums[]=');
-                    newLinkBox.appendChild(quickLinkSubs);
-                }
-            }
-        }
-
     }).call(this);
 }
