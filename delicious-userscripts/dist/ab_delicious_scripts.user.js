@@ -180,7 +180,7 @@
         // @author      Megure, TheFallingMan
         // @description Select text and press CTRL+V to quote
         // @include     https://animebytes.tv/*
-        // @version     0.2.1.1
+        // @version     0.2.2
         // @icon        http://animebytes.tv/favicon.ico
         // ==/UserScript==
         
@@ -460,6 +460,34 @@
                         continue;
                     }
         
+                    var isMediainfo = false;
+                    try {
+                        isMediainfo = (
+                            // Spoiler button
+                            thisNode.classList.contains('hideContainer')
+                            && (
+                                (// Either followed by a .mediainfo table
+                                    (i+1 < parentNode.childNodes.length)
+                                    && parentNode.childNodes[i+1].tagName.toUpperCase() === 'TABLE'
+                                    && parentNode.childNodes[i+1].classList.contains('mediainfo'))
+                                || ( // OR, which was originally followed by a mediainfo table.
+                                    (i+1 === parentNode.childNodes.length)
+                                    && thisNode.firstElementChild.value.length > 4
+                                    && thisNode.firstElementChild.value.indexOf('.') !== -1
+                                    && document.querySelector(
+                                        '.hideContainer > .spoilerButton[value="'
+                                        + thisNode.firstElementChild.value+'"]'
+                                    ).parentNode.nextElementSibling.classList.contains('mediainfo'))
+                            )
+                        );
+                    } catch (exception) { _debug && console.log(exception); }
+                    if (isMediainfo) {
+                        bbcodeString += bbcodeMediainfo(thisNode,
+                            parentNode.childNodes[i+1]);
+                        i += 1;
+                        continue;
+                    }
+        
                     // Otherwise, we handle it as a normal node.
                     bbcodeString += bbcodeOneElement(thisNode);
                 }
@@ -535,6 +563,8 @@
                 if (divNode.classList.contains('spoilerContainer')) {
                     return bbcodeSpoiler(divNode);
                 }
+                // This fallback shouldn't ever occur.
+                return bbcodeChildren(divNode);
             }
         
             /**
@@ -544,12 +574,21 @@
              * @param {HTMLDivElement} spoilerDiv
              */
             function bbcodeSpoiler(spoilerDiv) {
-                // If we have less than 2 children, the children aren't selected
-                // and the spoiler would be empty. Return.
-                if (spoilerDiv.children.length < 2) return '';
                 var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
                 // [hide] or [spoiler]
                 var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
+        
+                // If we have less than 2 children, then this is an abnormal spoiler.
+                if (spoilerDiv.children.length < 2) {
+                    // If the only child of this div isn't the spoiler's contents,
+                    // it must be the button and we return.
+                    if (!spoilerDiv.firstElementChild.classList.contains('spoiler')) {
+                        return '';
+                    }
+                    // Otherwise, only the inside of a spoiler is selected.
+                    // In this case, we have no button to work with. Compromise.
+                    return '['+bbcodeTag+']'+bbcodeChildren(spoilerDiv.firstElementChild)+'[/'+bbcodeTag+']';
+                }
                 var label = spoilerDiv.firstElementChild.value.replace(/^(Hide|Show)/, '');
                 if (isSpoiler) // ' spoiler' is appended automatically to spoiler buttons
                     label = label.replace(/ spoiler$/, '');
@@ -559,6 +598,19 @@
                 return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
                     bbcodeChildren(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
             }
+        
+        
+            /**
+             * Returns BBCode for a [mediainfo] tag.
+             *
+             * @param {HTMLDivElement} buttonDiv Div containing the button and spoiler.
+             * @param {HTMLTableElement} mediainfoTable
+             */
+            function bbcodeMediainfo(buttonDiv, mediainfoTable) {
+                if (buttonDiv.children.length < 2) return '';
+                return '[mediainfo]' + bbcodeChildren(buttonDiv.children[1]) + '[/mediainfo]';
+            }
+        
         
             /**
              * Returns BBCode of a <ol> or <ul> tag.
@@ -587,6 +639,9 @@
                 if (imgNode.classList.contains('bbcode_smiley')) {
                     return imgNode.alt;
                 }
+                // Note: AB proxies images, so quoted images will not
+                // necessarily use the same URL as the original did.
+                // Original URL is b64 encoded within the CDN URL.
                 return '[img]'+imgNode.src+'[/img]';
             }
         
@@ -600,6 +655,7 @@
              *  - Smiley
              *  - Color
              *  - Size
+             *  - Secret
              *
              * @param {HTMLSpanElement} spanNode
              */
@@ -623,6 +679,9 @@
                 }
                 if (spanNode.className === 'last-edited') {
                     return '';
+                }
+                if (spanNode.classList.contains('secret')) {
+                    return '[secret]' + bbcodeChildren(spanNode) + '[/secret]';
                 }
                 if (spanNode.title)
                     return formattedUTCString(spanNode.title);
@@ -738,8 +797,15 @@
                     case 'IMG': return bbcodeImage(node);
                     case 'IFRAME': return bbcodeIframe(node);
                     case 'BLOCKQUOTE': return '[quote]'+bbcodeChildren(node)+'[/quote]';
+                    case 'HR': return '[hr]';
+                    case 'TABLE': return bbcodeChildren(node); // crude representation of a table
+                    case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
+                    case 'TBODY': return bbcodeChildren(node);
+                    case 'TH': return bbcodeChildren(node) + '\n';
+                    case 'TR': return bbcodeChildren(node) + '\n';
+                    case 'TD': return bbcodeChildren(node) + '\t';
                     default:
-                        return node.tagName+': ' + bbcodeChildren(node);
+                        return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
                 }
             }
         
