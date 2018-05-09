@@ -10,7 +10,7 @@
 (function ABHyperQuote() {
     if (document.getElementById('quickpost') === null)
         return;
-
+    /** Debug flag. */
     var _debug = false;
 
     function formattedUTCString(date, timezone) {
@@ -23,6 +23,12 @@
         }
     }
 
+    /**
+     * Quotes the entire selection.
+     *
+     * Handles combining adjacent selection ranges, then calls
+     * QUOTEMANY.
+     * */
     function QUOTEALL() {
         var sel = window.getSelection();
         if (sel.rangeCount === 0) return;
@@ -35,7 +41,7 @@
             _debug && console.log('Dealing with multiple ranges.');
             // Ohhh boy.... firefox, why...?
             var allRanges = [];
-            // Start range of the current "range group".
+            // Start range of the current continguous selection range.
             // The aim of this code is to join contiguous ranges into one range
             // so they can be parsed properly, without being split into multiple
             // quotes.
@@ -64,7 +70,7 @@
                     // Store this range as the previous and continue looping.
                     previousRange = thisRange;
                 } else {
-                    // In this case, the current range does not continue from
+                    // Else, the current range does not continue from
                     // the previous one.
                     if (startRange !== previousRange) {
                         // Create and append a new, more sensible, range.
@@ -73,7 +79,8 @@
                         newRange.setEnd(previousRange.endContainer, previousRange.endOffset);
                         allRanges.push(newRange);
                     } else {
-                        // They're both the same, append one.
+                        // No adjacent ranges to startRange.
+                        // They're both the same, append either.
                         allRanges.push(previousRange);
                     }
                     // Set these for the next iteration.
@@ -87,6 +94,14 @@
         }
     }
 
+    /**
+     * Quotes many posts.
+     *
+     * Clones each post and deletes text outside of the selection
+     * range.
+     *
+     * @param {Range} range Selection range to quote.
+     */
     function QUOTEMANY(range) {
         function removeChildren(node, prev) {
             if (node === null || node.parentNode === null) return;
@@ -157,11 +172,23 @@
         }
     }
 
+    /**
+     * Returns BBCode of one whole div.post.
+     *
+     * @param {HTMLDivElement} postDiv
+     */
     function bbcodePostDiv(postDiv) {
         return bbcodeChildren(postDiv).trim();
     }
 
     /**
+     * Returns BBCode of parentNode's children.
+     *
+     * BBCode which relies on adjacent siblings (e.g. quotes) must be placed
+     * here, as other functions consider one HTML element only.
+     *
+     * Returns children's BBCode only; assumes the parent BBCode has
+     * been generated elsewhere.
      *
      * @param {Node} parentNode
      */
@@ -174,10 +201,15 @@
         for (var i = 0; i < parentNode.childNodes.length; i++) {
             var thisNode = parentNode.childNodes[i];
             if (thisNode.nodeType === Node.TEXT_NODE) {
+                // Handles text nodes.
                 var text = thisNode.nodeValue;
+                // If this isn't the first child and previous is a <br>,
+                // collapse leading space.
                 if (i > 0 && parentNode.childNodes[i-1].nodeType === Node.ELEMENT_NODE
                     && parentNode.childNodes[i-1].tagName.toUpperCase() === 'BR')
                     text = text.replace(/^\s+/, '');
+                // If this isn't the last child and next is a <br>,
+                // collapse trailing space.
                 if (i+1 < parentNode.childNodes.length
                     && parentNode.childNodes[i+1].nodeType === Node.ELEMENT_NODE
                     && parentNode.childNodes[i+1].tagName.toUpperCase() === 'BR')
@@ -186,35 +218,55 @@
                 continue;
             }
 
-            var isQuote = false;
+            /**
+             * Whether this element represents the start of a
+             * post number (e.g. `[quote=#1559283]`) quote.
+             */
+            var isSmartQuote = false;
             try {
                 // We fully expect this to throw exceptions if the element
                 // is not a quote block, as the surrounding structure
                 // will not be there.
                 //debugger;
-                isQuote = (
+                isSmartQuote = (
                     (i+4 < parentNode.childNodes.length)
+                    // thisNode is a <strong></strong> node containing the
+                    // user link.
                     && thisNode.nodeType === Node.ELEMENT_NODE
                     && thisNode.tagName.toUpperCase() === 'STRONG'
                     && thisNode.firstElementChild.href.indexOf('user.php?id=') !== -1
+                    // i+1 is a " " text node.
+                    && !parentNode.childNodes[i+1].nodeValue.trim()
+                    // i+2 is the <a> node linking to the post.
                     && parentNode.childNodes[i+2].textContent.indexOf('wrote') !== -1
                     && parentNode.childNodes[i+2].firstElementChild.tagName.toUpperCase() === 'SPAN'
                     && parentNode.childNodes[i+2].firstElementChild.title
+                    // i+3 is the :
                     && parentNode.childNodes[i+3].nodeValue.indexOf(':') !== -1
+                    // i+4 is the quote.
                     && parentNode.childNodes[i+4].classList.contains('blockquote')
                 );
             } catch (exception) { _debug && console.log(exception); }
-            _debug && console.log('isQuote: ' + isQuote);
-            if (isQuote) {
+            _debug && console.log('isSmartQuote: ' + isSmartQuote);
+            if (isSmartQuote) {
                 bbcodeString += bbcodeSmartQuote(thisNode,
                     parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
-                i += 4;
+                i += 4; // Skip the next 4 nodes.
                 continue;
             }
 
-            var isSimpleQuote = false;
+            /**
+             * Whether this element represents the start of a
+             * `[quote=username]` quote.
+             * */
+            var isBasicQuote = false;
             try {
-                isSimpleQuote = (
+                // Strictly speaking, we don't have to handle this here;
+                // handling it with the generic code
+                // (i.e. [b]username[/b] wrote ...)
+                // results in identical rendered output.
+                isBasicQuote = (
+                    // Similar logic as above.
                     (i+2 < parentNode.childNodes.length)
                     && thisNode.nodeType === Node.ELEMENT_NODE
                     && thisNode.tagName.toUpperCase() === 'STRONG'
@@ -224,22 +276,24 @@
                     && parentNode.childNodes[i+2].classList.contains('blockquote')
                 );
             } catch (exception) { _debug && console.log(exception); }
-            if (isSimpleQuote) {
-                bbcodeString += ('[quote='+thisNode.firstChild.nodeValue+']\n'
+            if (isBasicQuote) {
+                bbcodeString += ('[quote='+thisNode.firstChild.nodeValue+']'
                     +bbcodeChildren(parentNode.childNodes[i+2])+'\n[/quote]');
                 i += 2;
                 continue;
             }
 
+            // Otherwise, we handle it as a normal node.
             bbcodeString += bbcodeOneElement(thisNode);
         }
         return bbcodeString;
     }
     /**
+     * Returns an appropriate [quote] tag using a post number.
      *
-     * @param {HTMLElement} strongNode
-     * @param {HTMLAnchorElement} wroteLink
-     * @param {HTMLQuoteElement} quoteNode
+     * @param {HTMLElement} strongNode Node containing username link.
+     * @param {HTMLAnchorElement} wroteLink Post link element.
+     * @param {HTMLQuoteElement} quoteNode Blockquote element.
      */
     function bbcodeSmartQuote(strongNode, wroteLink, quoteNode) {
         var quoteType = '';
@@ -249,18 +303,27 @@
         else if (href.indexOf('/torrents.php') !== -1) quoteType = '-1';
         else if (href.indexOf('/torrents2.php') !== -1) quoteType = '-2';
         if (quoteType !== '') {
-            var id = /#(?:msg|post)?(\d+)$/.exec(href);
+            var id = /#(?:msg|post)?(\d+)$/.exec(href); // post number
+            // We have to be careful with newlines otherwise too much whitespace
+            // will be added.
             if (id)
                 return '[quote=' + quoteType + id[1] + ']' + bbcodeChildren(quoteNode) + '\n[/quote]';
         }
+        // We shouldn't ever reach this.
         return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
             +bbcodeChildren(quoteNode)+'[/quote]');
     }
 
+    /**
+     * Returns BBCode of one <strong> node.
+     *
+     * @param {HTMLElement} strongNode
+     */
     function bbcodeStrong(strongNode) {
+        // Special case of "Added on ..." text.
         if (strongNode.childNodes.length === 1
-            && strongNode.firstChild.nodeType === Node.TEXT_NODE
-            && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
+        && strongNode.firstChild.nodeType === Node.TEXT_NODE
+        && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
             var dateString = strongNode.firstChild.nodeValue.slice(9);
             var end = '';
             if (dateString.slice(-1) === ':') {
@@ -274,6 +337,13 @@
     }
 
     /**
+     * Returns BBCode of a div element.
+     *
+     * Possible cases:
+     *
+     *  - [align=...] tag.
+     *  - [code] tag.
+     *  - [spoiler] or [hide] tag.
      *
      * @param {HTMLDivElement} divNode
      */
@@ -291,36 +361,51 @@
     }
 
     /**
+     * Returns BBCode of a spoiler element, considering for
+     * custom button text.
      *
      * @param {HTMLDivElement} spoilerDiv
      */
     function bbcodeSpoiler(spoilerDiv) {
+        // If we have less than 2 children, the children aren't selected
+        // and the spoiler would be empty. Return.
         if (spoilerDiv.children.length < 2) return '';
         var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
+        // [hide] or [spoiler]
         var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
-        var label = spoilerDiv.firstElementChild.value.replace(/(Hide|Show)/, '');
-        if (label.length !== 0) {
-            if (isSpoiler)
-               label = label.replace(/ spoiler$/, '');
-            label = label.slice(1);
+        var label = spoilerDiv.firstElementChild.value.replace(/^(Hide|Show)/, '');
+        if (isSpoiler) // ' spoiler' is appended automatically to spoiler buttons
+            label = label.replace(/ spoiler$/, '');
+        if (label) {
+            label = label.slice(1); // slice space.
         }
-        return '['+bbcodeTag + (label.length!==0 ? '='+label : '') + ']\n' +
+        return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
             bbcodeChildren(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
     }
 
     /**
+     * Returns BBCode of a <ol> or <ul> tag.
      *
      * @param {HTMLUListElement} listNode
+     * @param {String} bbcodeTag Tag to insert before each line.
      */
     function bbcodeList(listNode, bbcodeTag) {
         var str = '';
         for (var c = 0; c < listNode.childElementCount; c++) {
+            // Only consider element children, which we assume are
+            // <li> or <ol>/<ul>.
             str += bbcodeTag + bbcodeChildren(listNode.children[c]);
+            // For whitespace.
             if (str.slice(-1) !== '\n') str += '\n';
         }
         return str;
     }
 
+    /**
+     * Returns BBCode of an image element, possibly a smiley.
+     *
+     * @param {HTMLImageElement} imgNode
+     */
     function bbcodeImage(imgNode) {
         if (imgNode.classList.contains('bbcode_smiley')) {
             return imgNode.alt;
@@ -328,9 +413,16 @@
         return '[img]'+imgNode.src+'[/img]';
     }
 
+    /** Regex matching colour in rgb(x, y, z) format. */
     var rgbRegex = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/i;
-
     /**
+     * Returns BBCode of a HTML <span> element.
+     *
+     * Possible cases:
+     *
+     *  - Smiley
+     *  - Color
+     *  - Size
      *
      * @param {HTMLSpanElement} spanNode
      */
@@ -341,6 +433,7 @@
         var colour = spanNode.style.color;
         if (colour) {
             var rgbMatch = rgbRegex.exec(colour);
+            // Check for rgb() format colours.
             if (rgbMatch)
                 colour = ('#' + parseInt(rgbMatch[1]).toString(16)
                 +parseInt(rgbMatch[2]).toString(16)
@@ -359,6 +452,12 @@
         return bbcodeChildren(spanNode);
     }
 
+    /**
+     * Given a HTML span element representing a smiley, finds and returns
+     * the smiley's BBCode.
+     *
+     * @param {HTMLSpanElement} smileySpan
+     */
     function bbcodeSmiley(smileySpan) {
         var smiley = smileySpan.title;
         var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
@@ -388,21 +487,29 @@
      * @param {HTMLAnchorElement} linkElement
      */
     function bbcodeLink(linkElement) {
+        // <img> tags are often wrapped around a <a> pointing to the same image.
         if (linkElement.classList.contains('scaledImg')) {
-            return '[img]'+linkElement.href+'[/img]';
+            return bbcodeImage(linkElement.firstElementChild);
         }
+        /** href with relative links resolved. */
         var href = linkElement.href;
+        /** Actual href as typed into HTML */
         var realHref = linkElement.getAttribute('href');
+
         var userMatch = userRegex.exec(realHref);
         if (userMatch)
             return '[user='+href+']'+bbcodeChildren(linkElement)+'[/user]';
         var torrentMatch = torrentRegex.exec(realHref);
         if (torrentMatch) {
+            // If the link's text contains &nbsp; we assume it is a torrent
+            // link.
             if (linkElement.textContent.indexOf('\xa0\xa0[') !== -1)
                 return '[torrent]'+href+'[/torrent]';
             else
                 return '[torrent='+href+']'+bbcodeChildren(linkElement)+'[/torrent]';
         }
+        // Actually, torrent and user links could be written using [url=]
+        // and the rendered output would be the same.
         return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
     }
 
@@ -410,6 +517,7 @@
     var soundcloudRegex = /\/player\/\?url=([^&]+)&/i;
 
     /**
+     * Returns BBCode for embedded media.
      *
      * @param {HTMLIFrameElement} iframeNode
      */
@@ -419,11 +527,21 @@
             return '[youtube]https://youtube.com/watch?v='+youtubeRegex.exec(src)[1]+'[/youtube]';
         }
         if (src.indexOf('soundcloud.com/player') !== -1) {
+            // The original soundcloud URL is encoded and forms a part of the
+            // embed URL.
             return '[soundcloud]'+decodeURIComponent(soundcloudRegex.exec(src)[1])+'[/soundcloud]';
         }
         return 'Embedded media: ' + src;
     }
 
+    /**
+     * Returns BBCode for one element.
+     *
+     * Handles simple cases and routes more complex cases
+     * to the appropriate function.
+     *
+     * @param {HTMLElement} node
+     */
     function bbcodeOneElement(node) {
         if (node.nodeType !== Node.ELEMENT_NODE) {
             if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
@@ -448,6 +566,11 @@
         }
     }
 
+    /**
+     * Quotes one post, with post number.
+     *
+     * @param {Node} post
+     */
     function QUOTEONE(post) {
         //_debug && console.log(post.querySelector('div.post,div.body').innerHTML);
         //var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
