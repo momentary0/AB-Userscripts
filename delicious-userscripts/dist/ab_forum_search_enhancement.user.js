@@ -19,6 +19,16 @@ if ((/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL)) && !/action=
         // Debug flag. Used to enable/disable some verbose console logging.
         var _debug = false;
         
+        // jQuery, just for Pale Moon.
+        // Note: this doesn't actually import jQuery successfully,
+        // but for whatever reason, it lets PM load the script.
+        if ((typeof jQuery) === 'undefined') {
+            _debug && console.log('setting window.jQuery');
+            jQuery = window.jQuery;
+            $ = window.$;
+            $j = window.$j;
+        }
+        
         // Super duper important functions
         // Do not delete or something might break and stuff!! :(
         HTMLCollection.prototype.each = function (f) { for (var i = 0, e = null; e = this[i]; i++) f.call(e, e); return this; };
