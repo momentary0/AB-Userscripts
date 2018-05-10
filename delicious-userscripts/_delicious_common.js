@@ -6,6 +6,8 @@
 var _debug = false;
 
 // jQuery, just for Pale Moon.
+// Note: this doesn't actually import jQuery successfully,
+// but for whatever reason, it lets PM load the script.
 if ((typeof jQuery) === 'undefined') {
     _debug && console.log('setting window.jQuery');
     jQuery = window.jQuery;
