@@ -3,7 +3,7 @@
 // @author      Megure, TheFallingMan
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
-// @version     0.2.2
+// @version     0.2.2.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -603,7 +603,11 @@
      */
     function bbcodeOneElement(node) {
         if (node.nodeType !== Node.ELEMENT_NODE) {
-            if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+            // Text nodes should be handled in bbcodeChildren.
+            if (node.nodeType === Node.TEXT_NODE)
+                return node.nodeValue;
+            if (node.nodeType === Node.COMMENT_NODE && node.nodeValue === 'n')
+                return '[n]';
             return '';
         }
         switch (node.tagName.toUpperCase()) {
