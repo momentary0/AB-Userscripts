@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.6
+// @version 2.0.1.7
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @grant GM_getValue
 // @grant GM_setValue
@@ -190,7 +190,7 @@
         // @author      Megure, TheFallingMan
         // @description Select text and press CTRL+V to quote
         // @include     https://animebytes.tv/*
-        // @version     0.2.2.1
+        // @version     0.2.2.2
         // @icon        http://animebytes.tv/favicon.ico
         // ==/UserScript==
         
@@ -655,6 +655,19 @@
                 return '[img]'+imgNode.src+'[/img]';
             }
         
+            /**
+             * Returns a string containing the hex representation of a number,
+             * padded to 2 hex digits.
+             *
+             * @param {Number} num
+             */
+            function numToHex(num) {
+                var h = num.toString(16);
+                while (h.length < 2)
+                    h = '0' + h;
+                return h;
+            }
+        
             /** Regex matching colour in rgb(x, y, z) format. */
             var rgbRegex = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/i;
             /**
@@ -678,9 +691,9 @@
                     var rgbMatch = rgbRegex.exec(colour);
                     // Check for rgb() format colours.
                     if (rgbMatch)
-                        colour = ('#' + parseInt(rgbMatch[1]).toString(16)
-                        +parseInt(rgbMatch[2]).toString(16)
-                        +parseInt(rgbMatch[3]).toString(16));
+                        colour = ('#' + numToHex(parseInt(rgbMatch[1]))
+                        +numToHex(parseInt(rgbMatch[2]))
+                        +numToHex(parseInt(rgbMatch[3])));
                     return '[color='+colour+']' + bbcodeChildren(spanNode) + '[/color]';
                 }
                 if (spanNode.className.slice(0, 4) === 'size') {
