@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.7
+// @version 2.0.1.8
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @grant GM_getValue
 // @grant GM_setValue
@@ -957,7 +957,7 @@
         // @author      Alpha, modified by Megure
         // @description Enables keyboard shortcuts for forum (new post and edit) and PM
         // @include     https://animebytes.tv/*
-        // @version     0.1
+        // @version     0.1.1
         // @icon        http://animebytes.tv/favicon.ico
         // ==/UserScript==
         
@@ -1010,13 +1010,25 @@
                     console.log(e.altKey);
                     console.log(e.shiftKey);
                 }
+                // Javascript has some discrepancies with symbols and their keycodes.
+                var keyCode;
+                switch (key) {
+                case '.':
+                    keyCode = 190;
+                    break;
+                case '/':
+                    keyCode = 191;
+                    break;
+                default:
+                    keyCode = key.charCodeAt(0);
+                }
+        
                 // Checks if correct modifiers are pressed
                 if (document.activeElement.tagName.toLowerCase() === 'textarea' &&
-                    (ctrl === (e.ctrlKey || e.metaKey)) &&
-                    (alt === e.altKey) &&
-                    (shift === e.shiftKey) &&
-                    (e.keyCode === key.charCodeAt(0))) {
-        
+                (ctrl === (e.ctrlKey || e.metaKey)) &&
+                (alt === e.altKey) &&
+                (shift === e.shiftKey) &&
+                (e.keyCode === keyCode)) {
                     e.preventDefault();
                     custom_insert_text(open, close);
                     return false;
@@ -1064,6 +1076,11 @@
                 insert(e, 'Y', true, true, false, '[youtube]', '[/youtube]', '#bbcode img[alt="YouTube"]');
                 // Image
                 insert(e, 'G', true, false, false, '[img]', '[/img]', '#bbcode img[title="Image"]');
+                // Bullet point and numbered list
+                insert(e, '.', true, false, false, '[*] ', '', '#bbcode img[title="Unordered list"]');
+                insert(e, '/', true, false, false, '[#] ', '', '#bbcode img[title="Ordered list"]');
+                // URL
+                insert(e, 'K', true, false, false, '[url=]', '[/url]', '#bbcode img[title="URL"]');
             }
         
             var textAreas = document.querySelectorAll('textarea');
@@ -1765,7 +1782,7 @@
     // @namespace   Megure@AnimeBytes.tv
     // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     // @include     http*://animebytes.tv*
-    // @version     1.00
+    // @version     1.01
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
@@ -1802,6 +1819,9 @@
         var datetime_RegExp = /^(\d+)\-(\d{1,2})\-(\d{1,2})\s+(\d{1,2}):(\d{1,2})$/;
         var currency_RegExp = /^(?:[¥|€|£|\$]\s*)([\d\.]+)$/;
         function unit_prefix(prefix) {
+            // If prefix is undefined, the regex failed to match a prefix
+            // and we assume it is in bytes.
+            if (typeof prefix === 'undefined') return 1 / 1073741824;
             // This is called with only the prefix of the byte unit
             switch (prefix.toUpperCase()) {
                 case '':

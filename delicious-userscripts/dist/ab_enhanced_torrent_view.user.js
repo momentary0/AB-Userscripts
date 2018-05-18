@@ -3,7 +3,7 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.00
+// @version     1.01
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -128,6 +128,9 @@
     var datetime_RegExp = /^(\d+)\-(\d{1,2})\-(\d{1,2})\s+(\d{1,2}):(\d{1,2})$/;
     var currency_RegExp = /^(?:[¥|€|£|\$]\s*)([\d\.]+)$/;
     function unit_prefix(prefix) {
+        // If prefix is undefined, the regex failed to match a prefix
+        // and we assume it is in bytes.
+        if (typeof prefix === 'undefined') return 1 / 1073741824;
         // This is called with only the prefix of the byte unit
         switch (prefix.toUpperCase()) {
             case '':
