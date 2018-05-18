@@ -106,7 +106,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
     var _marked = /*#__PURE__*/_regenerator2.default.mark(row_to_field_list);
 
     /** Enables/disables logging to console. */
-    var _debug = false;
+    function isDebug() {
+        return false;
+    }
 
     /**
      * Mapping between field properties and their relative
@@ -235,7 +237,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
                         // In this case, our work is done and we just need to return
                         // each span's text.
-                        _debug && console.log('span');
+                        isDebug() && console.log('span');
                         spans = link.children;
                         i = 0;
 
@@ -259,7 +261,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
                     case 13:
                         // Otherwise, we split and return the fields ourselves.
-                        _debug && console.log('textContent');
+                        isDebug() && console.log('textContent');
                         split_fields = link.textContent.replace('»', '').trim().split(' | ');
                         _i = 0;
 
@@ -393,7 +395,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
     function sort_rows(torrent_rows) {
         // Skips small groups.
         if (torrent_rows.length <= 3) {
-            _debug && console.log('too short');
+            isDebug() && console.log('too short');
             return null;
         }
         // Sort with our custom sort function.
