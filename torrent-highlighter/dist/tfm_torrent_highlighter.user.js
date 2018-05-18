@@ -105,7 +105,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 // ==/UserScript==
 
 (function TFMTorrentHighlighter() {
-    var _Object$freeze, _Object$freeze2, _Object$freeze3, _Object$freeze4;
+    var _MusicHandlers, _AnimeHandlers, _GameHandlers, _BookHandlers, _GlobalHandlers;
 
     function _debug() {
         return false;
@@ -125,6 +125,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         _createClass(TorrentPropertyParser, [{
             key: 'parse',
             value: function parse() {
+                _debug() && console.log(this.linkElement.textContent);
                 this.fields = [];
                 this.index = 0;
                 this.handlers = {};
@@ -136,7 +137,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     func = this.handlers[state];
                     if (!func) func = GlobalHandlers[state];
 
-                    state = func.call(this);
+                    try {
+                        state = func.call(this);
+                    } catch (e) {
+                        console.error(e);
+                        _debug() && console.log(this.linkElement);
+                        _debug() && console.log(this.index);
+                        _debug() && console.log(this.fields);
+                        _debug() && console.log(state);
+                        throw e;
+                    }
+                    if (this.index >= this.fields.length) {
+                        if (state !== GlobalStates.FINISHED) {
+                            state = GlobalHandlers[GlobalStates.INSERT_DOCFRAG].call(this);
+                        }
+                    }
                 }
 
                 _debug() && console.log(state);
@@ -265,7 +280,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      */
     null;
 
-    var MusicHandlers = Object.freeze((_Object$freeze = {}, _defineProperty(_Object$freeze, GlobalStates.BEGIN, newCaptureHandler('encoding', MusicStates.BITRATE, false)), _defineProperty(_Object$freeze, MusicStates.BITRATE, newCaptureHandler('bitrate', MusicStates.SOURCE)), _defineProperty(_Object$freeze, MusicStates.SOURCE, newCaptureHandler('source', MusicStates.LOG)), _defineProperty(_Object$freeze, MusicStates.LOG, newFlagHandler('Log', 'log', MusicStates.CUE)), _defineProperty(_Object$freeze, MusicStates.CUE, newFlagHandler('Cue', 'log', GlobalStates.COMMON_TRAILING_FIELDS)), _Object$freeze));
+    var MusicHandlers = (_MusicHandlers = {}, _defineProperty(_MusicHandlers, GlobalStates.BEGIN, newCaptureHandler('encoding', MusicStates.BITRATE, false)), _defineProperty(_MusicHandlers, MusicStates.BITRATE, newCaptureHandler('bitrate', MusicStates.SOURCE)), _defineProperty(_MusicHandlers, MusicStates.SOURCE, newCaptureHandler('source', MusicStates.LOG)), _defineProperty(_MusicHandlers, MusicStates.LOG, newFlagHandler('Log', 'log', MusicStates.CUE)), _defineProperty(_MusicHandlers, MusicStates.CUE, newFlagHandler('Cue', 'cue', GlobalStates.COMMON_TRAILING_FIELDS)), _MusicHandlers);
 
     var AnimeStates = Object.freeze({
         SOURCE: 1,
@@ -283,22 +298,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     /**
      * @type {Object<number, transitionHandler>}
      */
-    var AnimeHandlers = Object.freeze((_Object$freeze2 = {}, _defineProperty(_Object$freeze2, GlobalStates.BEGIN, newCaptureHandler('source', AnimeStates.CONTAINER, false)), _defineProperty(_Object$freeze2, AnimeStates.CONTAINER, function CONTAINER() {
+    var AnimeHandlers = (_AnimeHandlers = {}, _defineProperty(_AnimeHandlers, GlobalStates.BEGIN, newCaptureHandler('source', AnimeStates.CONTAINER, false)), _defineProperty(_AnimeHandlers, AnimeStates.CONTAINER, function CONTAINER() {
         var field = this.getNext();
         if (field.charAt(field.length - 1) === ')') {
             var left = field.substr(0, field.indexOf(' ('));
-            var right = field.substr(field.indexOf(' (') + 2, field.length - 1);
+            var right = field.slice(field.indexOf(' (') + 2, -1);
             this.appendDelim();
             this.appendSpan(left, 'container', left);
             this.appendText(' (');
             this.appendSpan(right, 'region', right);
+            this.appendText(')');
             return AnimeStates.ASPECT_RATIO;
         } else {
             this.appendDelim();
             this.appendSpan(field, 'container', field);
             return AnimeStates.VIDEO_CODEC;
         }
-    }), _defineProperty(_Object$freeze2, AnimeStates.ASPECT_RATIO, function ASPECT_RATIO() {
+    }), _defineProperty(_AnimeHandlers, AnimeStates.ASPECT_RATIO, function ASPECT_RATIO() {
         var field = this.getNext();
         this.appendDelim();
         this.appendSpan(field, 'aspectRatio', field);
@@ -307,7 +323,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         } else {
             return AnimeStates.VIDEO_CODEC;
         }
-    }), _defineProperty(_Object$freeze2, AnimeStates.VIDEO_CODEC, newCaptureHandler('codec', AnimeStates.RESOLUTION)), _defineProperty(_Object$freeze2, AnimeStates.RESOLUTION, newCaptureHandler('resolution', AnimeStates.AUDIO_CODEC_AND_CHANNELS)), _defineProperty(_Object$freeze2, AnimeStates.AUDIO_CODEC_AND_CHANNELS, function AUDIO_CODEC() {
+    }), _defineProperty(_AnimeHandlers, AnimeStates.VIDEO_CODEC, newCaptureHandler('codec', AnimeStates.RESOLUTION)), _defineProperty(_AnimeHandlers, AnimeStates.RESOLUTION, newCaptureHandler('resolution', AnimeStates.AUDIO_CODEC_AND_CHANNELS)), _defineProperty(_AnimeHandlers, AnimeStates.AUDIO_CODEC_AND_CHANNELS, function AUDIO_CODEC() {
         var field = this.getNext();
         var codec = field.substr(0, field.lastIndexOf(' '));
         var channels = field.substr(field.lastIndexOf(' ') + 1);
@@ -318,19 +334,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         this.appendSpan(channels, 'audioChannels', channels);
 
         return AnimeStates.DUAL_AUDIO;
-    }), _defineProperty(_Object$freeze2, AnimeStates.DUAL_AUDIO, newFlagHandler('Dual Audio', 'dualAudio', AnimeStates.REMASTER)), _defineProperty(_Object$freeze2, AnimeStates.REMASTER, function REMASTER() {
+    }), _defineProperty(_AnimeHandlers, AnimeStates.DUAL_AUDIO, newFlagHandler('Dual Audio', 'dualAudio', AnimeStates.REMASTER)), _defineProperty(_AnimeHandlers, AnimeStates.REMASTER, function REMASTER() {
         var node = this.peekNext();
-        if (typeof node !== 'string' && node.tagName === 'IMG' && node.alt === 'Remastered') {
+        if (node.tagName === 'IMG' && node.alt === 'Remastered') {
             this.index++;
             this.appendDelim();
             this.appendSpan(node, 'remastered', '');
         }
         return AnimeStates.SUBBING_AND_GROUP;
-    }), _defineProperty(_Object$freeze2, AnimeStates.SUBBING_AND_GROUP, function SUBBING() {
+    }), _defineProperty(_AnimeHandlers, AnimeStates.SUBBING_AND_GROUP, function SUBBING() {
         if (simpleSubbingHandler.call(this)) {
             return GlobalStates.COMMON_TRAILING_FIELDS;
         } else {
-            var field = this.getNext().trim();
+            var field = this.getNext();
+            if (field.nodeType) return;
+            field = field.trim();
             var left = field.substr(0, field.indexOf(' '));
             if (left === 'Softsubs' || left === 'Hardsubs' || left === 'RAW') {
                 this.appendDelim();
@@ -338,6 +356,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 this.appendText(' (');
                 var groupString = field.substr(field.indexOf(' (') + 2);
                 while (!groupString.endsWith(')') && this.index < this.fields.length) {
+                    groupString += this.delim;
                     groupString += this.getNext();
                 }
                 groupString = groupString.substr(0, groupString.length - 1);
@@ -346,7 +365,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         }
         return GlobalStates.COMMON_TRAILING_FIELDS;
-    }), _Object$freeze2));
+    }), _AnimeHandlers);
 
     var simpleSubbingHandler = newListHandler(['Softsubs', 'Hardsubs', 'RAW'], 'subbing', true, false);
 
@@ -358,20 +377,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         SCENE: 5
     };
 
-    var GameHandlers = Object.freeze((_Object$freeze3 = {}, _defineProperty(_Object$freeze3, GlobalStates.BEGIN, newCaptureHandler('type', GameStates.PLATFORM, false)), _defineProperty(_Object$freeze3, GameStates.PLATFORM, newCaptureHandler('platform', GameStates.REGION)), _defineProperty(_Object$freeze3, GameStates.REGION, newListHandler(["Region Free", "NTSC-J", "NTSC-U", "PAL", "JPN", "ENG", "EUR"], 'region', GameStates.ARCHIVED)), _defineProperty(_Object$freeze3, GameStates.ARCHIVED, newListHandler(['Archived', 'Unarchived'], 'archived', GameStates.SCENE)), _defineProperty(_Object$freeze3, GameStates.SCENE, newFlagHandler('Scene', 'scene', GlobalStates.COMMON_TRAILING_FIELDS)), _Object$freeze3));
+    var GameHandlers = (_GameHandlers = {}, _defineProperty(_GameHandlers, GlobalStates.BEGIN, newCaptureHandler('type', GameStates.PLATFORM, false)), _defineProperty(_GameHandlers, GameStates.PLATFORM, newCaptureHandler('platform', GameStates.REGION)), _defineProperty(_GameHandlers, GameStates.REGION, newListHandler(["Region Free", "NTSC-J", "NTSC-U", "PAL", "JPN", "ENG", "EUR"], 'region', GameStates.ARCHIVED)), _defineProperty(_GameHandlers, GameStates.ARCHIVED, newListHandler(['Archived', 'Unarchived'], 'archived', GameStates.SCENE)), _defineProperty(_GameHandlers, GameStates.SCENE, newFlagHandler('Scene', 'scene', GlobalStates.COMMON_TRAILING_FIELDS)), _GameHandlers);
 
     var BookStates = Object.freeze({
         TRANSLATION: 1,
         FORMAT: 2,
-        DIGITAL: 3,
         ONGOING: 4
     });
 
-    var BookHandlers = _defineProperty({}, GlobalStates.BEGIN, function () {
-        return GlobalStates.FINISHED;
-    });
+    var BookHandlers = (_BookHandlers = {}, _defineProperty(_BookHandlers, GlobalStates.BEGIN, function () {
+        var field = this.getNext();
+        if (field.indexOf('  (') !== -1) {
+            var translation = field.substr(0, field.indexOf('  ('));
+            var group = field.slice(field.indexOf('  (') + 3, -1);
+            this.appendSpan(translation, 'translation', translation);
+            this.appendText(' (');
+            this.appendSpan(group, 'group', group);
+            this.appendText(')');
+        } else {
+            var _translation = field.replace(' ', '');
+            this.appendSpan(_translation, 'translation', _translation);
+        }
+        return BookStates.FORMAT;
+    }), _defineProperty(_BookHandlers, BookStates.FORMAT, newListHandler(['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'], 'format', BookStates.ONGOING)), _defineProperty(_BookHandlers, BookStates.ONGOING, newFlagHandler('Ongoing', 'ongoing', GlobalStates.COMMON_TRAILING_FIELDS)), _BookHandlers);
 
-    var FirstFields = Object.freeze({
+    var FirstFields = {
         "Blu-ray": AnimeHandlers, "Web": AnimeHandlers, "TV": AnimeHandlers,
         "DVD": AnimeHandlers, "UHD Blu-ray": AnimeHandlers, "DVD5": AnimeHandlers,
         "DVD9": AnimeHandlers, "HD DVD": AnimeHandlers, "VHS": AnimeHandlers,
@@ -382,14 +412,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         "Game": GameHandlers, "Patch": GameHandlers, "DLC": GameHandlers,
 
         "Raw": BookHandlers, "Translated": BookHandlers
-    });
+    };
 
-    var GlobalHandlers = Object.freeze((_Object$freeze4 = {}, _defineProperty(_Object$freeze4, GlobalStates.INITIALISE, function INITIALISE() {
+    var GlobalHandlers = (_GlobalHandlers = {}, _defineProperty(_GlobalHandlers, GlobalStates.INITIALISE, function INITIALISE() {
         this.oldNodes = this.linkElement.childNodes;
         for (var i = 0; i < this.oldNodes.length; i++) {
             var child = this.oldNodes[i];
             if (child.nodeType === Node.TEXT_NODE) {
-                _debug() && console.log('x' + child.nodeValue + 'x');
+                _debug() && console.log('Handling text node: x' + child.nodeValue + 'x');
                 if (child.nodeValue.indexOf(this.delim) !== -1) {
                     var str = child.nodeValue;
                     if (i === 0) {
@@ -420,20 +450,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             _debug() && console.log(this.fields);
         }
         return GlobalStates.DETECTING;
-    }), _defineProperty(_Object$freeze4, GlobalStates.DETECTING, function DETECTING() {
+    }), _defineProperty(_GlobalHandlers, GlobalStates.DETECTING, function DETECTING() {
         var f = this.peekNext();
+        _debug() && console.log('detecting: x' + f + 'x');
         var handler = FirstFields[f];
         if (handler !== undefined) this.handlers = handler;else {
-            var left = f.substr(0, f.indexOf('  ('));
+            var left = f.substr(0, f.indexOf(' '));
             this.handlers = FirstFields[left];
             if (this.handlers === undefined) {
                 this.handlers = {};
-                console.info('No first field match for: ' + f);
+                console.info('No first field match for: x' + f + 'x');
                 return GlobalStates.ERROR;
             }
         }
         return GlobalStates.BEGIN;
-    }), _defineProperty(_Object$freeze4, GlobalStates.ERROR, function ERROR() {
+    }), _defineProperty(_GlobalHandlers, GlobalStates.ERROR, function ERROR() {
         _debug() && console.log('error state');
         if (this.nodeAppended) {
             this.clearChildren();
@@ -442,8 +473,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         }
         return GlobalStates.FINISHED;
-    }), _defineProperty(_Object$freeze4, GlobalStates.COMMON_TRAILING_FIELDS, function COMMON_TRAILING() {
+    }), _defineProperty(_GlobalHandlers, GlobalStates.COMMON_TRAILING_FIELDS, function COMMON_TRAILING() {
         var node = this.peekNext();
+        _debug() && console.log('trailing fields');
         _debug() && console.log(node);
         if (!node) return GlobalStates.INSERT_DOCFRAG;
         switch (node.nodeType) {
@@ -476,9 +508,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 }
                 return GlobalStates.COMMON_TRAILING_FIELDS;
                 break;
-            case undefined:
+            default:
                 this.index++;
-                if (node === ' - Snatched') {
+                if (node.indexOf('- Snatched') !== -1) {
                     this.appendText(' - ');
                     this.appendSpan('Snatched', 'snatched', '');
                 } else {
@@ -486,52 +518,61 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     this.appendDelim();
                     this.appendSpan(node, 'misc', node);
                 }
+                return GlobalStates.COMMON_TRAILING_FIELDS;
                 break;
         }
-        return GlobalStates.INSERT_DOCFRAG;
-    }), _defineProperty(_Object$freeze4, GlobalStates.INSERT_DOCFRAG, function INSERT_DOCFRAG() {
+    }), _defineProperty(_GlobalHandlers, GlobalStates.INSERT_DOCFRAG, function INSERT_DOCFRAG() {
+        _debug() && console.log('appending');
         this.clearChildren();
         this.linkElement.appendChild(this.docFrag);
         return GlobalStates.FINISHED;
-    }), _Object$freeze4));
+    }), _GlobalHandlers);
 
     var torrentPageTorrents = document.querySelectorAll('.group_torrent>td>a[href*="&torrentid="]');
+    var p = new TorrentPropertyParser();
     for (var t = 0; t < torrentPageTorrents.length; t++) {
         var link = torrentPageTorrents[t];
         link.classList.add('userscript-highlight');
         link.classList.add('torrent-page');
-        new TorrentPropertyParser(link, link.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ').parse();
+        p.linkElement = link;
+        p.delim = link.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ';
+        p.parse();
     }
 
     var searchResultTorrents = document.querySelectorAll('.torrent_properties>a[href*="&torrentid="]');
     for (var _t = 0; _t < searchResultTorrents.length; _t++) {
         searchResultTorrents[_t].className += 'userscript-highlight torrent-page';
-        new TorrentPropertyParser(searchResultTorrents[_t], ' | ').parse();
+        p.linkElement = searchResultTorrents[_t];
+        p.delim = ' | ';
+        p.parse();
     }
 
     var bbcodeTorrents = document.querySelectorAll(':not(.group_torrent)>:not(.torrent_properties)>a[href*="&torrentid="]:not([title])');
     for (var _t2 = 0; _t2 < bbcodeTorrents.length; _t2++) {
         var linkElement = bbcodeTorrents[_t2];
         linkElement.classList.add('userscript-highlight');
-        linkElement.classList.add('torrent-page');
+        linkElement.classList.add('torrent-bbcode');
         var textNode = linkElement.firstChild;
         var torrents1 = linkElement.href.indexOf('torrents.php') !== -1;
-        var parser = new TorrentPropertyParser(linkElement, torrents1 ? ' | ' : ' / ');
+        p.linkElement = linkElement;
+        p.delim = torrents1 ? ' | ' : ' / ';
+
         var bbcodeString = textNode.nodeValue.trim();
         var yearIndex = bbcodeString.indexOf('\xa0\xa0[');
         var leftDocFrag = document.createDocumentFragment();
-        if (yearIndex !== -1) {
+        _debug() && console.log('yearIndex: ' + yearIndex);
+        if (yearIndex === -1) continue;else {
             var leftString = bbcodeString.substr(0, yearIndex);
             var year = bbcodeString.substr(yearIndex + 3, 4);
             var dashIndex = torrents1 ? leftString.lastIndexOf(' - ') : leftString.indexOf(' - ');
             var artist = leftString.substr(0, dashIndex);
             var album = leftString.substr(dashIndex + 3);
 
-            leftDocFrag.appendChild(parser.newSpan(artist, torrents1 ? 'title' : 'artist', artist));
+            leftDocFrag.appendChild(p.newSpan(artist, torrents1 ? 'title' : 'artist', artist));
             leftDocFrag.appendChild(document.createTextNode(' - '));
-            leftDocFrag.appendChild(parser.newSpan(album, torrents1 ? 'type' : 'album', album));
+            leftDocFrag.appendChild(p.newSpan(album, torrents1 ? 'type' : 'album', album));
             leftDocFrag.appendChild(document.createTextNode('\xa0\xa0['));
-            leftDocFrag.appendChild(parser.newSpan(year, 'year', year));
+            leftDocFrag.appendChild(p.newSpan(year, 'year', year));
             leftDocFrag.appendChild(document.createTextNode('] ['));
             if (bbcodeString.charAt(bbcodeString.length - 1) === ']') {
                 textNode.nodeValue = bbcodeString.substr(0, bbcodeString.length - 1);
@@ -542,9 +583,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             textNode.splitText(leftString.length + 10);
             linkElement.removeChild(textNode);
         }
-        parser.parse();
+        p.parse();
         linkElement.insertBefore(leftDocFrag, linkElement.firstChild);
-        linkElement.appendChild(document.createTextNode(']'));
+        if (yearIndex !== -1) linkElement.appendChild(document.createTextNode(']'));
     }
 })();
 
