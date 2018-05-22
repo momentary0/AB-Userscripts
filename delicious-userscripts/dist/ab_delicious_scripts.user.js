@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AnimeBytes delicious user scripts (updated)
 // @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.8
+// @version 2.0.1.9
 // @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
 // @grant GM_getValue
 // @grant GM_setValue
@@ -190,7 +190,7 @@
         // @author      Megure, TheFallingMan
         // @description Select text and press CTRL+V to quote
         // @include     https://animebytes.tv/*
-        // @version     0.2.2.2
+        // @version     0.2.3
         // @icon        http://animebytes.tv/favicon.ico
         // ==/UserScript==
         
@@ -290,6 +290,13 @@
              * @param {Range} range Selection range to quote.
              */
             function QUOTEMANY(range) {
+                /**
+                 * Removes all siblings of 'node' which occur before or after it,
+                 * depending on the value of 'prev'.
+                 *
+                 * @param {Node} node
+                 * @param {boolean} prev
+                 */
                 function removeChildren(node, prev) {
                     if (node === null || node.parentNode === null) return;
                     if (prev === true)
@@ -300,41 +307,175 @@
                             node.parentNode.removeChild(node.parentNode.lastChild);
                     removeChildren(node.parentNode, prev);
                 }
+                /**
+                 * Essentailly indexOf for any array-like object.
+                 *
+                 * @param {Array} arr
+                 * @param {object} elem
+                 */
                 function inArray(arr, elem) {
                     for (var i = 0; i < arr.length; i++) {
                         if (arr[i] === elem)
                             return i;
                     }
+                    _debug && console.log(elem);
                     return -1;
+                }
+        
+                // TODO: refactor bbcodeChildren to use these functions.
+        
+                /**
+                 *
+                 * @param {HTMLElement} quoteNode
+                 */
+                function isSmartQuote(quoteNode) {
+                    try {
+                        var colon = quoteNode.previousSibling;
+                        var link = colon.previousSibling;
+                        var span = link.firstElementChild;
+                        var strong = link.previousElementSibling;
+                        return (colon.nodeValue === ':\n'
+                            && span.tagName.toUpperCase() === 'SPAN'
+                            && span.title
+                            && link.tagName.toUpperCase() === 'A'
+                            && link.textContent.slice(0, 6) === 'wrote '
+                            && strong.tagName.toUpperCase() === 'STRONG'
+                            && strong.firstElementChild.href.indexOf('/user.php?id=') !== -1);
+                    } catch (e) {
+                        return false;
+                    }
+                }
+        
+                function isUsernameQuote(quoteNode) {
+                    try {
+                        var wrote = quoteNode.previousSibling;
+                        var strong = wrote.previousSibling;
+                        return (wrote.nodeValue === ' wrote:\n'
+                            && strong.nodeType === Node.ELEMENT_NODE
+                            && strong.tagName.toUpperCase() === 'STRONG'
+                            && strong.childNodes.length === 1
+                            && strong.firstChild.nodeType === Node.TEXT_NODE
+                        );
+                    } catch (e) {
+                        return false;
+                    }
+                }
+        
+                /**
+                 * Returns a new documentFragment containing 'num' many nodes
+                 * which are previous siblings of 'node', cloned.
+                 * Assumes said siblings exist.
+                 *
+                 * @param {number} num
+                 * @param {Node} node
+                 */
+                function savePreviousNodes(num, node) {
+                    var docFrag = document.createDocumentFragment();
+                    var index = inArray(node.parentNode.childNodes, node);
+                    for (var q = 0; q < num; q++) {
+                        docFrag.appendChild(
+                            node.parentNode.childNodes[index-num+q].cloneNode(true));
+                    }
+                    return docFrag;
+                }
+        
+                /**
+                 * Array of [number, docFrag] pairs where number is a
+                 * data-hyper-quote value referencing a unique node
+                 * and the corresponding document fragment
+                 * contains the nodes to insert before it.
+                 *
+                 * @type {[number, DocumentFragment][]}
+                 */
+                var savedPreviousNodes = [];
+                /**
+                 * Checks if 'node' has previous siblings which should be kept
+                 * (e.g. usernames of quotes or buttons of spoilers).
+                 *
+                 * @param {Node} node
+                 */
+                function preserveIfNeeded(node) {
+                    var numToSave = 0;
+                    if (isSmartQuote(node))
+                        numToSave = 4;
+                    else if (isUsernameQuote(node))
+                        numToSave = 2;
+        
+                    if (numToSave) {
+                        var num;
+                        if (savedPreviousNodes.length) num = savedPreviousNodes.slice(-1)[0] + 1;
+                        else num = 1;
+                        var pair = [num, savePreviousNodes(numToSave, node)];
+                        node.dataset['hyperQuote'] = num;
+                        savedPreviousNodes.push(pair);
+                        return pair;
+                    }
+                    return null;
+                }
+        
+                /**
+                 * Traverses upwards from 'node' to the topmost element in the document.
+                 *
+                 * If preserve is true, will check for previous nodes to preserve.
+                 *
+                 * @param {Node} bottomNode
+                 * @param {boolean} preserve
+                 * @returns {[Node, number[]]} Tuple of topmost parent element and array of indexes.
+                 */
+                function traverseUpwards(bottomNode, preserve) {
+                    var path = [];
+                    while (bottomNode.parentNode !== null) {
+                        path.push(inArray(bottomNode.parentNode.childNodes, bottomNode));
+                        if (preserve)
+                            preserveIfNeeded(bottomNode);
+                        bottomNode = bottomNode.parentNode;
+                    }
+                    return [bottomNode, path];
+                }
+        
+                /**
+                 * Reverse of traverseUpwards,
+                 * descending to the element in the original position using a known
+                 * array of indexes.
+                 *
+                 * @param {Node} topNode
+                 * @param {number[]} path
+                 */
+                function traverseDownwards(topNode, path) {
+                    for (var i = path.length - 1; i >= 0; i--) {
+                        if (path[i] === -1) return;
+                        topNode = topNode.childNodes[path[i]];
+                    }
+                    return topNode;
                 }
         
                 if (range.collapsed === true) return;
         
-                var html1, html2, copy, res, start = [], end = [], startNode, endNode;
-                html1 = range.startContainer;
-                while (html1.parentNode !== null) {
-                    start.push(inArray(html1.parentNode.childNodes, html1));
-                    html1 = html1.parentNode;
-                }
-                html2 = range.endContainer;
-                while (html2.parentNode !== null) {
-                    end.push(inArray(html2.parentNode.childNodes, html2));
-                    html2 = html2.parentNode;
-                }
+                // Goes from the startContainer to root document node, storing its
+                // path in 'start'.
+                var html1 = range.startContainer;
+                var t = traverseUpwards(html1, true);
+                var html1 = t[0];
+                var start = t[1];
+        
+                // Similarly for the endContainer.
+                var html2 = range.endContainer;
+                var u = traverseUpwards(html2, false);
+                var html2 = u[0];
+                var end = u[1];
+        
+                // These should be equal as they originate from the same <html> tag.
                 if (html1 !== html2 || html1 === null) return;
-                copy = html1.cloneNode(true);
+                // Take a copy which we can edit as we need.
+                var htmlCopy = html1.cloneNode(true);
         
-                startNode = copy;
-                for (var i = start.length - 1; i >= 0; i--) {
-                    if (start[i] === -1) return;
-                    startNode = startNode.childNodes[start[i]];
-                }
-                endNode = copy;
-                for (var i = end.length - 1; i >= 0; i--) {
-                    if (end[i] === -1) return;
-                    endNode = endNode.childNodes[end[i]];
-                }
+                // Descends the copied HTML tree to get to the startContainer
+                // and endContainer, using the indexes stored previously.
+                var startNode = traverseDownwards(htmlCopy, start);
+                var endNode = traverseDownwards(htmlCopy, end);
         
+                // Slices the start and end containers so they contain only
+                // the selected text.
                 if (endNode.nodeType === 3)
                     endNode.data = endNode.data.substr(0, range.endOffset);
                 else if (endNode.nodeType === 1)
@@ -348,13 +489,71 @@
                             startNode.removeChild(startNode.firstChild);
                 }
         
+                // Removes all elements before startNode and after endNode.
                 removeChildren(startNode, true);
                 removeChildren(endNode, false);
         
-                var posts = copy.querySelectorAll('div[id^="post"],div[id^="msg"]');
-                for (var i = 0; i < posts.length; i++)
-                {
-                    _debug && console.log(posts[i]);
+                // Finds the bottommost element which is a parent of both
+                // startNode and endNode. This is done to find the deepest quote
+                // which was quoted.
+                // Implemented by searching recursing downwards while the parent node
+                // only has one child or one whild + whitespace.
+                var commonRoot = htmlCopy;
+                var rootQuote = null;
+                var secondChild = null; // Set in 'while' conditional.
+                while ( // I'm really sorry about this code ;-;
+                    (commonRoot.childNodes.length === 1) // If only one child, the result is obvious.
+                    || (
+                        commonRoot.childNodes.length === 2 // If 2 children.
+                        && (secondChild = commonRoot.childNodes[1])
+                        && ( // If second child is a text node, we require it be whitespace.
+                            (secondChild.nodeType === Node.TEXT_NODE && !secondChild.nodeValue.trim())
+                            || // If it is an element, we require it to be <br>.
+                            (secondChild.tagName && secondChild.tagName.toUpperCase() === 'BR')
+                        )
+                    )
+                ) {
+                    // If these conditions hold, the child is a common parent of both
+                    // startNode and endNode, as other elements were deleted earlier.
+                    commonRoot = commonRoot.firstChild;
+                    // Moreover, if it's a quote, we store it so we only quote within
+                    // the deepest common quote.
+                    if (commonRoot.classList && commonRoot.classList.contains('blockquote')) {
+                        rootQuote = commonRoot;
+                    }
+                }
+        
+                // Restores extra nodes before a quote such as username and link.
+                // Must be done after the common root checking otherwise it will
+                // mess up the process.
+                for (var i = 0; i < savedPreviousNodes.length; i++) {
+                    // Use selectors on the copied HTML tree to find the corresponding
+                    // nodes.
+                    var selector = '[data-hyper-quote="'+savedPreviousNodes[i][0]+'"]';
+                    var copyNode = htmlCopy.querySelector(selector);
+                    copyNode.parentNode.insertBefore(savedPreviousNodes[i][1], copyNode);
+        
+                    // Delete original document's data-hyper-quote attribute.
+                    // We don't care about htmlCopy's attributes as it gets reset
+                    // every time.
+                    delete document.querySelector(selector).dataset['hyperQuote'];
+                }
+                savedPreviousNodes = [];
+        
+                // If there is a [quote] common to start and end. In other worse,
+                // the selection is contained entirely within one quote.
+                if (rootQuote) {
+                    // Then, we only quote within the deepest quote, as that makes
+                    // the most sense.
+                    var sel = document.getElementById('quickpost');
+                    sel.value += bbcodeChildrenTrim(rootQuote.parentNode);
+                    sel.scrollIntoView();
+                    return;
+                }
+        
+                // Otherwise, quote as usual.
+                var posts = htmlCopy.querySelectorAll('div[id^="post"],div[id^="msg"]');
+                for (var i = 0; i < posts.length; i++) {
                     QUOTEONE(posts[i]);
                 }
             }
@@ -364,7 +563,7 @@
              *
              * @param {HTMLDivElement} postDiv
              */
-            function bbcodePostDiv(postDiv) {
+            function bbcodeChildrenTrim(postDiv) {
                 return bbcodeChildren(postDiv).trim();
             }
         
@@ -464,8 +663,7 @@
                         );
                     } catch (exception) { _debug && console.log(exception); }
                     if (isBasicQuote) {
-                        bbcodeString += ('[quote='+thisNode.firstChild.nodeValue+']'
-                            +bbcodeChildren(parentNode.childNodes[i+2])+'\n[/quote]');
+                        bbcodeString += bbcodeQuote(thisNode.firstChild.nodeValue, parentNode.childNodes[i+2]);
                         i += 2;
                         continue;
                     }
@@ -503,6 +701,22 @@
                 }
                 return bbcodeString;
             }
+        
+            /**
+             * Returns a quote BBCode, with quoteName as the = parameter, containing
+             * the contents of quoteNode.
+             *
+             * @param {string} quoteName
+             * @param {HTMLQuoteElement} quoteNode
+             */
+            function bbcodeQuote(quoteName, quoteNode) {
+                var contents = bbcodeChildrenTrim(quoteNode);
+                return (
+                    '[quote'+(quoteName?'='+quoteName:'')+']\n'
+                    +contents
+                    +'\n[/quote]\n');
+            }
+        
             /**
              * Returns an appropriate [quote] tag using a post number.
              *
@@ -522,7 +736,7 @@
                     // We have to be careful with newlines otherwise too much whitespace
                     // will be added.
                     if (id)
-                        return '[quote=' + quoteType + id[1] + ']' + bbcodeChildren(quoteNode) + '\n[/quote]';
+                        return bbcodeQuote(quoteType + id[1], quoteNode)
                 }
                 // We shouldn't ever reach this.
                 return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
@@ -568,7 +782,7 @@
                     return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]';
                 }
                 if (divNode.classList.contains('codeBox')) {
-                    return '[code]\n'+divNode.firstElementChild.firstChild.nodeValue+'\n[/code]';
+                    return '[code]'+divNode.firstElementChild.firstChild.nodeValue+'[/code]';
                 }
                 if (divNode.classList.contains('spoilerContainer')) {
                     return bbcodeSpoiler(divNode);
@@ -606,7 +820,7 @@
                     label = label.slice(1); // slice space.
                 }
                 return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
-                    bbcodeChildren(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
+                    bbcodeChildrenTrim(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
             }
         
         
@@ -823,7 +1037,7 @@
                     case 'A': return bbcodeLink(node);
                     case 'IMG': return bbcodeImage(node);
                     case 'IFRAME': return bbcodeIframe(node);
-                    case 'BLOCKQUOTE': return '[quote]'+bbcodeChildren(node)+'[/quote]';
+                    case 'BLOCKQUOTE': return bbcodeQuote('', node);
                     case 'HR': return '[hr]';
                     case 'TABLE': return bbcodeChildren(node); // crude representation of a table
                     case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
@@ -844,7 +1058,7 @@
             function QUOTEONE(post) {
                 //_debug && console.log(post.querySelector('div.post,div.body').innerHTML);
                 //var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
-                var res = bbcodePostDiv(post.querySelector('div.post, div.body'));
+                var res = bbcodeChildrenTrim(post.querySelector('div.post, div.body'));
                 var author, creation, postid, type = '';
                 if (res === '') return;
         
