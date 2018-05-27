@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name        AB Better Image Upload
 // @author      TheFallingMan
-// @description Click and drag files, and upload from clipboard.
-// @include       https://animebytes.tv/*
+// @description Drag and drop, and paste images to upload.
+// @include     https://animebytes.tv/*
 // @version     0.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
@@ -19,8 +19,10 @@
     function highlightBox(ev) {
         dragEnters++;
         // #323442 solid 1px
-        formContainer.style.border = 'grey solid 1px';
-        uploadFormDiv.style.pointerEvents = 'none';
+        if (dragEnters === 1) {
+            formContainer.style.border = 'grey solid 1px';
+            uploadFormDiv.style.pointerEvents = 'none';
+        }
 
         ev.preventDefault();
     }
@@ -95,16 +97,32 @@
             inputContainer.insertBefore(inputElement, inputContainer.firstChild);
         }
 
-        var rootSpan = document.createElement('span');
+        var rootSpan = document.createElement('div');
+        rootSpan.style.margin = '5px';
         for (var i = 0; i < fileList.length; i++) {
-            var imageSpan = document.createElement('span');
+            var imageSpan = document.createElement('div');
+            imageSpan.style.display = 'inline-block';
+            imageSpan.style.marginLeft = '5px';
+            imageSpan.style.marginRight = '5px';
 
             var imageLink = document.createElement('a');
-            imageLink.textContent = fileList[i].name;
+
+            var image = (function() {
+                var image2 = document.createElement('img');
+                scaleImage(fileList[i], function(url) {
+                    image2.src = url;
+                });
+                return image2;
+            })();
+            imageLink.appendChild(image);
+            imageLink.appendChild(document.createElement('br'));
+
+            imageLink.appendChild(document.createTextNode(fileList[i].name + ' ('));
             imageLink.href = window.URL.createObjectURL(fileList[i]);
             imageLink.target = '_blank';
+            imageLink.style.color = 'inherit';
             imageSpan.appendChild(imageLink);
-            imageSpan.appendChild(document.createTextNode(' ('));
+
             var removeLink = document.createElement('a');
             removeLink.textContent = 'remove';
             removeLink.onclick = function() {
@@ -140,6 +158,82 @@
         validateAndAddFiles(files);
         ev.preventDefault();
         return false;
+    }
+
+    function scaleImage(imageFile, callback) {
+        // Adapted from https://stackoverflow.com/a/39637827
+        var img = new Image();
+        var MAX_HEIGHT = 150;
+        var MAX_WIDTH = 250;
+        img.onload = function() {
+            var canvas = document.createElement('canvas'),
+                ctx = canvas.getContext("2d"),
+                ocanvas = document.createElement('canvas'),
+                octx = ocanvas.getContext('2d');
+
+            var targetScalingFactor = Math.min(MAX_HEIGHT/img.height, MAX_WIDTH/img.width);
+
+            if (targetScalingFactor >= 1) {
+                callback(img.src);
+                return;
+            }
+            var currentScalingFactor = 1;
+            var cur = {
+                width: img.width,
+                height: img.height,
+            };
+
+            ocanvas.width = cur.width;
+            ocanvas.height = cur.height;
+            canvas.width = cur.width;
+            canvas.height = cur.height;
+
+            octx.drawImage(img, 0, 0, cur.width, cur.height);
+            var nextDestOCanvas = false;
+            var srcCanvas, srcCtx, destCanvas, destCtx;
+            var old;
+            while (currentScalingFactor/2 >= targetScalingFactor) {
+                srcCanvas = !nextDestOCanvas ? ocanvas : canvas;
+                srcCtx = !nextDestOCanvas ? octx : ctx;
+                destCanvas = nextDestOCanvas ? ocanvas : canvas;
+                destCtx = nextDestOCanvas ? octx : ctx;
+
+                nextDestOCanvas = !nextDestOCanvas;
+
+                currentScalingFactor /= 2;
+                old = {
+                    width: cur.width,
+                    height: cur.height
+                };
+                cur = {
+                    width: Math.ceil(cur.width * 0.5),
+                    height: Math.ceil(cur.height * 0.5)
+                };
+                destCtx.clearRect(0, 0, cur.width, cur.height);
+                destCtx.drawImage(srcCanvas, 0, 0, old.width, old.height, 0, 0, cur.width, cur.height);
+            }
+
+            srcCanvas = !nextDestOCanvas ? ocanvas : canvas;
+            srcCtx = !nextDestOCanvas ? octx : ctx;
+            destCanvas = nextDestOCanvas ? ocanvas : canvas;
+            destCtx = nextDestOCanvas ? octx : ctx;
+
+            var targetWidth = Math.ceil(img.width * targetScalingFactor);
+            var targetHeight = Math.ceil(img.height * targetScalingFactor);
+            destCanvas.width = targetWidth;
+            destCanvas.height = targetHeight;
+
+            destCtx.clearRect(0, 0, targetWidth, targetHeight);
+            destCtx.drawImage(srcCanvas, 0, 0, cur.width, cur.height,
+                0, 0, targetWidth, targetHeight);
+            callback(destCanvas.toDataURL('image/png'));
+        };
+
+        var fileReader = new FileReader();
+        fileReader.onload = function(ev) {
+            img.src = ev.target.result;
+        };
+        fileReader.readAsDataURL(imageFile);
     }
 
     document.addEventListener('paste', pasteHandler, false);
