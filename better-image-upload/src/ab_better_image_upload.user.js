@@ -194,8 +194,7 @@
                 height: img.height,
             };
 
-            var halfScalingFactor = 2^Math.floor(-Math.log2(targetScalingFactor)/2);
-            //debugger;
+            var halfScalingFactor = Math.pow(2, Math.floor(-Math.log2(targetScalingFactor)));
             console.log('original: ', cur.width, cur.height);
             if (halfScalingFactor > 1) {
                 ocanvas.width = cur.width;
