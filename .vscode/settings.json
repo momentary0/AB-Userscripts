@@ -1,5 +1,5 @@
 {
     "cSpell.enabled": false,
-    "eslint.enable": false,
+    "eslint.enable": true,
     "files.trimTrailingWhitespace": true
 }
