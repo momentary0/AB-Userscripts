@@ -97,7 +97,7 @@
             inputContainer.insertBefore(inputElement, inputContainer.firstChild);
         }
 
-        var rootSpan = document.createElement('div');
+        var rootSpan = document.createElement('span');
         rootSpan.style.margin = '5px';
         for (var i = 0; i < fileList.length; i++) {
             var imageSpan = document.createElement('div');
@@ -125,9 +125,20 @@
 
             var removeLink = document.createElement('a');
             removeLink.textContent = 'remove';
-            removeLink.onclick = function() {
+            removeLink.onclick = function(ev) {
                 inputElement.parentNode.removeChild(inputElement);
-                rootSpan.parentNode.removeChild(rootSpan);
+                rootSpan.style.transitionProperty = 'opacity';
+                rootSpan.style.transitionDuration = '200ms';
+                rootSpan.style.opacity = '0';
+
+                var links = ev.target.parentElement.parentElement.querySelectorAll('a[href^="blob:"]');
+                for (let i = 0; i < links.length; i++) {
+                    console.log(links[i].href);
+                    window.URL.revokeObjectURL(links[i].href);
+                }
+                setTimeout(function() {
+                    rootSpan.parentNode.removeChild(rootSpan);
+                }, 200);
             };
             removeLink.style.cursor = 'pointer';
             imageSpan.appendChild(removeLink);
@@ -163,85 +174,79 @@
     function scaleImage(imageFile, callback) {
         // Adapted from https://stackoverflow.com/a/39637827
         var img = new Image();
-        var MAX_HEIGHT = 150;
-        var MAX_WIDTH = 250;
+        var MAX_HEIGHT = 175;
+        var MAX_WIDTH = 300;
         img.onload = function() {
-            var canvas = document.createElement('canvas'),
-                ctx = canvas.getContext("2d"),
-                ocanvas = document.createElement('canvas'),
-                octx = ocanvas.getContext('2d');
-
             var targetScalingFactor = Math.min(MAX_HEIGHT/img.height, MAX_WIDTH/img.width);
 
             if (targetScalingFactor >= 1) {
                 callback(img.src);
                 return;
             }
-            var currentScalingFactor = 1;
+
+            var canvas = document.createElement('canvas'),
+                ctx = canvas.getContext("2d"),
+                ocanvas = document.createElement('canvas'),
+                octx = ocanvas.getContext('2d');
+
             var cur = {
                 width: img.width,
                 height: img.height,
             };
 
-            ocanvas.width = cur.width;
-            ocanvas.height = cur.height;
-            canvas.width = cur.width;
-            canvas.height = cur.height;
-
-            octx.drawImage(img, 0, 0, cur.width, cur.height);
-            var nextDestOCanvas = false;
-            var srcCanvas, srcCtx, destCanvas, destCtx;
-            var old;
-            while (currentScalingFactor/2 >= targetScalingFactor) {
-                srcCanvas = !nextDestOCanvas ? ocanvas : canvas;
-                srcCtx = !nextDestOCanvas ? octx : ctx;
-                destCanvas = nextDestOCanvas ? ocanvas : canvas;
-                destCtx = nextDestOCanvas ? octx : ctx;
-
-                nextDestOCanvas = !nextDestOCanvas;
-
-                currentScalingFactor /= 2;
-                old = {
-                    width: cur.width,
-                    height: cur.height
-                };
+            var halfScalingFactor = 2^Math.floor(-Math.log2(targetScalingFactor)/2);
+            //debugger;
+            console.log('original: ', cur.width, cur.height);
+            if (halfScalingFactor > 1) {
+                ocanvas.width = cur.width;
+                ocanvas.height = cur.height;
                 cur = {
-                    width: Math.ceil(cur.width * 0.5),
-                    height: Math.ceil(cur.height * 0.5)
+                    width: Math.ceil(img.width/halfScalingFactor),
+                    height: Math.ceil(img.height/halfScalingFactor),
                 };
-                destCtx.clearRect(0, 0, cur.width, cur.height);
-                destCtx.drawImage(srcCanvas, 0, 0, old.width, old.height, 0, 0, cur.width, cur.height);
+                console.log('half scaled: ', cur.width, cur.height);
+                octx.drawImage(img, 0, 0, img.width, img.height,
+                    0, 0, cur.width, cur.height);
             }
-
-            srcCanvas = !nextDestOCanvas ? ocanvas : canvas;
-            srcCtx = !nextDestOCanvas ? octx : ctx;
-            destCanvas = nextDestOCanvas ? ocanvas : canvas;
-            destCtx = nextDestOCanvas ? octx : ctx;
 
             var targetWidth = Math.ceil(img.width * targetScalingFactor);
             var targetHeight = Math.ceil(img.height * targetScalingFactor);
-            destCanvas.width = targetWidth;
-            destCanvas.height = targetHeight;
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
 
-            destCtx.clearRect(0, 0, targetWidth, targetHeight);
-            destCtx.drawImage(srcCanvas, 0, 0, cur.width, cur.height,
+            ctx.drawImage(halfScalingFactor > 1 ? ocanvas : img,
+                0, 0, cur.width, cur.height,
                 0, 0, targetWidth, targetHeight);
-            callback(destCanvas.toDataURL('image/png'));
-        };
+            console.log('final: ', targetWidth, targetHeight);
+            callback(canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg'));
 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            octx.clearRect(0, 0, ocanvas.width, ocanvas.height);
+        };
         var fileReader = new FileReader();
         fileReader.onload = function(ev) {
             img.src = ev.target.result;
+            fileReader = null;
         };
         fileReader.readAsDataURL(imageFile);
+    }
+    // Adapted from https://stackoverflow.com/a/45122479
+    function hasAlpha (context, canvas) {
+        var data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (var i = 3, n = data.length; i < n; i+=4) {
+            if (data[i] < 255) {
+                return true;
+            }
+        }
+        return false;
     }
 
     document.addEventListener('paste', pasteHandler, false);
 
-    formContainer.addEventListener('dragover', function(ev) {
+    document.addEventListener('dragover', function(ev) {
         ev.preventDefault(); return false;
     });
-    formContainer.addEventListener('dragenter', highlightBox);
-    formContainer.addEventListener('dragleave', unhighlightBox);
-    formContainer.addEventListener('drop', onDrop, false);
+    document.addEventListener('dragenter', highlightBox);
+    document.addEventListener('dragleave', unhighlightBox);
+    document.addEventListener('drop', onDrop, false);
 })();
