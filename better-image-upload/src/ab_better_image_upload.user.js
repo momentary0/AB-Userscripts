@@ -50,17 +50,14 @@
             uploader,
             oldInput
         );
-
-        if (window.location.href.indexOf('?torrentid=') !== -1) {
-            var torrentId = /\?torrentid=(\d+)$/.exec(window.location.href);
+        var torrentIdMatch = /[?&]torrentid=(\d+)$/.exec(window.location.href);
+        if (torrentIdMatch) {
             var headerLink = document.querySelector('h3 a[href^="/torrents"]');
             var inlineLink = uploadFormDiv.querySelector('a[href="' + headerLink.getAttribute('href') + '"]');
-            headerLink.href = headerLink.href + '&torrentid=' + torrentId[1];
-            inlineLink.href = inlineLink.href + '&torrentid=' + torrentId[1];
+            headerLink.href = headerLink.href + '&torrentid=' + torrentIdMatch[1];
+            inlineLink.href = inlineLink.href + '&torrentid=' + torrentIdMatch[1];
         }
     }
-    replaceUploadForm();
-
     function inputOnChange(ev) {
         ev.preventDefault();
         if (validateAndAddFiles(ev.target.files, ev.target))
@@ -105,36 +102,22 @@
             inputContainer.insertAdjacentElement('afterbegin', inputElement);
         }
 
-        // TODO: CSS
         var rootSpan = document.createElement('div');
-        rootSpan.style.margin = '5px';
-        rootSpan.style.display = 'inline-block';
+        rootSpan.className = 'item';
         for (var i = 0; i < fileList.length; i++) {
             var file = fileList[i];
-            console.log(file);
+
             var thisDiv = document.createElement('div');
-            thisDiv.className = 'item';
-            thisDiv.style.display = 'inline-block';
-            thisDiv.style.marginLeft = '5px';
-            thisDiv.style.marginRight = '5px';
-            thisDiv.style.maxWidth = '300px';
-            thisDiv.style.overflow = 'hidden';
-            thisDiv.style.textOverflow = 'ellipsis';
+            thisDiv.className = 'item-container';
 
             var imageLink = document.createElement('a');
-
             var innerDiv = (function() {
                 var innerDiv = document.createElement('div');
-                innerDiv.style.fontSize = '85%';
-                innerDiv.style.lineHeight = '1.4em';
-                var image2 = document.createElement('img');
-                image2.title = file.name;
-                image2.alt = file.name;
-                innerDiv.appendChild(image2);
-                innerDiv.appendChild(document.createElement('br'));
+                innerDiv.className = 'thumbnail-container';
 
                 scaleImage(file, function(obj) {
-                    image2.src = obj.thumbnail;
+                    innerDiv.appendChild(obj.thumbnail);
+                    innerDiv.appendChild(document.createElement('br'));
                     innerDiv.appendChild(document.createTextNode(
                         formatBytes(obj.size, 2) + ' (' + obj.width + '\xD7' + obj.height + ')'
                     ));
@@ -185,7 +168,7 @@
         return parseFloat(
             (numBytes / Math.pow(BYTE_BASE, magnitude)).toFixed(decimals)
         ) + ' ' + BYTE_UNITS[magnitude];
-     }
+    }
     function newImageInput() {
         var newInput = document.createElement('input');
         newInput.type = 'file';
@@ -209,17 +192,22 @@
         return false;
     }
 
+    var CANVAS_HEIGHT = 200;
+    var CANVAS_WIDTH = 300;
+
+
+    var CSS_FINAL_RESIZE = true;
+    var CSS_ALL_RESIZING = false;
     function scaleImage(imageFile, callback) {
         // Adapted from https://stackoverflow.com/a/39637827
         var img = new Image();
-        var MAX_HEIGHT = 175;
-        var MAX_WIDTH = 300;
         img.onload = function() {
-            var targetScalingFactor = Math.min(MAX_HEIGHT/img.height, MAX_WIDTH/img.width);
+            var targetScalingFactor = Math.min(CANVAS_HEIGHT/img.height, CANVAS_WIDTH/img.width);
+            var cssScalingFactor = Math.min(IMG_HEIGHT/img.height, IMG_WIDTH/img.width);
 
             if (targetScalingFactor >= 1) {
                 callback({
-                    thumbnail: img.src,
+                    thumbnail: img,
                     width: img.width,
                     height: img.height,
                     size: imageFile.size
@@ -227,48 +215,68 @@
                 return;
             }
 
-            var canvas = document.createElement('canvas'),
-                ctx = canvas.getContext("2d"),
-                ocanvas = document.createElement('canvas'),
-                octx = ocanvas.getContext('2d');
+            if (CSS_ALL_RESIZING) {
+                img.style.height = Math.ceil(img.height*cssScalingFactor) + 'px';
+                callback({
+                    thumbnail: img,
+                    width: img.width,
+                    height: img.height,
+                    size: imageFile.size
+                });
+                return;
+            }
 
             var cur = {
                 width: img.width,
                 height: img.height,
             };
 
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext("2d");
+            var ocanvas = document.createElement('canvas');
+            var octx = ocanvas.getContext("2d");
+
+            var newImg = document.createElement('img');
+            if (CSS_FINAL_RESIZE) {
+                newImg.style.height = Math.ceil(cur.height*cssScalingFactor) + 'px';
+            }
+
             var halfScalingFactor = Math.pow(2, Math.floor(-Math.log2(targetScalingFactor)));
             console.log('original: ', cur.width, cur.height);
             if (halfScalingFactor > 1) {
-                ocanvas.width = cur.width;
-                ocanvas.height = cur.height;
                 cur = {
                     width: Math.ceil(img.width/halfScalingFactor),
                     height: Math.ceil(img.height/halfScalingFactor),
                 };
+                ocanvas.width = cur.width;
+                ocanvas.height = cur.height;
                 console.log('half scaled: ', cur.width, cur.height);
                 octx.drawImage(img, 0, 0, img.width, img.height,
                     0, 0, cur.width, cur.height);
             }
+            if (!CSS_FINAL_RESIZE) {
+                var targetWidth = Math.ceil(img.width * targetScalingFactor);
+                var targetHeight = Math.ceil(img.height * targetScalingFactor);
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
 
-            var targetWidth = Math.ceil(img.width * targetScalingFactor);
-            var targetHeight = Math.ceil(img.height * targetScalingFactor);
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-
-            ctx.drawImage(halfScalingFactor > 1 ? ocanvas : img,
-                0, 0, cur.width, cur.height,
-                0, 0, targetWidth, targetHeight);
-            console.log('final: ', targetWidth, targetHeight);
+                ctx.drawImage(halfScalingFactor > 1 ? ocanvas : img,
+                    0, 0, cur.width, cur.height,
+                    0, 0, targetWidth, targetHeight);
+                console.log('final: ', targetWidth, targetHeight);
+                newImg.src = canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg');
+            } else {
+                newImg.src = ocanvas.toDataURL(hasAlpha(octx, ocanvas) ? 'image/png' : 'image/jpeg');
+            }
             callback({
-                thumbnail: canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg'),
+                thumbnail: newImg,
                 width: img.width,
                 height: img.height,
                 size: imageFile.size
             });
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             octx.clearRect(0, 0, ocanvas.width, ocanvas.height);
+            img = null;
         };
         var fileReader = new FileReader();
         fileReader.onload = function(ev) {
@@ -287,6 +295,33 @@
         }
         return false;
     }
+    function insertCSS() {
+        var style = document.createElement('style');
+        style.type = 'text/css';
+        style.appendChild(document.createTextNode(
+            'div.item {\
+                margin: 5px;\
+                display: inline-block;\
+            }\
+            .item-container {\
+                display: inline-block;\
+                margin-left: 5px;\
+                margin-right: 5px;\
+                max-width: '+((CSS_ALL_RESIZING||CSS_FINAL_RESIZE) ? IMG_WIDTH:CANVAS_WIDTH)+'px;\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
+            }\
+            .thumbnail-container {\
+                font-size: 85%;\
+                line-height: 1.4em;\
+            }\
+            '
+        ));
+        document.head.appendChild(style);
+    }
+
+    insertCSS();
+    replaceUploadForm();
 
     document.addEventListener('paste', pasteHandler, false);
 
