@@ -327,7 +327,7 @@
 
     document.addEventListener('paste', pasteHandler, false);
 
-    var wrapper = document.getElementById('wrapper') || document.bdy;
+    var wrapper = document.getElementById('wrapper') || document.body;
 
     wrapper.addEventListener('dragover', function(ev) {
         ev.preventDefault(); return false;
