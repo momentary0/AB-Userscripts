@@ -195,6 +195,8 @@
     var CANVAS_HEIGHT = 200;
     var CANVAS_WIDTH = 300;
 
+    var IMG_HEIGHT = 100;
+    var IMG_WIDTH = 200;
 
     var CSS_FINAL_RESIZE = true;
     var CSS_ALL_RESIZING = false;
