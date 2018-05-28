@@ -105,6 +105,7 @@
             inputContainer.insertAdjacentElement('afterbegin', inputElement);
         }
 
+        // TODO: CSS
         var rootSpan = document.createElement('span');
         rootSpan.style.margin = '5px';
         for (var i = 0; i < fileList.length; i++) {
@@ -115,6 +116,8 @@
             thisDiv.style.display = 'inline-block';
             thisDiv.style.marginLeft = '5px';
             thisDiv.style.marginRight = '5px';
+            thisDiv.style.wordWrap = 'break-word';
+            thisDiv.style.maxWidth = '250px';
 
             var imageLink = document.createElement('a');
 
