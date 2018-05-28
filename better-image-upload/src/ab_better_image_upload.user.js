@@ -2,7 +2,7 @@
 // @name        AB Better Image Upload
 // @author      TheFallingMan
 // @description Drag and drop, and paste images to upload.
-// @include     https://animebytes.tv/*
+// @include     https://animebytes.tv/imageupload.php
 // @version     0.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
@@ -50,6 +50,14 @@
             uploader,
             oldInput
         );
+
+        if (window.location.href.indexOf('?torrentid=') !== -1) {
+            var torrentId = /\?torrentid=(\d+)$/.exec(window.location.href);
+            var headerLink = document.querySelector('h3 a[href^="/torrents"]');
+            var inlineLink = uploadFormDiv.querySelector('a[href="' + headerLink.getAttribute('href') + '"]');
+            headerLink.href = headerLink.href + '&torrentid=' + torrentId[1];
+            inlineLink.href = inlineLink.href + '&torrentid=' + torrentId[1];
+        }
     }
     replaceUploadForm();
 
