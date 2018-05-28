@@ -92,7 +92,8 @@
         }
         return fileList;
     }
-    var selectedFileList = document.getElementById('uploadQueue_noFlash');
+    var imagePreviewList = document.getElementById('uploadQueue_noFlash');
+    var globalImageCounter = 0;
     function addManyFiles(fileList, inputElement) {
         if (!(fileList && fileList.length)) return false;
         if (!inputElement) {
@@ -102,13 +103,13 @@
             inputContainer.insertAdjacentElement('afterbegin', inputElement);
         }
 
-        var rootSpan = document.createElement('div');
-        rootSpan.className = 'item';
+        globalImageCounter++;
         for (var i = 0; i < fileList.length; i++) {
             var file = fileList[i];
 
             var thisDiv = document.createElement('div');
-            thisDiv.className = 'item-inner';
+            thisDiv.className = 'item';
+            thisDiv.dataset['betterImageUpload'] = globalImageCounter;
 
             var imageLink = document.createElement('a');
             imageLink.href = window.URL.createObjectURL(file);
@@ -140,25 +141,35 @@
             removeLink.className = 'remove';
             removeLink.onclick = function(ev) {
                 inputElement.parentNode.removeChild(inputElement);
-                rootSpan.style.transitionProperty = 'opacity';
-                rootSpan.style.transitionDuration = '200ms';
-                rootSpan.style.opacity = '0';
 
-                var links = ev.target.parentElement.parentElement.querySelectorAll('a[href^="blob:"]');
-                for (var i = 0; i < links.length; i++) {
-                    window.URL.revokeObjectURL(links[i].href);
+                var thisDiv = ev.target.parentElement;
+                var idNum = thisDiv.dataset['betterImageUpload'];
+                var relatedDivs = uploadForm.querySelectorAll(
+                    'div[data-better-image-upload="' + idNum + '"]');
+
+                for (var i = 0; i < relatedDivs.length; i++) {
+                    var div = relatedDivs[i];
+                    div.style.transitionProperty = 'opacity';
+                    div.style.transitionDuration = '200ms';
+                    div.style.opacity = '0';
+
+                    var link = div.querySelector('a[href^="blob:"]');
+                    window.URL.revokeObjectURL(link.href);
                 }
                 setTimeout(function() {
-                    rootSpan.parentNode.removeChild(rootSpan);
-                }, 200);
+                    for (var i = 0; i < relatedDivs.length; i++) {
+                        var div = relatedDivs[i];
+                        div.parentNode.removeChild(div);
+                    }
+                }, 300);
             };
             removeLink.style.cursor = 'pointer';
             thisDiv.appendChild(removeLink);
             thisDiv.appendChild(document.createTextNode(')'));
             thisDiv.appendChild(document.createElement('br'));
-            rootSpan.appendChild(thisDiv);
+            imagePreviewList.appendChild(thisDiv);
         }
-        selectedFileList.appendChild(rootSpan);
+
     }
     // Adapted from https://stackoverflow.com/a/18650828
     var BYTE_UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
@@ -178,7 +189,7 @@
         newInput.name = 'screenshot[]';
         newInput.multiple = true;
         newInput.accept = 'image/*';
-        newInput.dataset['userscriptUpload'] = '';
+        newInput.dataset['betterImageUpload'] = '';
         return newInput;
     }
     function prependNewInput() {
@@ -194,8 +205,8 @@
         return false;
     }
 
-    var CANVAS_HEIGHT = 300;
-    var CANVAS_WIDTH = 600;
+    var CANVAS_HEIGHT = 250;
+    var CANVAS_WIDTH = 500;
 
     var FINAL_HEIGHT = 100;
     var FINAL_WIDTH = 200;
@@ -294,11 +305,6 @@
             'div.item {\
                 margin: 5px;\
                 display: inline-block;\
-            }\
-            .item-inner {\
-                display: inline-block;\
-                margin-left: 5px;\
-                margin-right: 5px;\
                 max-width: '+(FINAL_WIDTH)+'px;\
             }\
             .file-details {\
@@ -309,6 +315,7 @@
             .thumbnail-container {\
                 overflow: hidden;\
                 text-overflow: ellipsis;\
+                white-space: nowrap;\
             }\
             '
         ));
@@ -320,7 +327,7 @@
 
     document.addEventListener('paste', pasteHandler, false);
 
-    var wrapper = document.getElementById('wrapper');
+    var wrapper = document.getElementById('wrapper') || document.bdy;
 
     wrapper.addEventListener('dragover', function(ev) {
         ev.preventDefault(); return false;
