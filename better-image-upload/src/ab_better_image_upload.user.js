@@ -111,27 +111,29 @@
             thisDiv.className = 'item-inner';
 
             var imageLink = document.createElement('a');
+            imageLink.href = window.URL.createObjectURL(file);
+            imageLink.target = '_blank';
+            imageLink.style.color = 'inherit';
             var innerDiv = (function() {
                 var innerDiv = document.createElement('div');
                 innerDiv.className = 'thumbnail-container';
-
+                innerDiv.appendChild(document.createTextNode(file.name));
                 scaleImage(file, function(obj) {
-                    innerDiv.appendChild(obj.thumbnail);
-                    innerDiv.appendChild(document.createElement('br'));
-                    innerDiv.appendChild(document.createTextNode(
-                        formatBytes(obj.size, 2) + ' (' + obj.width + '\xD7' + obj.height + ')'
-                    ));
+                    var fileDetails = document.createElement('div');
+                    fileDetails.className = 'file-details';
+                    fileDetails.textContent =
+                        formatBytes(obj.size, 2) + ' (' + obj.width + '\xD7' + obj.height + ')';
+                    innerDiv.insertAdjacentElement('afterbegin', fileDetails);
+                    innerDiv.insertAdjacentElement('afterbegin', obj.thumbnail);
                 });
 
                 return innerDiv;
             })();
             imageLink.appendChild(innerDiv);
-
-            imageLink.appendChild(document.createTextNode(file.name + ' ('));
-            imageLink.href = window.URL.createObjectURL(file);
-            imageLink.target = '_blank';
-            imageLink.style.color = 'inherit';
             thisDiv.appendChild(imageLink);
+
+            thisDiv.appendChild(document.createTextNode(' ('));
+
 
             var removeLink = document.createElement('a');
             removeLink.textContent = 'remove';
@@ -207,8 +209,8 @@
             var targetScalingFactor = Math.min(CANVAS_HEIGHT/img.height, CANVAS_WIDTH/img.width);
             var finalScalingFactor = Math.min(FINAL_HEIGHT/img.height, FINAL_WIDTH/img.width);
 
-            if (targetScalingFactor >= 1 || SKIP_ALL_RESIZING) {
-                if (targetScalingFactor < 1)
+            if (finalScalingFactor >= 1 || SKIP_ALL_RESIZING) {
+                if (finalScalingFactor < 1)
                     img.style.height = Math.ceil(img.height*finalScalingFactor) + 'px';
                 callback({
                     thumbnail: img,
@@ -233,7 +235,9 @@
             newImg.style.height = Math.ceil(cur.height*finalScalingFactor) + 'px';
 
             var halfScalingFactor = Math.pow(2, Math.floor(-Math.log2(targetScalingFactor)));
-            if (halfScalingFactor > 1) {
+            if (SKIP_LAST_STEP && halfScalingFactor <= 1)
+                halfScalingFactor = 1;
+            if (halfScalingFactor > 1 || SKIP_LAST_STEP) {
                 cur = {
                     width: Math.ceil(img.width/halfScalingFactor),
                     height: Math.ceil(img.height/halfScalingFactor),
@@ -296,12 +300,15 @@
                 margin-left: 5px;\
                 margin-right: 5px;\
                 max-width: '+(FINAL_WIDTH)+'px;\
-                overflow: hidden;\
-                text-overflow: ellipsis;\
+            }\
+            .file-details {\
+                font-size: 85%;\
+                line-height: 1em;\
+                margin-bottom: 5px;\
             }\
             .thumbnail-container {\
-                font-size: 85%;\
-                line-height: 1.4em;\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
             }\
             '
         ));
