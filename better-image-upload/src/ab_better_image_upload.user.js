@@ -106,8 +106,9 @@
         }
 
         // TODO: CSS
-        var rootSpan = document.createElement('span');
+        var rootSpan = document.createElement('div');
         rootSpan.style.margin = '5px';
+        rootSpan.style.display = 'inline-block';
         for (var i = 0; i < fileList.length; i++) {
             var file = fileList[i];
             console.log(file);
@@ -116,8 +117,9 @@
             thisDiv.style.display = 'inline-block';
             thisDiv.style.marginLeft = '5px';
             thisDiv.style.marginRight = '5px';
-            thisDiv.style.wordWrap = 'break-word';
-            thisDiv.style.maxWidth = '250px';
+            thisDiv.style.maxWidth = '300px';
+            thisDiv.style.overflow = 'hidden';
+            thisDiv.style.textOverflow = 'ellipsis';
 
             var imageLink = document.createElement('a');
 
@@ -134,7 +136,7 @@
                 scaleImage(file, function(obj) {
                     image2.src = obj.thumbnail;
                     innerDiv.appendChild(document.createTextNode(
-                        obj.width + '\xD7' + obj.height
+                        formatBytes(obj.size, 2) + ' (' + obj.width + '\xD7' + obj.height + ')'
                     ));
                 });
 
@@ -158,7 +160,7 @@
                 rootSpan.style.opacity = '0';
 
                 var links = ev.target.parentElement.parentElement.querySelectorAll('a[href^="blob:"]');
-                for (let i = 0; i < links.length; i++) {
+                for (var i = 0; i < links.length; i++) {
                     window.URL.revokeObjectURL(links[i].href);
                 }
                 setTimeout(function() {
@@ -173,6 +175,17 @@
         }
         selectedFileList.appendChild(rootSpan);
     }
+    // Adapted from https://stackoverflow.com/a/18650828
+    var BYTE_UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    var BYTE_BASE = 1024;
+    function formatBytes(numBytes, decimals) {
+        if (numBytes === 0) return '0 ' + BYTE_UNITS[0];
+        var magnitude = Math.floor(Math.log(numBytes) / Math.log(BYTE_BASE));
+        // Extra parseFloat is so trailing 0's are removed.
+        return parseFloat(
+            (numBytes / Math.pow(BYTE_BASE, magnitude)).toFixed(decimals)
+        ) + ' ' + BYTE_UNITS[magnitude];
+     }
     function newImageInput() {
         var newInput = document.createElement('input');
         newInput.type = 'file';
@@ -209,6 +222,7 @@
                     thumbnail: img.src,
                     width: img.width,
                     height: img.height,
+                    size: imageFile.size
                 });
                 return;
             }
@@ -249,7 +263,8 @@
             callback({
                 thumbnail: canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg'),
                 width: img.width,
-                height: img.height
+                height: img.height,
+                size: imageFile.size
             });
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
