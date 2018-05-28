@@ -108,7 +108,7 @@
             var file = fileList[i];
 
             var thisDiv = document.createElement('div');
-            thisDiv.className = 'item-container';
+            thisDiv.className = 'item-inner';
 
             var imageLink = document.createElement('a');
             var innerDiv = (function() {
@@ -192,33 +192,24 @@
         return false;
     }
 
-    var CANVAS_HEIGHT = 200;
-    var CANVAS_WIDTH = 300;
+    var CANVAS_HEIGHT = 300;
+    var CANVAS_WIDTH = 600;
 
-    var IMG_HEIGHT = 100;
-    var IMG_WIDTH = 200;
+    var FINAL_HEIGHT = 100;
+    var FINAL_WIDTH = 200;
 
-    var CSS_FINAL_RESIZE = true;
-    var CSS_ALL_RESIZING = false;
+    var SKIP_LAST_STEP = true;
+    var SKIP_ALL_RESIZING = false;
     function scaleImage(imageFile, callback) {
         // Adapted from https://stackoverflow.com/a/39637827
         var img = new Image();
         img.onload = function() {
             var targetScalingFactor = Math.min(CANVAS_HEIGHT/img.height, CANVAS_WIDTH/img.width);
-            var cssScalingFactor = Math.min(IMG_HEIGHT/img.height, IMG_WIDTH/img.width);
+            var finalScalingFactor = Math.min(FINAL_HEIGHT/img.height, FINAL_WIDTH/img.width);
 
-            if (targetScalingFactor >= 1) {
-                callback({
-                    thumbnail: img,
-                    width: img.width,
-                    height: img.height,
-                    size: imageFile.size
-                });
-                return;
-            }
-
-            if (CSS_ALL_RESIZING) {
-                img.style.height = Math.ceil(img.height*cssScalingFactor) + 'px';
+            if (targetScalingFactor >= 1 || SKIP_ALL_RESIZING) {
+                if (targetScalingFactor < 1)
+                    img.style.height = Math.ceil(img.height*finalScalingFactor) + 'px';
                 callback({
                     thumbnail: img,
                     width: img.width,
@@ -239,12 +230,9 @@
             var octx = ocanvas.getContext("2d");
 
             var newImg = document.createElement('img');
-            if (CSS_FINAL_RESIZE) {
-                newImg.style.height = Math.ceil(cur.height*cssScalingFactor) + 'px';
-            }
+            newImg.style.height = Math.ceil(cur.height*finalScalingFactor) + 'px';
 
             var halfScalingFactor = Math.pow(2, Math.floor(-Math.log2(targetScalingFactor)));
-            console.log('original: ', cur.width, cur.height);
             if (halfScalingFactor > 1) {
                 cur = {
                     width: Math.ceil(img.width/halfScalingFactor),
@@ -252,11 +240,10 @@
                 };
                 ocanvas.width = cur.width;
                 ocanvas.height = cur.height;
-                console.log('half scaled: ', cur.width, cur.height);
                 octx.drawImage(img, 0, 0, img.width, img.height,
                     0, 0, cur.width, cur.height);
             }
-            if (!CSS_FINAL_RESIZE) {
+            if (!SKIP_LAST_STEP) {
                 var targetWidth = Math.ceil(img.width * targetScalingFactor);
                 var targetHeight = Math.ceil(img.height * targetScalingFactor);
                 canvas.width = targetWidth;
@@ -265,7 +252,6 @@
                 ctx.drawImage(halfScalingFactor > 1 ? ocanvas : img,
                     0, 0, cur.width, cur.height,
                     0, 0, targetWidth, targetHeight);
-                console.log('final: ', targetWidth, targetHeight);
                 newImg.src = canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg');
             } else {
                 newImg.src = ocanvas.toDataURL(hasAlpha(octx, ocanvas) ? 'image/png' : 'image/jpeg');
@@ -305,11 +291,11 @@
                 margin: 5px;\
                 display: inline-block;\
             }\
-            .item-container {\
+            .item-inner {\
                 display: inline-block;\
                 margin-left: 5px;\
                 margin-right: 5px;\
-                max-width: '+((CSS_ALL_RESIZING||CSS_FINAL_RESIZE) ? IMG_WIDTH:CANVAS_WIDTH)+'px;\
+                max-width: '+(FINAL_WIDTH)+'px;\
                 overflow: hidden;\
                 text-overflow: ellipsis;\
             }\
