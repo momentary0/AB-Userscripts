@@ -94,37 +94,52 @@
             inputElement = newImageInput();
             inputElement.style.display = 'none';
             inputElement.files = fileList;
-            inputContainer.insertBefore(inputElement, inputContainer.firstChild);
+            inputContainer.insertAdjacentElement('afterbegin', inputElement);
         }
 
         var rootSpan = document.createElement('span');
         rootSpan.style.margin = '5px';
         for (var i = 0; i < fileList.length; i++) {
-            var imageSpan = document.createElement('div');
-            imageSpan.style.display = 'inline-block';
-            imageSpan.style.marginLeft = '5px';
-            imageSpan.style.marginRight = '5px';
+            var file = fileList[i];
+            console.log(file);
+            var thisDiv = document.createElement('div');
+            thisDiv.className = 'item';
+            thisDiv.style.display = 'inline-block';
+            thisDiv.style.marginLeft = '5px';
+            thisDiv.style.marginRight = '5px';
 
             var imageLink = document.createElement('a');
 
-            var image = (function() {
+            var innerDiv = (function() {
+                var innerDiv = document.createElement('div');
+                innerDiv.style.fontSize = '85%';
+                innerDiv.style.lineHeight = '1.4em';
                 var image2 = document.createElement('img');
-                scaleImage(fileList[i], function(url) {
-                    image2.src = url;
-                });
-                return image2;
-            })();
-            imageLink.appendChild(image);
-            imageLink.appendChild(document.createElement('br'));
+                image2.title = file.name;
+                image2.alt = file.name;
+                innerDiv.appendChild(image2);
+                innerDiv.appendChild(document.createElement('br'));
 
-            imageLink.appendChild(document.createTextNode(fileList[i].name + ' ('));
-            imageLink.href = window.URL.createObjectURL(fileList[i]);
+                scaleImage(file, function(obj) {
+                    image2.src = obj.thumbnail;
+                    innerDiv.appendChild(document.createTextNode(
+                        obj.width + '\xD7' + obj.height
+                    ));
+                });
+
+                return innerDiv;
+            })();
+            imageLink.appendChild(innerDiv);
+
+            imageLink.appendChild(document.createTextNode(file.name + ' ('));
+            imageLink.href = window.URL.createObjectURL(file);
             imageLink.target = '_blank';
             imageLink.style.color = 'inherit';
-            imageSpan.appendChild(imageLink);
+            thisDiv.appendChild(imageLink);
 
             var removeLink = document.createElement('a');
             removeLink.textContent = 'remove';
+            removeLink.className = 'remove';
             removeLink.onclick = function(ev) {
                 inputElement.parentNode.removeChild(inputElement);
                 rootSpan.style.transitionProperty = 'opacity';
@@ -133,7 +148,6 @@
 
                 var links = ev.target.parentElement.parentElement.querySelectorAll('a[href^="blob:"]');
                 for (let i = 0; i < links.length; i++) {
-                    console.log(links[i].href);
                     window.URL.revokeObjectURL(links[i].href);
                 }
                 setTimeout(function() {
@@ -141,10 +155,10 @@
                 }, 200);
             };
             removeLink.style.cursor = 'pointer';
-            imageSpan.appendChild(removeLink);
-            imageSpan.appendChild(document.createTextNode(')'));
-            imageSpan.appendChild(document.createElement('br'));
-            rootSpan.appendChild(imageSpan);
+            thisDiv.appendChild(removeLink);
+            thisDiv.appendChild(document.createTextNode(')'));
+            thisDiv.appendChild(document.createElement('br'));
+            rootSpan.appendChild(thisDiv);
         }
         selectedFileList.appendChild(rootSpan);
     }
@@ -162,7 +176,7 @@
         var newInput = newImageInput();
         newInput.addEventListener('change',
             inputOnChange, false);
-        inputContainer.insertBefore(newInput, inputContainer.firstChild);
+        inputContainer.insertAdjacentElement('afterbegin', newInput);
     }
     function pasteHandler(ev) {
         var files = (ev.clipboardData || ev.originalEvent.clipboardData).files;
@@ -180,7 +194,11 @@
             var targetScalingFactor = Math.min(MAX_HEIGHT/img.height, MAX_WIDTH/img.width);
 
             if (targetScalingFactor >= 1) {
-                callback(img.src);
+                callback({
+                    thumbnail: img.src,
+                    width: img.width,
+                    height: img.height,
+                });
                 return;
             }
 
@@ -217,7 +235,11 @@
                 0, 0, cur.width, cur.height,
                 0, 0, targetWidth, targetHeight);
             console.log('final: ', targetWidth, targetHeight);
-            callback(canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg'));
+            callback({
+                thumbnail: canvas.toDataURL(hasAlpha(ctx, canvas) ? 'image/png' : 'image/jpeg'),
+                width: img.width,
+                height: img.height
+            });
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             octx.clearRect(0, 0, ocanvas.width, ocanvas.height);
@@ -242,10 +264,12 @@
 
     document.addEventListener('paste', pasteHandler, false);
 
-    document.addEventListener('dragover', function(ev) {
+    var wrapper = document.getElementById('wrapper');
+
+    wrapper.addEventListener('dragover', function(ev) {
         ev.preventDefault(); return false;
     });
-    document.addEventListener('dragenter', highlightBox);
-    document.addEventListener('dragleave', unhighlightBox);
-    document.addEventListener('drop', onDrop, false);
+    wrapper.addEventListener('dragenter', highlightBox);
+    wrapper.addEventListener('dragleave', unhighlightBox);
+    wrapper.addEventListener('drop', onDrop, false);
 })();
