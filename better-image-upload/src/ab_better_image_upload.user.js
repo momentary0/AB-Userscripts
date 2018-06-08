@@ -3,7 +3,7 @@
 // @author      TheFallingMan
 // @description Drag and drop, and paste images to upload.
 // @include     https://animebytes.tv/imageupload.php
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -271,9 +271,11 @@
     }
     function pasteHandler(ev) {
         var files = (ev.clipboardData || ev.originalEvent.clipboardData).files;
-        validateAndAddFiles(files);
-        ev.preventDefault();
-        return false;
+        if (files.length && validateAndAddFiles(files)) {
+            ev.preventDefault();
+            return false;
+        }
+        return true;
     }
 
     // Target resolution for the internal canvas used for scaling.
