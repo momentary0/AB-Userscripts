@@ -2,8 +2,8 @@
 // @name        AB Better Image Upload
 // @author      TheFallingMan
 // @description Drag and drop, and paste images to upload.
-// @include     https://animebytes.tv/imageupload.php
-// @version     0.1.1
+// @include     https://animebytes.tv/*
+// @version     0.1.2
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -13,7 +13,23 @@
      * @type {HTMLDivElement}
      * */
     var uploadFormDiv = document.querySelector('#uploadform');
-    if (!uploadFormDiv) return false;
+    if (!uploadFormDiv) {
+        // If there isn't an upload form and there is a BBCode image button,
+        // we bind ctrl+click to open the image uploader.
+        var imgButton = document.querySelector('[src="/static/common/symbols/image.png"]');
+        if (imgButton) {
+            imgButton.dataset['oldOnclick'] = imgButton.getAttribute('onclick');
+            imgButton.removeAttribute('onclick');
+            imgButton.onclick = function(ev) {
+                if (ev.ctrlKey) {
+                    window.open('/imageupload.php', '_blank');
+                } else {
+                    eval(ev.target.dataset['oldOnclick']);
+                }
+            };
+        }
+        return false;
+    }
     /**
      * The form itself.
      * @type {HTMLFormElement}
@@ -29,6 +45,11 @@
      * @type {HTMLDivElement}
      */
     var formContainer = uploadFormDiv.parentElement;
+
+    /**
+     * `input#uurl` for the URL input.
+     */
+    var urlInput = uploadForm.querySelector('#uurl');
 
     var dragEnters = 0;
     function highlightBox(ev) {
@@ -50,9 +71,17 @@
     }
     function onDrop(ev) {
         unhighlightBox();
-        ev.preventDefault();
-        validateAndAddFiles(ev.dataTransfer.files);
-        return false;
+        if (validateAndAddFiles(ev.dataTransfer.files)) {
+            ev.preventDefault();
+            return false;
+        }
+        // If it is a string, we append it to the URL field.
+        var droppedText = ev.dataTransfer.getData('text');
+        if (droppedText !== '') {
+            urlInput.value += droppedText;
+            ev.preventDefault();
+            return false;
+        }
     }
     /**
      * Initialises the script by replacing default elements with our own.
@@ -113,6 +142,8 @@
      * @returns {boolean | File[]} False if fileList is invalid. fileList otherwise.
      */
     function validateFiles(fileList) {
+        // We consider empty lists invalid.
+        if (fileList.length === 0) return false;
         if (fileList.length > 10) {
             alert('You can select a maximum of 10 files.');
             return false;
@@ -271,7 +302,7 @@
     }
     function pasteHandler(ev) {
         var files = (ev.clipboardData || ev.originalEvent.clipboardData).files;
-        if (files.length && validateAndAddFiles(files)) {
+        if (validateAndAddFiles(files)) {
             ev.preventDefault();
             return false;
         }
@@ -430,6 +461,7 @@
 
     document.addEventListener('paste', pasteHandler, false);
 
+    /** Element to attach drag/drop handlers to. */
     var wrapper = document.getElementById('wrapper') || document.body;
 
     wrapper.addEventListener('dragover', function(ev) {
