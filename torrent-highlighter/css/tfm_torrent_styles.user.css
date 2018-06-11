@@ -18,7 +18,7 @@
     border: 1px solid #d9d9d9;
     word-spacing: normal;
 }
-.group_torrent > td:first-child {
+.torrent_table .group_torrent > td:first-child {
     word-spacing: -0.6ex;
 }
 
