@@ -40,7 +40,7 @@
                     state = func.call(this);
                 } catch (e) {
                     console.error(e);
-                    _debug() && console.log(this.linkElement)
+                    _debug() && console.log(this.linkElement);
                     _debug() && console.log(this.index);
                     _debug() && console.log(this.fields);
                     _debug() && console.log(state);
@@ -158,7 +158,7 @@
         SOURCE: 3,
         LOG: 4,
         CUE: 5
-    })
+    });
     /**
      * @function
      * @typedef {() => number} transitionHandler
@@ -282,7 +282,7 @@
         REGION: 3,
         ARCHIVED: 4,
         SCENE: 5
-    }
+    };
 
     let GameHandlers = ({
         [GlobalStates.BEGIN]: newCaptureHandler('type', GameStates.PLATFORM, false),
@@ -303,7 +303,7 @@
 
     let BookHandlers = {
         [GlobalStates.BEGIN]: function() {
-            let field = this.getNext()
+            let field = this.getNext();
             if (field.indexOf('  (') !== -1) {
                 let translation = field.substr(0, field.indexOf('  ('));
                 let group = field.slice(field.indexOf('  (')+3,
@@ -488,7 +488,7 @@
 
     const bbcodeTorrents = document.querySelectorAll(
         ':not(.group_torrent)>:not(.torrent_properties)>a[href*="&torrentid="]:not([title])'
-    )
+    );
     for (let t = 0; t < bbcodeTorrents.length; t++) {
         let linkElement = bbcodeTorrents[t];
         linkElement.classList.add('userscript-highlight');
