@@ -62,8 +62,8 @@
         var a = document.createElement('a');
         a.style.width = '100%';
         a.style.boxSizing = 'border-box';
-        a.href = links[i]['href'];
-        a.textContent = links[i]['text'];
+        if (links[i]['href']) a.href = links[i]['href'];
+        a.textContent = links[i]['text'] || '';
         li.appendChild(a);
         subnavUL.appendChild(li);
     }
