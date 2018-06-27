@@ -40,269 +40,270 @@ var delicious = (function ABDeliciousLibrary(){
         console.debug(message);
     }
 
-    var settings = {};
+    var _isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
 
-    settings.isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
-    log('Is settings page: ' +settings.isSettingsPage);
+    var settings = {
+        isSettingsPage: _isSettingsPage,
 
-    settings.createSettingsPage = function() {
-        log('Creating settings page...');
-        var settingsDiv = document.createElement('div');
-        settingsDiv.id = 'delicious_settings';
+        createSettingsPage: function() {
+            log('Creating settings page...');
+            var settingsDiv = document.createElement('div');
+            settingsDiv.id = 'delicious_settings';
 
-        var header = document.createElement('div');
-        header.className = 'head colhead_dark strong';
-        header.textContent = 'Userscript Settings';
-        settingsDiv.appendChild(header);
+            var header = document.createElement('div');
+            header.className = 'head colhead_dark strong';
+            header.textContent = 'Userscript Settings';
+            settingsDiv.appendChild(header);
 
-        var settingsList = document.createElement('ul');
-        settingsList.className = 'nobullet ue_list';
+            var settingsList = document.createElement('ul');
+            settingsList.className = 'nobullet ue_list';
 
-        var simpleSection = document.createElement('div');
-        simpleSection.id = 'delicious_basic_settings';
-        settingsList.appendChild(simpleSection);
+            var simpleSection = document.createElement('div');
+            simpleSection.id = 'delicious_basic_settings';
+            settingsList.appendChild(simpleSection);
 
-        settingsDiv.appendChild(settingsList);
+            settingsDiv.appendChild(settingsList);
 
-        return settingsDiv;
-    };
+            return settingsDiv;
+        },
 
-    /**
-     *
-     * @param {MouseEvent} ev
-     */
-    settings._tabLinkClick = function(ev) {
-        log('Clicked tab link: ' + ev.target.textContent);
-        document.querySelector('.ue_tabs .selected').classList.remove('selected');
-        var tabs = document.querySelectorAll('#tabs > div');
-        for (var i = 0; i < tabs.length; i++) {
-            tabs[i].style.display = 'none';
-        }
-        var settingsPage = document.querySelector(ev.target.getAttribute('href'));
-        settingsPage.style.display = 'block';
-
-        ev.target.classList.add('selected');
-        ev.stopPropagation();
-        ev.preventDefault();
-        return false;
-    };
-
-    settings._relinkClickHandlers = function() {
-        log('Rebinding tab click handlers...');
-        var tabLinks = document.querySelectorAll('.ue_tabs a');
-        for (var i = 0; i < tabLinks.length; i++) {
-            tabLinks[i].addEventListener('click', settings._tabLinkClick);
-        }
-    };
-
-    settings._insertSettingsPage = function() {
-        log('Inserting settings page...');
-        var linkItem = document.createElement('li');
-        linkItem.appendChild(document.createTextNode('•'));
-
-        var link = document.createElement('a');
-        link.href = '#delicious_settings';
-        link.textContent = 'Userscript Settings';
-        linkItem.appendChild(link);
-
-        document.querySelector('.ue_tabs').appendChild(linkItem);
-        settings._relinkClickHandlers();
-
-        var page = settings.createSettingsPage();
-        page.style.display = 'none';
-        var tabs = document.querySelector('#tabs');
-
-        tabs.insertBefore(page, tabs.lastElementChild);
-
-        var userform = document.querySelector('form#userform');
-
-        userform.addEventListener('submit', settings.saveAllSettings);
-
-        userform.dataset['onsubmit'] = userform.getAttribute('onsubmit');
-        userform.removeAttribute('onsubmit');
-        log('Previous onsubmit: ' + userform.dataset['onsubmit']);
-    };
-
-    settings._settingsInserted = !settings.isSettingsPage;
-
-    settings._ensureSettingsInserted = function() {
-        if (!settings.isSettingsPage) {
-            if (!settings.rootSettingsList) {
-                settings.basicSettingsDiv = newElement('div',
-                    {id: 'delicious_basic_settings',
-                        className: 'dummy_element'});
-                settings.rootSettingsList = newElement('ul', {className: 'nobullet ue_list'}, [
-                    settings.basicSettingsDiv
-                ]);
+        /**
+         *
+         * @param {MouseEvent} ev
+         */
+        _tabLinkClick: function(ev) {
+            log('Clicked tab link: ' + ev.target.textContent);
+            document.querySelector('.ue_tabs .selected').classList.remove('selected');
+            var tabs = document.querySelectorAll('#tabs > div');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].style.display = 'none';
             }
-            return false;
-        }
+            var settingsPage = document.querySelector(ev.target.getAttribute('href'));
+            settingsPage.style.display = 'block';
 
-        if (!settings._settingsInserted) {
-            log('Settings not yet inserted; inserting...');
-            settings._settingsInserted = true;
-
-            settings._insertSettingsPage();
-            settings.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
-            settings.basicSettingsDiv = settings.rootSettingsList.querySelector('#delicious_basic_settings');
-        }
-        return true;
-    };
-
-    settings.saveAllSettings = function(ev) {
-        log('Saving all settings...');
-        var cancelled = false;
-        var settingsItems = settings.rootSettingsList.querySelectorAll('[data-delicious-key]');
-        for (var i = 0; i < settingsItems.length; i++) {
-            log('Sending save event for setting key: ' + settingsItems[i].dataset['deliciousKey']);
-            var subevent = new Event('delicioussave', {
-                cancelable: true,
-            });
-            if (!settingsItems[i].dispatchEvent(subevent)) {
-                cancelled = true;
-            }
-        }
-        log('Form submit cancelled: ' + cancelled);
-        if (cancelled) {
-            ev.preventDefault();
+            ev.target.classList.add('selected');
             ev.stopPropagation();
+            ev.preventDefault();
             return false;
-        } else {
-            ev.target.removeEventListener('submit', settings.saveAllSettings);
-            ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
-            ev.target.submit();
-        }
-    };
+        },
 
-    settings.saveOneElement = function(element, property) {
-        if (element.dataset['deliciousKey'])
-            settings.set(element.dataset['deliciousKey'], element[property]);
-        else
-            log('Skipping blank: ' + element.outerHTML);
-    };
+        _relinkClickHandlers: function() {
+            log('Rebinding tab click handlers...');
+            var tabLinks = document.querySelectorAll('.ue_tabs a');
+            for (var i = 0; i < tabLinks.length; i++) {
+                tabLinks[i].addEventListener('click', this._tabLinkClick);
+            }
+        },
 
-    settings.set = function(key, value) {
-        /* eslint-disable-next-line no-undef */
-        GM_setValue(key, JSON.stringify(value));
-    };
+        _insertSettingsPage: function() {
+            log('Inserting settings page...');
+            var linkItem = document.createElement('li');
+            linkItem.appendChild(document.createTextNode('•'));
 
-    settings.get = function(key, defaultValue) {
-        /* eslint-disable-next-line no-undef */
-        var value = GM_getValue(key, undefined);
-        if (value !== undefined) {
-            return JSON.parse(value);
-        } else {
-            return defaultValue;
-        }
-    };
+            var link = document.createElement('a');
+            link.href = '#delicious_settings';
+            link.textContent = 'Userscript Settings';
+            linkItem.appendChild(link);
 
-    settings.getExisting = function(key) {
-        return document.getElementById(key);
-    };
+            document.querySelector('.ue_tabs').appendChild(linkItem);
+            this._relinkClickHandlers();
 
-    settings.addScriptCheckbox = function(key, label, description, options) {
-        var existing = settings.getExisting(key);
-        if (existing)
-            return existing;
+            var page = this.createSettingsPage();
+            page.style.display = 'none';
+            var tabs = document.querySelector('#tabs');
 
-        var checkboxLI = settings.createCheckbox(
-            key, label, description, options);
-        checkboxLI.id = key;
-        settings.basicSettingsDiv.appendChild(checkboxLI);
+            tabs.insertBefore(page, tabs.lastElementChild);
 
-        return checkboxLI;
-    };
+            var userform = document.querySelector('form#userform');
 
-    settings.createCheckbox = function(key, label, description, options) {
-        if (options === undefined)
-            options = {};
-        var input = newElement('input', {type: 'checkbox'});
-        input.dataset['deliciousKey'] = key;
+            userform.addEventListener('submit', this.saveAllSettings);
 
-        var defaultValue = options['default'];
-        if (defaultValue === undefined) defaultValue = true;
-        if (settings.get(key, defaultValue)) input.setAttribute('checked', 'checked');
+            userform.dataset['onsubmit'] = userform.getAttribute('onsubmit');
+            userform.removeAttribute('onsubmit');
+            log('Previous onsubmit: ' + userform.dataset['onsubmit']);
+        },
 
-        if (options['onsave'] !== null) {
-            var saveHandler = options['onsave'] || function(ev) {
-                settings.saveOneElement(ev.target, 'checked');
-            };
-            input.addEventListener('delicioussave', saveHandler);
-        }
+        _settingsInserted: !_isSettingsPage,
 
-        var li = newElement('li', {}, [
-            newElement('span', {className: 'ue_left strong', innerHTML: label}),
-            newElement('span', {className: 'ue_right'}, [
-                input,
-                ' ',
-                newElement('label', {innerHTML: description}),
-            ]),
-        ]);
+        _ensureSettingsInserted: function() {
+            if (!this.isSettingsPage) {
+                if (!this.rootSettingsList) {
+                    this.basicSettingsDiv = newElement('div',
+                        {id: 'delicious_basic_settings',
+                            className: 'dummy_element'});
+                    this.rootSettingsList = newElement('ul', {className: 'nobullet ue_list'}, [
+                        this.basicSettingsDiv
+                    ]);
+                }
+                return false;
+            }
 
-        return li;
-    };
+            if (!this._settingsInserted) {
+                log('Settings not yet inserted; inserting...');
+                this._settingsInserted = true;
 
-    settings.createSection = function(title) {
-        var heading = newElement('h3', {innerHTML: title});
-        heading.style.marginTop = '5px';
-        var section = newElement('div', {}, [
-            newElement('li', {}, [heading])
-        ]);
-        return section;
-    };
+                this._insertSettingsPage();
+                this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
+                this.basicSettingsDiv = this.rootSettingsList.querySelector('#delicious_basic_settings');
+            }
+            return true;
+        },
 
-    settings.addScriptSection = function(key, title, description, options) {
-        var existing = settings.getExisting(key);
-        if (existing)
-            return existing;
+        saveAllSettings: function(ev) {
+            log('Saving all settings...');
+            var cancelled = false;
+            var settingsItems = this.rootSettingsList.querySelectorAll('[data-delicious-key]');
+            for (var i = 0; i < settingsItems.length; i++) {
+                log('Sending save event for setting key: ' + settingsItems[i].dataset['deliciousKey']);
+                var subevent = new Event('delicioussave', {
+                    cancelable: true,
+                });
+                if (!settingsItems[i].dispatchEvent(subevent)) {
+                    cancelled = true;
+                }
+            }
+            log('Form submit cancelled: ' + cancelled);
+            if (cancelled) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                return false;
+            } else {
+                ev.target.removeEventListener('submit', this.saveAllSettings);
+                ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
+                ev.target.submit();
+            }
+        },
 
-        var section = settings.createSection(title);
-        section.id = key;
+        saveOneElement: function(element, property) {
+            if (element.dataset['deliciousKey'])
+                this.set(element.dataset['deliciousKey'], element[property]);
+            else
+                log('Skipping blank: ' + element.outerHTML);
+        },
 
-        var enableBox = settings.createCheckbox(key, 'Enabled', description, options);
-        enableBox.style.marginTop = '10px';
-        section.appendChild(enableBox);
+        set: function(key, value) {
+            /* eslint-disable-next-line no-undef */
+            GM_setValue(key, JSON.stringify(value));
+        },
 
-        settings.rootSettingsList.appendChild(section);
-        return section;
-    };
+        get: function(key, defaultValue) {
+            /* eslint-disable-next-line no-undef */
+            var value = GM_getValue(key, undefined);
+            if (value !== undefined) {
+                return JSON.parse(value);
+            } else {
+                return defaultValue;
+            }
+        },
 
-    settings.createTextField = function(key, label, description, options) {
-        options = options || {};
-        var input = newElement('input', {
-            type: 'text',
-            size: options['width'] || 50,
-        });
-        input.value = settings.get(key, options['default'] || '');
-        input.dataset['deliciousKey'] = key;
+        getExisting: function(key) {
+            return document.getElementById(key);
+        },
 
-        var li = newElement('li', {}, [
-            newElement('span', {className: 'ue_left strong', innerHTML: label}),
-            newElement('span', {className: 'ue_right'}, [
-                input,
-                options['lineBreak'] ? newElement('br') : ' ',
-                newElement('span', {innerHTML: description})
-            ])
-        ]);
+        addScriptCheckbox: function(key, label, description, options) {
+            var existing = this.getExisting(key);
+            if (existing)
+                return existing;
 
-        if (options['onsave'] !== null) {
-            var saveHandler = options['onsave'] || function(ev) {
-                settings.saveOneElement(ev.target, 'value');
-            };
-            input.addEventListener('delicioussave', saveHandler);
-        }
+            var checkboxLI = this.createCheckbox(
+                key, label, description, options);
+            checkboxLI.id = key;
+            this.basicSettingsDiv.appendChild(checkboxLI);
 
-        return li;
-    };
+            return checkboxLI;
+        },
 
-    settings.showErrorBox = function(message) {
-        var errorDiv = newElement('div', {
-            className: 'error_message',
-            innerHTML: message
-        });
-        var thinDiv = document.querySelector('div.thin');
-        thinDiv.parentNode.insertBefore(errorDiv, thinDiv);
-        return errorDiv;
+        createCheckbox: function(key, label, description, options) {
+            if (options === undefined)
+                options = {};
+            var input = newElement('input', {type: 'checkbox'});
+            input.dataset['deliciousKey'] = key;
+
+            var defaultValue = options['default'];
+            if (defaultValue === undefined) defaultValue = true;
+            if (this.get(key, defaultValue)) input.setAttribute('checked', 'checked');
+
+            if (options['onsave'] !== null) {
+                var saveHandler = options['onsave'] || function(ev) {
+                    this.saveOneElement(ev.target, 'checked');
+                };
+                input.addEventListener('delicioussave', saveHandler);
+            }
+
+            var li = newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong', innerHTML: label}),
+                newElement('span', {className: 'ue_right'}, [
+                    input,
+                    ' ',
+                    newElement('label', {innerHTML: description}),
+                ]),
+            ]);
+
+            return li;
+        },
+
+        createSection: function(title) {
+            var heading = newElement('h3', {innerHTML: title});
+            heading.style.marginTop = '5px';
+            var section = newElement('div', {}, [
+                newElement('li', {}, [heading])
+            ]);
+            return section;
+        },
+
+        addScriptSection: function(key, title, description, options) {
+            var existing = this.getExisting(key);
+            if (existing)
+                return existing;
+
+            var section = this.createSection(title);
+            section.id = key;
+
+            var enableBox = this.createCheckbox(key, 'Enabled', description, options);
+            enableBox.style.marginTop = '10px';
+            section.appendChild(enableBox);
+
+            this.rootSettingsList.appendChild(section);
+            return section;
+        },
+
+        createTextField: function(key, label, description, options) {
+            options = options || {};
+            var input = newElement('input', {
+                type: 'text',
+                size: options['width'] || 50,
+            });
+            input.value = this.get(key, options['default'] || '');
+            input.dataset['deliciousKey'] = key;
+
+            var li = newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong', innerHTML: label}),
+                newElement('span', {className: 'ue_right'}, [
+                    input,
+                    options['lineBreak'] ? newElement('br') : ' ',
+                    newElement('span', {innerHTML: description})
+                ])
+            ]);
+
+            if (options['onsave'] !== null) {
+                var saveHandler = options['onsave'] || function(ev) {
+                    this.saveOneElement(ev.target, 'value');
+                };
+                input.addEventListener('delicioussave', saveHandler);
+            }
+
+            return li;
+        },
+
+        showErrorBox: function(message) {
+            var errorDiv = newElement('div', {
+                className: 'error_message',
+                innerHTML: message
+            });
+            var thinDiv = document.querySelector('div.thin');
+            thinDiv.parentNode.insertBefore(errorDiv, thinDiv);
+            return errorDiv;
+        },
     };
 
 
