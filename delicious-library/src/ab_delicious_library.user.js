@@ -16,9 +16,11 @@ var delicious = (function ABDeliciousLibrary(){
 
     function newElement(tagName, properties, children) {
         var elem = document.createElement(tagName);
-        for (var key in properties) {
-            if (properties.hasOwnProperty(key)) {
-                elem[key] = properties[key];
+        if (properties) {
+            for (var key in properties) {
+                if (properties.hasOwnProperty(key)) {
+                    elem[key] = properties[key];
+                }
             }
         }
         if (children) {
@@ -58,10 +60,16 @@ var delicious = (function ABDeliciousLibrary(){
         applyDefaults: function(options, defaults) {
             if (!options)
                 return defaults;
-            else
-                return Object.assign(
-                    JSON.parse(JSON.stringify(defaults)),
-                    options);
+            var newObject = {};
+            for (var key in defaults) {
+                if (defaults.hasOwnProperty(key)) {
+                    if (options.hasOwnProperty(key))
+                        newObject[key] = options[key];
+                    else
+                        newObject[key] = defaults[key];
+                }
+            }
+            return newObject;
         },
 
         htmlEscape: function(text) {
@@ -266,8 +274,9 @@ var delicious = (function ABDeliciousLibrary(){
             var input = newElement('input', {type: 'checkbox'});
             input.dataset['deliciousKey'] = key;
 
-            var defaultValue = options['default'];
-            if (this.get(key, defaultValue)) input.setAttribute('checked', 'checked');
+            var currentValue = options['default'];
+            if (this.get(key, currentValue))
+                input.setAttribute('checked', 'checked');
 
             if (options['onSave'] !== null) {
                 input.addEventListener('deliciousSave', options['onSave']);
@@ -343,6 +352,51 @@ var delicious = (function ABDeliciousLibrary(){
             return li;
         },
 
+        createDropDown: function(key, label, description, valuesArray, options) {
+            options = utilities.applyDefaults(options, {
+                lineBreak: false,
+                default: null,
+                onSave: function(ev) {
+                    settings.saveOneElement(ev.target, 'value');
+                }
+            });
+
+            var select = newElement('select');
+            select.dataset['deliciousKey'] = key;
+
+
+            var currentValue = null;
+            if (options['default'] !== null)
+                currentValue = this.get(key, options['default']);
+
+            for (var i = 0; i < valuesArray .length; i++) {
+                var newOption = newElement('option', {
+                    value: valuesArray[i][1],
+                    textContent: valuesArray[i][0]
+                });
+                if (valuesArray[i][1] === currentValue)
+                    newOption.setAttribute('selected', 'selected');
+                select.appendChild(newOption);
+            }
+
+            var li = newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong', innerHTML: label}),
+                newElement('span', {className: 'ue_right'}, [
+                    select,
+                    (options['lineBreak'] && description) ? newElement('br') : ' ',
+                    newElement('span', {innerHTML: description})
+                ])
+            ]);
+
+            if (options['onSave'] !== null) {
+                select.addEventListener('deliciousSave', options['onSave']);
+            }
+
+            return li;
+        },
+
+
+
         showErrorBox: function(message, errorId) {
             var errorDiv = newElement('div', {
                 className: 'error_message',
@@ -384,6 +438,12 @@ var delicious = (function ABDeliciousLibrary(){
             default: 1234,
             lineBreak: false,
         })
+    );
+    settings.basicSettingsDiv.appendChild(
+        settings.createDropDown('dropdownkey', 'A drop down', 'Drops down some things',
+            [['Text', 1], ['Value', 2], ['This', 3]], {
+                default: 2,
+            })
     );
 
     return {
