@@ -11,6 +11,8 @@
 // @grant       GM_setValue
 // ==/UserScript==
 
+/* global GM_setValue:false, GM_getValue:false */
+
 /* eslint-disable-next-line no-unused-vars */
 var delicious = (function ABDeliciousLibrary(){
 
@@ -225,19 +227,16 @@ var delicious = (function ABDeliciousLibrary(){
         },
 
         init: function(key, defaultValue) {
-            /* eslint-disable-next-line no-undef */
             if (GM_getValue(key, undefined) === undefined) {
                 this.set(defaultValue);
             }
         },
 
         set: function(key, value) {
-            /* eslint-disable-next-line no-undef */
             GM_setValue(key, JSON.stringify(value));
         },
 
         get: function(key, defaultValue) {
-            /* eslint-disable-next-line no-undef */
             var value = GM_getValue(key, undefined);
             if (value !== undefined) {
                 return JSON.parse(value);
@@ -478,6 +477,7 @@ var delicious = (function ABDeliciousLibrary(){
     settings.basicSettingsDiv.appendChild(
         settings.createNumberInput('numberkey', 'An integer', 'Whole numbers!', {
         default: 2,
+        lineBreak: true,
         })
     );
 
