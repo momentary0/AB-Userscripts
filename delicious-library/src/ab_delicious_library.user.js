@@ -40,6 +40,36 @@ var delicious = (function ABDeliciousLibrary(){
         console.debug(message);
     }
 
+
+    var utilities = {
+        toggleSubnav: function(ev) {
+            var subnav = ev.currentTarget.parentNode.children[1];
+            var willShow = (subnav.style.display==='none');
+            subnav.style.display = willShow?'block':'none';
+            if (willShow)
+                subnav.parentNode.classList.add('selected');
+            else
+                subnav.parentNode.classList.remove('selected');
+            ev.stopPropagation();
+            ev.preventDefault();
+            return false;
+        },
+
+        applyDefaults: function(options, defaults) {
+            if (!options)
+                return defaults;
+            else
+                return Object.assign(
+                    JSON.parse(JSON.stringify(defaults)),
+                    options);
+        },
+
+        htmlEscape: function(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+    };
+
+
     var _isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
 
     var settings = {
@@ -123,17 +153,17 @@ var delicious = (function ABDeliciousLibrary(){
             log('Previous onsubmit: ' + userform.dataset['onsubmit']);
         },
 
-        _settingsInserted: !_isSettingsPage,
+        _settingsInserted: !_isSettingsPage || !!document.getElementById('delicious_settings'),
 
-        _ensureSettingsInserted: function() {
+        ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
                 if (!this.rootSettingsList) {
                     this.basicSettingsDiv = newElement('div',
                         {id: 'delicious_basic_settings',
-                            className: 'dummy_element'});
-                    this.rootSettingsList = newElement('ul', {className: 'nobullet ue_list'}, [
-                        this.basicSettingsDiv
-                    ]);
+                            className: 'dummy'});
+                    this.rootSettingsList = newElement('ul',
+                        {className: 'dummy nobullet ue_list'},
+                        [this.basicSettingsDiv]);
                 }
                 return false;
             }
@@ -143,6 +173,8 @@ var delicious = (function ABDeliciousLibrary(){
                 this._settingsInserted = true;
 
                 this._insertSettingsPage();
+            }
+            if (!this.rootSettingsList) {
                 this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
                 this.basicSettingsDiv = this.rootSettingsList.querySelector('#delicious_basic_settings');
             }
@@ -152,10 +184,10 @@ var delicious = (function ABDeliciousLibrary(){
         saveAllSettings: function(ev) {
             log('Saving all settings...');
             var cancelled = false;
-            var settingsItems = this.rootSettingsList.querySelectorAll('[data-delicious-key]');
+            var settingsItems = ev.target.querySelectorAll('[data-delicious-key]');
             for (var i = 0; i < settingsItems.length; i++) {
                 log('Sending save event for setting key: ' + settingsItems[i].dataset['deliciousKey']);
-                var subevent = new Event('delicioussave', {
+                var subevent = new Event('deliciousSave', {
                     cancelable: true,
                 });
                 if (!settingsItems[i].dispatchEvent(subevent)) {
@@ -164,11 +196,14 @@ var delicious = (function ABDeliciousLibrary(){
             }
             log('Form submit cancelled: ' + cancelled);
             if (cancelled) {
+                var errorBox = document.querySelector('.error_message');
+                if (errorBox)
+                    errorBox.scrollIntoView();
                 ev.preventDefault();
                 ev.stopPropagation();
                 return false;
             } else {
-                ev.target.removeEventListener('submit', this.saveAllSettings);
+                ev.target.removeEventListener('submit', settings.saveAllSettings);
                 ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
                 ev.target.submit();
             }
@@ -179,6 +214,13 @@ var delicious = (function ABDeliciousLibrary(){
                 this.set(element.dataset['deliciousKey'], element[property]);
             else
                 log('Skipping blank: ' + element.outerHTML);
+        },
+
+        init: function(key, defaultValue) {
+            /* eslint-disable-next-line no-undef */
+            if (GM_getValue(key, undefined) === undefined) {
+                this.set(defaultValue);
+            }
         },
 
         set: function(key, value) {
@@ -214,20 +256,21 @@ var delicious = (function ABDeliciousLibrary(){
         },
 
         createCheckbox: function(key, label, description, options) {
-            if (options === undefined)
-                options = {};
+            options = utilities.applyDefaults(options, {
+                default: true,
+                onSave: function(ev) {
+                    settings.saveOneElement(ev.target, 'checked');
+                }
+            });
+
             var input = newElement('input', {type: 'checkbox'});
             input.dataset['deliciousKey'] = key;
 
             var defaultValue = options['default'];
-            if (defaultValue === undefined) defaultValue = true;
             if (this.get(key, defaultValue)) input.setAttribute('checked', 'checked');
 
-            if (options['onsave'] !== null) {
-                var saveHandler = options['onsave'] || function(ev) {
-                    this.saveOneElement(ev.target, 'checked');
-                };
-                input.addEventListener('delicioussave', saveHandler);
+            if (options['onSave'] !== null) {
+                input.addEventListener('deliciousSave', options['onSave']);
             }
 
             var li = newElement('li', {}, [
@@ -268,38 +311,49 @@ var delicious = (function ABDeliciousLibrary(){
         },
 
         createTextField: function(key, label, description, options) {
-            options = options || {};
+            options = utilities.applyDefaults(options, {
+                width: 50,
+                lineBreak: false,
+                default: '',
+                onSave: function(ev) {
+                    settings.saveOneElement(ev.target, 'value');
+                }
+            });
+
             var input = newElement('input', {
                 type: 'text',
-                size: options['width'] || 50,
+                size: options['width']
             });
-            input.value = this.get(key, options['default'] || '');
+            input.value = this.get(key, options['default']);
             input.dataset['deliciousKey'] = key;
 
             var li = newElement('li', {}, [
                 newElement('span', {className: 'ue_left strong', innerHTML: label}),
                 newElement('span', {className: 'ue_right'}, [
                     input,
-                    options['lineBreak'] ? newElement('br') : ' ',
+                    (options['lineBreak'] && description) ? newElement('br') : ' ',
                     newElement('span', {innerHTML: description})
                 ])
             ]);
 
-            if (options['onsave'] !== null) {
-                var saveHandler = options['onsave'] || function(ev) {
-                    this.saveOneElement(ev.target, 'value');
-                };
-                input.addEventListener('delicioussave', saveHandler);
+            if (options['onSave'] !== null) {
+                input.addEventListener('deliciousSave', options['onSave']);
             }
 
             return li;
         },
 
-        showErrorBox: function(message) {
+        showErrorBox: function(message, errorId) {
             var errorDiv = newElement('div', {
                 className: 'error_message',
                 innerHTML: message
             });
+            if (errorId) {
+                errorDiv.dataset['errorId'] = errorId;
+                var existing = document.querySelector('[data-error-id="'+errorId+'"');
+                if (existing)
+                    existing.parentNode.removeChild(existing);
+            }
             var thinDiv = document.querySelector('div.thin');
             thinDiv.parentNode.insertBefore(errorDiv, thinDiv);
             return errorDiv;
@@ -307,7 +361,7 @@ var delicious = (function ABDeliciousLibrary(){
     };
 
 
-    settings._ensureSettingsInserted();
+    settings.ensureSettingsInserted();
 
     settings.addScriptCheckbox('ABQuickLinks', 'Quick Links', 'Adds quick links to the main navbar.');
     settings.addScriptCheckbox('ABQuickLinks2', 'Quick Links 2.0', 'Adds quick links to the main navbar.');
@@ -317,7 +371,7 @@ var delicious = (function ABDeliciousLibrary(){
     s.appendChild(settings.createCheckbox('TEST', 'The label', 'Does things'));
 
     var c = settings.createCheckbox('', 'Error test', 'Will throw an error if ticked', {
-        onsave: function(ev) {
+        onSave: function(ev) {
             if (ev.target.checked) {
                 settings.showErrorBox('Error thrown.');
                 ev.preventDefault();
@@ -332,23 +386,8 @@ var delicious = (function ABDeliciousLibrary(){
         })
     );
 
-    var util = {
-        toggleSubnav: function(ev) {
-            var subnav = ev.currentTarget.parentNode.children[1];
-            var willShow = (subnav.style.display==='none');
-            subnav.style.display = willShow?'block':'none';
-            if (willShow)
-                subnav.parentNode.classList.add('selected');
-            else
-                subnav.parentNode.classList.remove('selected');
-            ev.stopPropagation();
-            ev.preventDefault();
-            return false;
-        }
-    };
-
     return {
         settings: settings,
-        util: util
+        utilities: utilities
     };
 })();
