@@ -395,6 +395,36 @@ var delicious = (function ABDeliciousLibrary(){
             return li;
         },
 
+        createNumberInput: function(key, label, description, options) {
+            options = utilities.applyDefaults(options, {
+                lineBreak: false,
+                default: '',
+                onSave: function(ev) {
+                    settings.set(key, parseFloat(ev.target.value));
+                }
+            });
+
+            var input = newElement('input');
+            input.dataset['deliciousKey'] = key;
+            input.type = 'number';
+            input.value = this.get(key, options['default']);
+
+            var li = newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong', innerHTML: label}),
+                newElement('span', {className: 'ue_right'}, [
+                    input,
+                    (options['lineBreak'] && description) ? newElement('br') : ' ',
+                    newElement('span', {innerHTML: description})
+                ])
+            ]);
+
+            if (options['onSave'] !== null) {
+                input.addEventListener('deliciousSave', options['onSave']);
+            }
+
+            return li;
+        },
+
 
 
         showErrorBox: function(message, errorId) {
@@ -427,7 +457,7 @@ var delicious = (function ABDeliciousLibrary(){
     var c = settings.createCheckbox('', 'Error test', 'Will throw an error if ticked', {
         onSave: function(ev) {
             if (ev.target.checked) {
-                settings.showErrorBox('Error thrown.');
+                settings.showErrorBox('Error thrown.', 'testId');
                 ev.preventDefault();
             }
         }
@@ -441,9 +471,14 @@ var delicious = (function ABDeliciousLibrary(){
     );
     settings.basicSettingsDiv.appendChild(
         settings.createDropDown('dropdownkey', 'A drop down', 'Drops down some things',
-            [['Text', 1], ['Value', 2], ['This', 3]], {
-                default: 2,
+            [['Text', '1'], ['Value', '2'], ['This', '3']], {
+                default: '2',
             })
+    );
+    settings.basicSettingsDiv.appendChild(
+        settings.createNumberInput('numberkey', 'An integer', 'Whole numbers!', {
+        default: 2,
+        })
     );
 
     return {
