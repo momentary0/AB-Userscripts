@@ -15,6 +15,7 @@
 
 /* eslint-disable-next-line no-unused-vars */
 var delicious = (function ABDeliciousLibrary(){
+    "use strict";
 
     function newElement(tagName, properties, children) {
         var elem = document.createElement(tagName);
@@ -113,13 +114,12 @@ var delicious = (function ABDeliciousLibrary(){
          */
         _tabLinkClick: function(ev) {
             log('Clicked tab link: ' + ev.target.textContent);
+            var clickedId = ev.target.getAttribute('href').replace(/^#/, '');
             document.querySelector('.ue_tabs .selected').classList.remove('selected');
             var tabs = document.querySelectorAll('#tabs > div');
             for (var i = 0; i < tabs.length; i++) {
-                tabs[i].style.display = 'none';
+                tabs[i].style.display = (tabs[i].id === clickedId)?'block':'none';
             }
-            var settingsPage = document.querySelector(ev.target.getAttribute('href'));
-            settingsPage.style.display = 'block';
 
             ev.target.classList.add('selected');
             ev.stopPropagation();
@@ -168,12 +168,12 @@ var delicious = (function ABDeliciousLibrary(){
         ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
                 if (!this.rootSettingsList) {
-                    this.basicSettingsDiv = newElement('div',
+                    this.basicSettingsSection = newElement('div',
                         {id: 'delicious_basic_settings',
                             className: 'dummy'});
                     this.rootSettingsList = newElement('ul',
                         {className: 'dummy nobullet ue_list'},
-                        [this.basicSettingsDiv]);
+                        [this.basicSettingsSection]);
                 }
                 return false;
             }
@@ -186,7 +186,7 @@ var delicious = (function ABDeliciousLibrary(){
             }
             if (!this.rootSettingsList) {
                 this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
-                this.basicSettingsDiv = this.rootSettingsList.querySelector('#delicious_basic_settings');
+                this.basicSettingsSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
             }
             return true;
         },
@@ -244,22 +244,25 @@ var delicious = (function ABDeliciousLibrary(){
                 return defaultValue;
             }
         },
-
-        getExisting: function(key) {
-            return document.getElementById(key);
-        },
-
         addScriptCheckbox: function(key, label, description, options) {
-            var existing = this.getExisting(key);
-            if (existing)
-                return existing;
-
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
             checkboxLI.id = key;
-            this.basicSettingsDiv.appendChild(checkboxLI);
+            this.basicSettingsSection.appendChild(checkboxLI);
 
             return checkboxLI;
+        },
+
+        addScriptSection: function(key, title, description, options) {
+            var section = this.createSection(title);
+            section.id = key;
+
+            var enableBox = this.createCheckbox(key, 'Enabled', description, options);
+            enableBox.style.marginTop = '10px';
+            section.appendChild(enableBox);
+
+            this.rootSettingsList.appendChild(section);
+            return section;
         },
 
         createCheckbox: function(key, label, description, options) {
@@ -296,25 +299,9 @@ var delicious = (function ABDeliciousLibrary(){
         createSection: function(title) {
             var heading = newElement('h3', {innerHTML: title});
             heading.style.marginTop = '5px';
-            var section = newElement('div', {}, [
+            var section = newElement('div', {className: 'delicious_settings_section'}, [
                 newElement('li', {}, [heading])
             ]);
-            return section;
-        },
-
-        addScriptSection: function(key, title, description, options) {
-            var existing = this.getExisting(key);
-            if (existing)
-                return existing;
-
-            var section = this.createSection(title);
-            section.id = key;
-
-            var enableBox = this.createCheckbox(key, 'Enabled', description, options);
-            enableBox.style.marginTop = '10px';
-            section.appendChild(enableBox);
-
-            this.rootSettingsList.appendChild(section);
             return section;
         },
 
@@ -461,20 +448,20 @@ var delicious = (function ABDeliciousLibrary(){
             }
         }
     });
-    settings.basicSettingsDiv.appendChild(c);
-    settings.basicSettingsDiv.appendChild(
+    settings.basicSettingsSection.appendChild(c);
+    settings.basicSettingsSection.appendChild(
         settings.createTextField('ABTestText', 'Text field', 'description', {
             default: 1234,
             lineBreak: false,
         })
     );
-    settings.basicSettingsDiv.appendChild(
+    settings.basicSettingsSection.appendChild(
         settings.createDropDown('dropdownkey', 'A drop down', 'Drops down some things',
             [['Text', '1'], ['Value', '2'], ['This', '3']], {
                 default: '2',
             })
     );
-    settings.basicSettingsDiv.appendChild(
+    settings.basicSettingsSection.appendChild(
         settings.createNumberInput('numberkey', 'An integer', 'Whole numbers!', {
         default: 2,
         lineBreak: true,
