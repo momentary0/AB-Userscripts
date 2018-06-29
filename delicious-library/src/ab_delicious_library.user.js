@@ -185,17 +185,17 @@ var delicious = (function ABDeliciousLibrary(){
             log('Previous onsubmit: ' + userform.dataset['onsubmit']);
         },
 
-        _settingsInserted: !_isSettingsPage || !!document.getElementById('delicious_settings'),
+        _settingsInserted: !!document.getElementById('delicious_settings'),
 
         ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
                 if (!this.rootSettingsList) {
-                    this.basicSettingsSection = newElement('div',
+                    this._basicSection = newElement('div',
                         {id: 'delicious_basic_settings',
                             className: 'dummy'});
                     this.rootSettingsList = newElement('ul',
                         {className: 'dummy nobullet ue_list'},
-                        [this.basicSettingsSection]);
+                        [this._basicSection]);
                 }
                 return false;
             }
@@ -208,7 +208,7 @@ var delicious = (function ABDeliciousLibrary(){
             }
             if (!this.rootSettingsList) {
                 this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
-                this.basicSettingsSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
+                this._basicSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
             }
             return true;
         },
@@ -267,11 +267,11 @@ var delicious = (function ABDeliciousLibrary(){
             }
         },
 
-        _insertSorted: function(text, newElement, rootElement, skipFirst) {
+        _insertSorted: function(newText, newElement, rootElement, skipFirst) {
             var current = rootElement.firstElementChild;
             if (skipFirst)
                 current = current.nextElementSibling;
-            while (current && (current.firstElementChild.textContent < text)) {
+            while (current && (current.firstElementChild.textContent < newText)) {
                 current = current.nextElementSibling;
             }
             if (current) {
@@ -284,14 +284,14 @@ var delicious = (function ABDeliciousLibrary(){
         addScriptCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
-            //this.basicSettingsSection.appendChild(checkboxLI);
+            //this._basicSection.appendChild(checkboxLI);
             this.addBasicSetting(checkboxLI);
             return checkboxLI;
         },
 
         addBasicSetting: function(setting) {
             this._insertSorted(setting.textContent,
-                setting, this.basicSettingsSection);
+                setting, this._basicSection);
         },
 
         addScriptSection: function(key, title, description, options) {
@@ -483,20 +483,20 @@ var delicious = (function ABDeliciousLibrary(){
             }
         }
     });
-    settings.basicSettingsSection.appendChild(c);
-    settings.basicSettingsSection.appendChild(
+    settings.addBasicSetting(c);
+    settings.addBasicSetting(
         settings.createTextField('ABTestText', 'Text field', 'description', {
             default: 1234,
             lineBreak: false,
         })
     );
-    settings.basicSettingsSection.appendChild(
+    settings.addBasicSetting(
         settings.createDropDown('dropdownkey', 'A drop down', 'Drops down some things',
             [['Text', '1'], ['Value', '2'], ['This', '3']], {
                 default: '2',
             })
     );
-    settings.basicSettingsSection.appendChild(
+    settings.addBasicSetting(
         settings.createNumberInput('numberkey', 'An integer', 'Whole numbers!', {
         default: 2,
         lineBreak: true,
