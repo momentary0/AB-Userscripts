@@ -266,24 +266,42 @@ var delicious = (function ABDeliciousLibrary(){
                 return defaultValue;
             }
         },
+
+        _insertSorted: function(text, newElement, rootElement, skipFirst) {
+            var current = rootElement.firstElementChild;
+            if (skipFirst)
+                current = current.nextElementSibling;
+            while (current && (current.firstElementChild.textContent < text)) {
+                current = current.nextElementSibling;
+            }
+            if (current) {
+                rootElement.insertBefore(newElement, current);
+            } else {
+                rootElement.appendChild(newElement);
+            }
+        },
+
         addScriptCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
-            checkboxLI.id = key;
-            this.basicSettingsSection.appendChild(checkboxLI);
-
+            //this.basicSettingsSection.appendChild(checkboxLI);
+            this.addBasicSetting(checkboxLI);
             return checkboxLI;
+        },
+
+        addBasicSetting: function(setting) {
+            this._insertSorted(setting.textContent,
+                setting, this.basicSettingsSection);
         },
 
         addScriptSection: function(key, title, description, options) {
             var section = this.createSection(title);
-            section.id = key;
 
-            var enableBox = this.createCheckbox(key, 'Enabled', description, options);
+            var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
             enableBox.style.marginTop = '10px';
             section.appendChild(enableBox);
 
-            this.rootSettingsList.appendChild(section);
+            this._insertSorted(title.textContent || title, section, this.rootSettingsList, true);
             return section;
         },
 
@@ -450,6 +468,8 @@ var delicious = (function ABDeliciousLibrary(){
 
     settings.addScriptCheckbox('ABQuickLinks', 'Quick Links', 'Adds quick links to the main navbar.');
     settings.addScriptCheckbox('ABQuickLinks2', 'Quick Links 2.0', 'Adds quick links to the main navbar.');
+    settings.addScriptCheckbox('ABQuickLinks3', 'AA Quick Links 2.0', 'Adds quick links to the main navbar.');
+    settings.addScriptCheckbox('ABQuickLinks4', 'ZZ Quick Links 2.0', 'Adds quick links to the main navbar.');
 
     var s = settings.addScriptSection('ABDynamicStylesheets', 'Dynamic Stylesheets', 'Automatically changes stylesheets.');
 
@@ -482,6 +502,8 @@ var delicious = (function ABDeliciousLibrary(){
         lineBreak: true,
         })
     );
+
+    settings.addScriptSection('ABDynamicStyleasheets', 'Adynamic Stylesheets', 'Automatically changes stylesheets.');
 
     return {
         settings: settings,
