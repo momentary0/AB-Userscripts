@@ -324,10 +324,10 @@ var delicious = (function ABDeliciousLibrary(){
 
         createSection: function(title) {
             var heading = newElement('h3', {}, [title]);
-            heading.style.marginTop = '5px';
             var section = newElement('div', {className: 'delicious_settings_section'}, [
                 newElement('li', {}, [heading])
             ]);
+            section.style.marginTop = '25px';
             return section;
         },
 
