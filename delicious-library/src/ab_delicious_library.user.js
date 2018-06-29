@@ -45,7 +45,6 @@ var delicious = (function ABDeliciousLibrary(){
         console.debug(message);
     }
 
-
     var utilities = {
         toggleSubnav: function(ev) {
             var subnav = ev.currentTarget.parentNode.children[1];
@@ -77,6 +76,29 @@ var delicious = (function ABDeliciousLibrary(){
 
         htmlEscape: function(text) {
             return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        },
+
+        _bytes_units: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'],
+        _bytes_base: 1024,
+        nbsp: '\xa0',
+
+        parseBytes: function(bytesString) {
+            var split = bytesString.split(/\s+/);
+            var significand = parseFloat(split[0]);
+            var magnitude = this._bytes_units.indexOf(split[1]);
+            if (magnitude === -1)
+                throw 'Bytes unit not recognised. Make sure you are using KiB, MiB, or similar.';
+            return significand * Math.pow(this._bytes_base, magnitude);
+        },
+
+        // Adapted from https://stackoverflow.com/a/18650828
+        formatBytes: function(numBytes, decimals) {
+            if (numBytes === 0) return '0 ' + this._bytes_units[0];
+            var magnitude = Math.floor(Math.log(numBytes) / Math.log(this._bytes_base));
+            // Extra parseFloat is so trailing 0's are removed.
+            return parseFloat(
+                (numBytes / Math.pow(this._bytes_base, magnitude)).toFixed(decimals)
+            ) + ' ' + this._bytes_units[magnitude];
         }
     };
 
@@ -194,10 +216,10 @@ var delicious = (function ABDeliciousLibrary(){
         saveAllSettings: function(ev) {
             log('Saving all settings...');
             var cancelled = false;
-            var settingsItems = ev.target.querySelectorAll('[data-delicious-key]');
+            var settingsItems = ev.target.querySelectorAll('[data-settings-key]');
             for (var i = 0; i < settingsItems.length; i++) {
-                log('Sending save event for setting key: ' + settingsItems[i].dataset['deliciousKey']);
-                var subevent = new Event('deliciousSave', {
+                log('Sending save event for setting key: ' + settingsItems[i].dataset['settingsKey']);
+                var subevent = new Event('saveEvent', {
                     cancelable: true,
                 });
                 if (!settingsItems[i].dispatchEvent(subevent)) {
@@ -220,8 +242,8 @@ var delicious = (function ABDeliciousLibrary(){
         },
 
         saveOneElement: function(element, property) {
-            if (element.dataset['deliciousKey'])
-                this.set(element.dataset['deliciousKey'], element[property]);
+            if (element.dataset['settingsKey'])
+                this.set(element.dataset['settingsKey'], element[property]);
             else
                 log('Skipping blank: ' + element.outerHTML);
         },
@@ -274,14 +296,14 @@ var delicious = (function ABDeliciousLibrary(){
             });
 
             var input = newElement('input', {type: 'checkbox'});
-            input.dataset['deliciousKey'] = key;
+            input.dataset['settingsKey'] = key;
 
             var currentValue = options['default'];
             if (this.get(key, currentValue))
                 input.setAttribute('checked', 'checked');
 
             if (options['onSave'] !== null) {
-                input.addEventListener('deliciousSave', options['onSave']);
+                input.addEventListener('saveEvent', options['onSave']);
             }
 
             var li = newElement('li', {}, [
@@ -320,7 +342,7 @@ var delicious = (function ABDeliciousLibrary(){
                 size: options['width']
             });
             input.value = this.get(key, options['default']);
-            input.dataset['deliciousKey'] = key;
+            input.dataset['settingsKey'] = key;
 
             var li = newElement('li', {}, [
                 newElement('span', {className: 'ue_left strong', innerHTML: label}),
@@ -332,7 +354,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                input.addEventListener('deliciousSave', options['onSave']);
+                input.addEventListener('saveEvent', options['onSave']);
             }
 
             return li;
@@ -348,7 +370,7 @@ var delicious = (function ABDeliciousLibrary(){
             });
 
             var select = newElement('select');
-            select.dataset['deliciousKey'] = key;
+            select.dataset['settingsKey'] = key;
 
 
             var currentValue = null;
@@ -375,7 +397,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                select.addEventListener('deliciousSave', options['onSave']);
+                select.addEventListener('saveEvent', options['onSave']);
             }
 
             return li;
@@ -391,7 +413,7 @@ var delicious = (function ABDeliciousLibrary(){
             });
 
             var input = newElement('input');
-            input.dataset['deliciousKey'] = key;
+            input.dataset['settingsKey'] = key;
             input.type = 'number';
             input.value = this.get(key, options['default']);
 
@@ -405,7 +427,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                input.addEventListener('deliciousSave', options['onSave']);
+                input.addEventListener('saveEvent', options['onSave']);
             }
 
             return li;
@@ -413,7 +435,7 @@ var delicious = (function ABDeliciousLibrary(){
 
 
 
-        showErrorBox: function(message, errorId) {
+        showErrorMessage: function(message, errorId) {
             var errorDiv = newElement('div', {
                 className: 'error_message',
                 innerHTML: message
@@ -443,7 +465,7 @@ var delicious = (function ABDeliciousLibrary(){
     var c = settings.createCheckbox('', 'Error test', 'Will throw an error if ticked', {
         onSave: function(ev) {
             if (ev.target.checked) {
-                settings.showErrorBox('Error thrown.', 'testId');
+                settings.showErrorMessage('Error thrown.', 'testId');
                 ev.preventDefault();
             }
         }
