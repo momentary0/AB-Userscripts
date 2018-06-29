@@ -40,9 +40,9 @@ var delicious = (function ABDeliciousLibrary(){
 
 
     function log(message) {
-        if (typeof message === 'string')
-            message = '[Delicious] ' + message;
-        console.debug(message);
+        console.debug(
+            typeof message === 'string' ? ('[Delicious] '+message) : message
+        );
     }
 
     var utilities = {
@@ -287,6 +287,13 @@ var delicious = (function ABDeliciousLibrary(){
             return section;
         },
 
+        _createSettingLI: function(label, rightElements) {
+            return newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong'}, [label]),
+                newElement('span', {className: 'ue_right'}, rightElements),
+            ]);
+        },
+
         createCheckbox: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
                 default: true,
@@ -295,31 +302,28 @@ var delicious = (function ABDeliciousLibrary(){
                 }
             });
 
-            var input = newElement('input', {type: 'checkbox'});
-            input.dataset['settingsKey'] = key;
+            var checkbox = newElement('input', {type: 'checkbox'});
+            checkbox.dataset['settingsKey'] = key;
 
             var currentValue = options['default'];
             if (this.get(key, currentValue))
-                input.setAttribute('checked', 'checked');
+                checkbox.setAttribute('checked', 'checked');
 
             if (options['onSave'] !== null) {
-                input.addEventListener('saveEvent', options['onSave']);
+                checkbox.addEventListener('saveEvent', options['onSave']);
             }
 
-            var li = newElement('li', {}, [
-                newElement('span', {className: 'ue_left strong', innerHTML: label}),
-                newElement('span', {className: 'ue_right'}, [
-                    input,
-                    ' ',
-                    newElement('label', {innerHTML: description}),
-                ]),
+            var li = this._createSettingLI(label, [
+                checkbox,
+                ' ',
+                newElement('label', {}, [description]),
             ]);
 
             return li;
         },
 
         createSection: function(title) {
-            var heading = newElement('h3', {innerHTML: title});
+            var heading = newElement('h3', {}, [title]);
             heading.style.marginTop = '5px';
             var section = newElement('div', {className: 'delicious_settings_section'}, [
                 newElement('li', {}, [heading])
@@ -337,24 +341,21 @@ var delicious = (function ABDeliciousLibrary(){
                 }
             });
 
-            var input = newElement('input', {
+            var inputElem = newElement('input', {
                 type: 'text',
                 size: options['width']
             });
-            input.value = this.get(key, options['default']);
-            input.dataset['settingsKey'] = key;
+            inputElem.value = this.get(key, options['default']);
+            inputElem.dataset['settingsKey'] = key;
 
-            var li = newElement('li', {}, [
-                newElement('span', {className: 'ue_left strong', innerHTML: label}),
-                newElement('span', {className: 'ue_right'}, [
-                    input,
-                    (options['lineBreak'] && description) ? newElement('br') : ' ',
-                    newElement('span', {innerHTML: description})
-                ])
+            var li = this._createSettingLI(label, [
+                inputElem,
+                (options['lineBreak'] && description) ? newElement('br') : ' ',
+                description
             ]);
 
             if (options['onSave'] !== null) {
-                input.addEventListener('saveEvent', options['onSave']);
+                inputElem.addEventListener('saveEvent', options['onSave']);
             }
 
             return li;
@@ -387,13 +388,10 @@ var delicious = (function ABDeliciousLibrary(){
                 select.appendChild(newOption);
             }
 
-            var li = newElement('li', {}, [
-                newElement('span', {className: 'ue_left strong', innerHTML: label}),
-                newElement('span', {className: 'ue_right'}, [
-                    select,
-                    (options['lineBreak'] && description) ? newElement('br') : ' ',
-                    newElement('span', {innerHTML: description})
-                ])
+            var li = this._createSettingLI(label, [
+                select,
+                (options['lineBreak'] && description) ? newElement('br') : ' ',
+                description
             ]);
 
             if (options['onSave'] !== null) {
@@ -417,13 +415,10 @@ var delicious = (function ABDeliciousLibrary(){
             input.type = 'number';
             input.value = this.get(key, options['default']);
 
-            var li = newElement('li', {}, [
-                newElement('span', {className: 'ue_left strong', innerHTML: label}),
-                newElement('span', {className: 'ue_right'}, [
-                    input,
-                    (options['lineBreak'] && description) ? newElement('br') : ' ',
-                    newElement('span', {innerHTML: description})
-                ])
+            var li = this._createSettingLI(label, [
+                input,
+                (options['lineBreak'] && description) ? newElement('br') : ' ',
+                description
             ]);
 
             if (options['onSave'] !== null) {
@@ -436,10 +431,8 @@ var delicious = (function ABDeliciousLibrary(){
 
 
         showErrorMessage: function(message, errorId) {
-            var errorDiv = newElement('div', {
-                className: 'error_message',
-                innerHTML: message
-            });
+            var errorDiv = newElement('div', {className: 'error_message'},
+                [message]);
             if (errorId) {
                 errorDiv.dataset['errorId'] = errorId;
                 var existing = document.querySelector('[data-error-id="'+errorId+'"');
