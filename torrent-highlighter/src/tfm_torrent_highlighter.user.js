@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TFM's torrent highlighter
 // @namespace    TheFallingMan
-// @version      0.1.0
+// @version      0.1.1
 // @description  Adds attributes to torrent links, allowing CSS styling.
 // @author       TheFallingMan
 // @icon         https://animebytes.tv/favicon.ico
@@ -366,6 +366,10 @@
                 }
             }
 
+            if (this.linkElement.childElementCount === 0) {
+                this.fields[this.fields.length-1] = this.fields[this.fields.length-1].replace(/\s+$/, '');
+            }
+
             let lastText = this.fields[this.fields.length-1];
             _debug() && console.log('lastText: '+lastText);
             if (typeof lastText === 'string' && lastText.endsWith(' - Snatched')) {
@@ -536,10 +540,5 @@
         if (yearIndex !== -1)
             linkElement.appendChild(document.createTextNode(']'));
 
-
     }
-
-
-
-
 })();
