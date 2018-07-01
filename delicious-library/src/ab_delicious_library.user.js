@@ -108,7 +108,7 @@ var delicious = (function ABDeliciousLibrary(){
     var settings = {
         isSettingsPage: _isSettingsPage,
 
-        createSettingsPage: function() {
+        _createDeliciousPage: function() {
             log('Creating settings page...');
             var settingsDiv = document.createElement('div');
             settingsDiv.id = 'delicious_settings';
@@ -157,32 +157,36 @@ var delicious = (function ABDeliciousLibrary(){
             }
         },
 
-        _insertSettingsPage: function() {
-            log('Inserting settings page...');
+        insertSettingsPage: function(label, settingsPage) {
+            log('Inserting a settings page...');
             var linkItem = document.createElement('li');
             linkItem.appendChild(document.createTextNode('•'));
 
             var link = document.createElement('a');
-            link.href = '#delicious_settings';
-            link.textContent = 'Userscript Settings';
+            link.href = '#' + settingsPage.id;
+            link.textContent = label;
             linkItem.appendChild(link);
 
             document.querySelector('.ue_tabs').appendChild(linkItem);
             this._relinkClickHandlers();
 
-            var page = this.createSettingsPage();
-            page.style.display = 'none';
+            settingsPage.style.display = 'none';
             var tabs = document.querySelector('#tabs');
+            tabs.insertBefore(settingsPage, tabs.lastElementChild);
+        },
 
-            tabs.insertBefore(page, tabs.lastElementChild);
+        _insertDeliciousSettings: function() {
+            this.insertSettingsPage('Userscript Settings',
+                this._createDeliciousPage());
 
             var userform = document.querySelector('form#userform');
-
             userform.addEventListener('submit', this.saveAllSettings);
 
-            userform.dataset['onsubmit'] = userform.getAttribute('onsubmit');
-            userform.removeAttribute('onsubmit');
-            log('Previous onsubmit: ' + userform.dataset['onsubmit']);
+            if (userform.hasAttribute('onsubmit')) {
+                userform.dataset['onsubmit'] = userform.getAttribute('onsubmit');
+                userform.removeAttribute('onsubmit');
+                log('Previous onsubmit: ' + userform.dataset['onsubmit']);
+            }
         },
 
         _settingsInserted: !!document.getElementById('delicious_settings'),
@@ -198,19 +202,19 @@ var delicious = (function ABDeliciousLibrary(){
                         [this._basicSection]);
                 }
                 return false;
-            }
+            } else {
+                if (!this._settingsInserted) {
+                    log('Settings not yet inserted; inserting...');
+                    this._settingsInserted = true;
 
-            if (!this._settingsInserted) {
-                log('Settings not yet inserted; inserting...');
-                this._settingsInserted = true;
-
-                this._insertSettingsPage();
+                    this._insertDeliciousSettings();
+                }
+                if (!this.rootSettingsList) {
+                    this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
+                    this._basicSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
+                }
+                return true;
             }
-            if (!this.rootSettingsList) {
-                this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
-                this._basicSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
-            }
-            return true;
         },
 
         saveAllSettings: function(ev) {
@@ -219,10 +223,8 @@ var delicious = (function ABDeliciousLibrary(){
             var settingsItems = ev.target.querySelectorAll('[data-settings-key]');
             for (var i = 0; i < settingsItems.length; i++) {
                 log('Sending save event for setting key: ' + settingsItems[i].dataset['settingsKey']);
-                var subevent = new Event('saveEvent', {
-                    cancelable: true,
-                });
-                if (!settingsItems[i].dispatchEvent(subevent)) {
+                var saveEvent = new Event('deliciousSave', {cancelable: true});
+                if (!settingsItems[i].dispatchEvent(saveEvent)) {
                     cancelled = true;
                 }
             }
@@ -328,7 +330,7 @@ var delicious = (function ABDeliciousLibrary(){
                 checkbox.setAttribute('checked', 'checked');
 
             if (options['onSave'] !== null) {
-                checkbox.addEventListener('saveEvent', options['onSave']);
+                checkbox.addEventListener('deliciousSave', options['onSave']);
             }
 
             var li = this._createSettingLI(label, [
@@ -373,7 +375,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                inputElem.addEventListener('saveEvent', options['onSave']);
+                inputElem.addEventListener('deliciousSave', options['onSave']);
             }
 
             return li;
@@ -390,7 +392,6 @@ var delicious = (function ABDeliciousLibrary(){
 
             var select = newElement('select');
             select.dataset['settingsKey'] = key;
-
 
             var currentValue = null;
             if (options['default'] !== null)
@@ -413,7 +414,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                select.addEventListener('saveEvent', options['onSave']);
+                select.addEventListener('deliciousSave', options['onSave']);
             }
 
             return li;
@@ -440,7 +441,7 @@ var delicious = (function ABDeliciousLibrary(){
             ]);
 
             if (options['onSave'] !== null) {
-                input.addEventListener('saveEvent', options['onSave']);
+                input.addEventListener('deliciousSave', options['onSave']);
             }
 
             return li;
