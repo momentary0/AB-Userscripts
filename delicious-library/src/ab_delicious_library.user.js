@@ -257,7 +257,7 @@ var delicious = (function ABDeliciousLibrary(){
 
         init: function(key, defaultValue) {
             if (GM_getValue(key, undefined) === undefined) {
-                this.set(defaultValue);
+                this.set(key, defaultValue);
             }
         },
 
