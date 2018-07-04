@@ -1,20 +1,27 @@
-// ==UserScript==
-// @name        AB Delicious Userscript Library
-// @namespace   TheFallingMan
-// @version     0.0.1
-// @description Provides useful functions for AnimeBytes userscripts.
-// @author      TheFallingMan
-// @icon        https://animebytes.tv/favicon.ico
-// @include     https://animebytes.tv/*
-// @license     GPL-3.0
-// @grant       GM_getValue
-// @grant       GM_setValue
-// ==/UserScript==
+/**
+ * @file Library for userscripts on AnimeBytes.
+ * @author TheFallingMan
+ * @version 0.0.1
+ * @license GPL-3.0
+ *
+ * Exports `delicious`, containing `delicious.settings` and
+ * `delicious.utilities`.
+ *
+ * This implements settings, providing functions for storing and setting
+ * values, and methods to create an organised userscript settings page within
+ * the user's profile settings.
+ *
+ * Additionally, provides several (hopefully) useful functions through
+ * `delicious.utilities`.
+ */
 
 /* global GM_setValue:false, GM_getValue:false */
 
-/* eslint-disable-next-line no-unused-vars */
-var delicious = (function ABDeliciousLibrary(){
+/**
+ * @namespace
+ * Namespace for the delicious library.
+ */
+var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused-vars
     "use strict";
 
     function newElement(tagName, properties, children) {
@@ -37,7 +44,6 @@ var delicious = (function ABDeliciousLibrary(){
         }
         return elem;
     }
-
 
     function log(message) {
         console.debug(
@@ -101,7 +107,6 @@ var delicious = (function ABDeliciousLibrary(){
             ) + ' ' + this._bytes_units[magnitude];
         }
     };
-
 
     var _isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
 
