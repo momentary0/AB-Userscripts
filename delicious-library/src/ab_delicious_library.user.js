@@ -502,6 +502,147 @@ var delicious = (function ABDeliciousLibrary(){
             return li;
         },
 
+        _moveRowUp: function(ev) {
+            var thisRow = ev.target.parentNode;
+            if (thisRow.previousElementSibling) {
+                thisRow.parentNode.insertBefore(
+                    thisRow,
+                    thisRow.previousElementSibling
+                );
+            }
+            if (ev.preventDefault) {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+        },
+
+        _moveRowDown: function(ev) {
+            var thisRow = ev.target.parentNode;
+            if (thisRow.nextElementSibling) {
+                settings._moveRowUp({target: thisRow.nextElementSibling.firstElementChild});
+            }
+            ev.preventDefault();
+            ev.stopPropagation();
+        },
+
+        _deleteRow: function(ev) {
+            var row = ev.target.parentNode;
+            row.parentNode.removeChild(row);
+            ev.preventDefault();
+            ev.stopPropagation();
+        },
+
+        _createRow: function(values, columns, allowSort, allowDelete) {
+            var row = newElement('div', {className: 'setting_row'});
+            row.style.marginBottom = '2px';
+
+            if (allowSort === undefined || allowSort) {
+                var upButton = newElement('button', {textContent: '▲',
+                    title: 'Move up'});
+                upButton.addEventListener('click', this._moveRowUp);
+                row.appendChild(upButton);
+                row.appendChild(document.createTextNode(' '));
+
+                var downButton = newElement('button', {textContent: '▼',
+                    title: 'Move down'});
+                downButton.addEventListener('click', this._moveRowDown);
+                row.appendChild(downButton);
+                row.appendChild(document.createTextNode(' '));
+            }
+
+            for (var i = 0; i < columns.length; i++) {
+                var cell = newElement('input', {type: columns[i][2]});
+                var subkey = columns[i][1];
+                cell.dataset['settingsSubkey'] = subkey;
+                cell.placeholder = columns[i][0];
+                if (values[subkey] !== undefined) {
+                    cell.value = values[subkey];
+                }
+                row.appendChild(cell);
+                row.appendChild(document.createTextNode(' '));
+            }
+
+            if (allowDelete === undefined || allowDelete) {
+                var delButton = newElement('button', {textContent: '✖',
+                    title: 'Delete'});
+                delButton.addEventListener('click', this._deleteRow);
+                row.appendChild(delButton);
+            }
+
+            return row;
+        },
+
+        createRowSetting: function(key, label, columns, description, options) {
+            options = utilities.applyDefaults(options, {
+                default: [],
+                newButtonText: '+',
+                allowSort: true,
+                allowDelete: true,
+                allowNew: true,
+                onSave: function(ev) {
+                    var list = [];
+                    var rows = ev.target.querySelectorAll('.setting_row');
+                    for (var i = 0; i < rows.length; i++) {
+                        var obj = {};
+                        var columns = rows[i].querySelectorAll('[data-settings-subkey]');
+                        for (var j = 0; j < columns.length; j++) {
+                            var val = columns[j].value;
+                            if (columns[j].type === 'number')
+                                val = parseFloat(val);
+                            obj[columns[j].dataset['settingsSubkey']] = val;
+                        }
+                        list.push(obj);
+                    }
+                    settings.set(key, list);
+                }
+            });
+
+            var children;
+            if (description) {
+                children = [description, newElement('br')];
+            } else {
+                children = undefined;
+            }
+            var rowDiv = newElement('div', {className: 'ue_right'}, children);
+
+            var rowContainer = newElement('div');
+            rowContainer.dataset['settingsKey'] = key;
+            rowContainer.className = 'row_container';
+            if (options['onSave'] !== null)
+                rowContainer.addEventListener('deliciousSave', options['onSave']);
+            if (description)
+                rowContainer.style.marginTop = '5px';
+            rowDiv.appendChild(rowContainer);
+
+            var current = this.get(key, options['default']);
+            for (var i = 0; i < current.length; i++) {
+                rowContainer.appendChild(
+                    this._createRow(current[i], columns, options['allowSort'],
+                        options['allowDelete']));
+            }
+
+            if (options['allowNew']) {
+                var newButton = newElement('button', {textContent: options['newButtonText'], title: 'New'});
+                newButton.style.marginTop = '8px';
+                newButton.addEventListener('click', function(ev) {
+                    rowContainer.appendChild(
+                        settings._createRow({}, columns,
+                            options['allowSort'],
+                            options['allowDelete']));
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                });
+                rowDiv.appendChild(newButton);
+            }
+
+            var li = newElement('li', {}, [
+                newElement('span', {className: 'ue_left strong'}, [label]),
+                rowDiv
+            ]);
+
+            return li;
+        },
+
 
 
         showErrorMessage: function(message, errorId) {
@@ -568,6 +709,16 @@ var delicious = (function ABDeliciousLibrary(){
                 'default': ['secur2ity']
             }
         )
+    );
+
+    settings.init('ABRowSetting', [
+        {href: 'google.com', text: 'Goodle'}
+    ]);
+
+    settings.addBasicSetting(
+        settings.createRowSetting('ABRowSetting', 'Bookmarks', [['Number', 'num', 'number'], ['Text', 'text', 'text'], ['Link', 'href', 'text']],
+        '', {
+        newButtonText: '+ New row'})
     );
 
     settings.addScriptSection('ABDynamicStyleasheets', 'Adynamic Stylesheets', 'Automatically changes stylesheets.');
