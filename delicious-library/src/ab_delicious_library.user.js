@@ -180,7 +180,7 @@ var delicious = (function ABDeliciousLibrary(){
                 this._createDeliciousPage());
 
             var userform = document.querySelector('form#userform');
-            userform.addEventListener('submit', this.saveAllSettings);
+            userform.addEventListener('submit', this._deliciousSaveAndSubmit);
 
             if (userform.hasAttribute('onsubmit')) {
                 userform.dataset['onsubmit'] = userform.getAttribute('onsubmit');
@@ -217,6 +217,18 @@ var delicious = (function ABDeliciousLibrary(){
             }
         },
 
+        _deliciousSaveAndSubmit: function(ev) {
+            if (settings.saveAllSettings(ev)) {
+                ev.target.removeEventListener('submit', settings._deliciousSaveAndSubmit);
+                ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
+                ev.target.submit();
+            } else {
+                var errorBox = document.querySelector('.error_message');
+                if (errorBox)
+                    errorBox.scrollIntoView();
+            }
+        },
+
         saveAllSettings: function(ev) {
             log('Saving all settings...');
             var cancelled = false;
@@ -230,16 +242,9 @@ var delicious = (function ABDeliciousLibrary(){
             }
             log('Form submit cancelled: ' + cancelled);
             if (cancelled) {
-                var errorBox = document.querySelector('.error_message');
-                if (errorBox)
-                    errorBox.scrollIntoView();
                 ev.preventDefault();
                 ev.stopPropagation();
                 return false;
-            } else {
-                ev.target.removeEventListener('submit', settings.saveAllSettings);
-                ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
-                ev.target.submit();
             }
         },
 
@@ -447,6 +452,56 @@ var delicious = (function ABDeliciousLibrary(){
             return li;
         },
 
+        createFieldSetSetting: function(key, label, fields, description, options) {
+            options = utilities.applyDefaults(options, {
+                default: [fields[0][1]],
+                onSave: function(ev) {
+                    var obj = {};
+                    var checkboxes = ev.target.querySelectorAll('[data-settings-subkey]');
+                    for (var i = 0; i < checkboxes.length; i++) {
+                        obj[checkboxes[i].dataset['settingsSubkey']] = checkboxes[i].checked;
+                    }
+                    settings.set(ev.target.dataset['settingsKey'], obj);
+                }
+            });
+
+            var fieldset = newElement('span');
+            fieldset.dataset['settingsKey'] = key;
+
+            var currentSettings = this.get(key, {});
+
+            for (var i = 0; i < fields.length; i++) {
+                var checkbox = newElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.dataset['settingsSubkey'] = fields[i][1];
+
+                var current = currentSettings[fields[i][1]];
+                if (current === undefined)
+                    current = options['default'].indexOf(fields[i][1]) !== -1;
+
+                if (current)
+                    checkbox.checked = true;
+
+                var newLabel = newElement('label', {}, [
+                    checkbox, ' ', fields[i][0]
+                ]);
+                newLabel.style.marginRight = '15px';
+
+                fieldset.appendChild(newLabel);
+            }
+
+            if (options['onSave'] !== null) {
+                fieldset.addEventListener('deliciousSave', options['onSave']);
+            }
+
+            var li = this._createSettingLI(label, [
+                fieldset, newElement('br'),
+                description
+            ]);
+
+            return li;
+        },
+
 
 
         showErrorMessage: function(message, errorId) {
@@ -502,6 +557,17 @@ var delicious = (function ABDeliciousLibrary(){
         default: 2,
         lineBreak: true,
         })
+    );
+
+    settings.addBasicSetting(
+        settings.createFieldSetSetting('ABFieldSet', 'A Field Set',
+            [['Privacy', 'privacy'],
+                ['Security', 'secur2ity']],
+            'Some description',
+            {
+                'default': ['secur2ity']
+            }
+        )
     );
 
     settings.addScriptSection('ABDynamicStyleasheets', 'Adynamic Stylesheets', 'Automatically changes stylesheets.');
