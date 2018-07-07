@@ -9,6 +9,7 @@
 // @include *animebytes.tv/*
 // @match https://*.animebytes.tv/*
 // @icon http://animebytes.tv/favicon.ico
+// @require https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 (function AnimeBytesDeliciousUserScripts() {
@@ -53,9 +54,9 @@
         function relink() { $j(function () { var stuff = $j('#tabs > div'); $j('ul.ue_tabs a').click(function () { stuff.hide().filter(this.hash).show(); $j('ul.ue_tabs a').removeClass('selected'); $j(this).addClass('selected'); return false; }).filter(':first,a[href="' + window.location.hash + '"]').slice(-1)[0].click(); }); }
         var pose = document.createElement('div');
         pose.id = "potatoes_settings";
-        pose.innerHTML = '<div class="head colhead_dark strong">User Script Settings</div><ul id="pose_list" class="nobullet ue_list"></ul>';
+        pose.innerHTML = '<div class="head colhead_dark strong">Legacy User Script Settings</div><ul id="pose_list" class="nobullet ue_list"></ul>';
         var poseanc = document.createElement('li');
-        poseanc.innerHTML = '&bull;<a href="#potatoes_settings">User Script Settings</a>';
+        poseanc.innerHTML = '&bull;<a href="#potatoes_settings">Legacy User Script Settings</a>';
         var tabsNode = document.getElementById('tabs');
         var linksNode = document.getElementsByClassName('ue_tabs')[0];
         if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
@@ -95,9 +96,7 @@
 
     // HYPER QUOTE by Megure
     // Select text and press CTRL+V to quote
-    if (GM_getValue('delicioushyperquote') === 'true') {
-        importScriptFile('ab_hyper_quote.user.js');
-    }
+    importScriptFile('ab_hyper_quote.user.js');
 
 
     // Forums title inverter by Potatoe

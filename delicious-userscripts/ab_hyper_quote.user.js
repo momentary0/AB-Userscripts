@@ -5,9 +5,25 @@
 // @include     https://animebytes.tv/*
 // @version     0.2.3
 // @icon        http://animebytes.tv/favicon.ico
+// @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
+//import '../delicious-library/src/ab_delicious_library';
+
+/* global delicious */
+
 (function ABHyperQuote() {
+    delicious.settings.init('delicioushyperquote', true);
+    if (delicious.settings.ensureSettingsInserted()) {
+        delicious.settings.addScriptCheckbox(
+            'delicioushyperquote',
+            'Hyper Quote',
+            'Select text and press Ctrl+V to instantly quote it.'
+        );
+    }
+    if (!delicious.settings.get('delicioushyperquote'))
+        return;
+
     if (document.getElementById('quickpost') === null)
         return;
     /** Debug flag. */
