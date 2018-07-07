@@ -61,8 +61,6 @@
         var linksNode = document.getElementsByClassName('ue_tabs')[0];
         if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
         //addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
-        addCheckbox("Delicious HYPER Quote", "Enable/Disable experimental HYPER quoting: select text and press CTRL+V to instant-quote. [EXPERIMENTAL]", 'delicioushyperquote');
-        addCheckbox("Delicious Title Flip", "Enable/Disable delicious flipping of Forum title tags.", 'delicioustitleflip');
         addCheckbox("Disgusting Treats", "Hide/Unhide those hideous treats!", 'delicioustreats');
         addCheckbox("Delicious Keyboard Shortcuts", "Enable/Disable delicious keyboard shortcuts for easier access to Bold/Italics/Underline/Spoiler/Hide and aligning.", 'deliciouskeyboard');
         addCheckbox("Delicious Title Notifications", "Display number of notifications in title.", 'delicioustitlenotifications');
@@ -101,9 +99,7 @@
 
     // Forums title inverter by Potatoe
     // Inverts the forums titles.
-    if (GM_getValue('delicioustitleflip') === 'true') {
-        importScriptFile('ab_title_inverter.user.js');
-    }
+    importScriptFile('ab_title_inverter.user.js');
 
 
     // Hide treats by Alpha

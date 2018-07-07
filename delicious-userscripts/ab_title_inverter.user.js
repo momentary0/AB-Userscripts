@@ -15,7 +15,7 @@
 (function ABTitleInverter() {
     delicious.settings.init('delicioustitleflip', true);
     if (delicious.settings.ensureSettingsInserted()) {
-        delicious.settings.addScriptCheckbox('delicioustitleflip', 'Title inverter',
+        delicious.settings.addScriptCheckbox('delicioustitleflip', 'Title Inverter',
             'Flips the tab title.');
     }
     if (!delicious.settings.get('delicioustitleflip'))
