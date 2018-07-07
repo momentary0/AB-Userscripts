@@ -1,5 +1,5 @@
 /**
- * @file Library for userscripts on AnimeBytes.
+ * @file   Library for userscripts on AnimeBytes.
  * @author TheFallingMan
  * @version 0.0.1
  * @license GPL-3.0
@@ -19,7 +19,7 @@
 
 /**
  * @namespace
- * Namespace for the delicious library.
+ * Root namespace for the delicious library.
  */
 var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused-vars
     "use strict";
@@ -52,6 +52,9 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
     }
 
     var utilities = {
+        /**
+         * @param {MouseEvent} ev
+         */
         toggleSubnav: function(ev) {
             var subnav = ev.currentTarget.parentNode.children[1];
             var willShow = (subnav.style.display==='none');
@@ -65,6 +68,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return false;
         },
 
+        /**
+         * @param {Object.<string, any>} options
+         * @param {Object.<string, any>} defaults
+         * @returns {Object.<string, any>}
+         */
         applyDefaults: function(options, defaults) {
             if (!options)
                 return defaults;
@@ -80,6 +88,9 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return newObject;
         },
 
+        /**
+         * @param {string} text
+         */
         htmlEscape: function(text) {
             return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
@@ -88,6 +99,9 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         _bytes_base: 1024,
         nbsp: '\xa0',
 
+        /**
+         * @param {string} bytesString
+         */
         parseBytes: function(bytesString) {
             var split = bytesString.split(/\s+/);
             var significand = parseFloat(split[0]);
@@ -97,7 +111,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return significand * Math.pow(this._bytes_base, magnitude);
         },
 
-        // Adapted from https://stackoverflow.com/a/18650828
+
+        /**
+         * Adapted from https://stackoverflow.com/a/18650828
+         *
+         * @param {number} numBytes
+         * @param {number} decimals
+         */
         formatBytes: function(numBytes, decimals) {
             if (numBytes === 0) return '0 ' + this._bytes_units[0];
             var magnitude = Math.floor(Math.log(numBytes) / Math.log(this._bytes_base));
@@ -434,6 +454,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             options = utilities.applyDefaults(options, {
                 lineBreak: false,
                 default: '',
+                allowDecimal: true,
+                allowNegative: false,
                 onSave: function(ev) {
                     settings.set(key, parseFloat(ev.target.value));
                 }
@@ -442,6 +464,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var input = newElement('input');
             input.dataset['settingsKey'] = key;
             input.type = 'number';
+            if (options['allowDecimal'])
+                input.step = 'any';
+            if (!options['allowNegative'])
+                input.min = '0';
             input.value = this.get(key, options['default']);
 
             var li = this._createSettingLI(label, [
@@ -557,6 +583,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             for (var i = 0; i < columns.length; i++) {
                 var cell = newElement('input', {type: columns[i][2]});
+                if (cell.type === 'number') {
+                    cell.min = '0';
+                    cell.step = 'any';
+                }
                 var subkey = columns[i][1];
                 cell.dataset['settingsSubkey'] = subkey;
                 cell.placeholder = columns[i][0];
@@ -577,6 +607,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return row;
         },
 
+        /**
+         * @param {string} key
+         * @param {string | HTMLElement} label
+         * @param {Array.<[string, string, string]>} columns
+         * @param {string | HTMLElement} description
+         * @param {Object} options
+         */
         createRowSetting: function(key, label, columns, description, options) {
             options = utilities.applyDefaults(options, {
                 default: [],
@@ -702,6 +739,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         settings.createNumberInput('numberkey', 'An integer', 'Whole numbers!', {
         default: 2,
         lineBreak: true,
+        allowNegative: false,
         })
     );
 
@@ -726,7 +764,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         newButtonText: '+ New row'})
     );
 
-    settings.addScriptSection('ABDynamicStyleasheets', 'Adynamic Stylesheets', 'Automatically changes stylesheets.');
+    var d = newElement('div');
+    d.appendChild(settings.createCheckbox('TEST123', 'Disables foo', 'Bar baz', {default: true}));
+    d.appendChild(settings.createCheckbox('TEST1234', 'Enables foo', 'Baz bar', {default: false}));
+    d.appendChild(settings.createCheckbox('TEST1234', 'Activates foo!', 'Baz bar', {default: false}));
+    settings.addBasicSetting(d);
+
+    settings.addScriptSection('ABDynamicStyleasheets', 'Adynamic Stylesheets', 'Alternative version of automatically changes stylesheets.');
 
     return {
         settings: settings,
