@@ -284,13 +284,13 @@
         // path in 'start'.
         var html1 = range.startContainer;
         var t = traverseUpwards(html1, true);
-        var html1 = t[0];
+        html1 = t[0];
         var start = t[1];
 
         // Similarly for the endContainer.
         var html2 = range.endContainer;
         var u = traverseUpwards(html2, false);
-        var html2 = u[0];
+        html2 = u[0];
         var end = u[1];
 
         // These should be equal as they originate from the same <html> tag.
@@ -314,7 +314,7 @@
             if (startNode.nodeType === 3)
                 startNode.data = startNode.data.substr(range.startOffset);
             else if (startNode.nodeType === 1)
-                for (var i = 0; i < range.startOffset; i++)
+                for (var j = 0; j < range.startOffset; j++)
                     startNode.removeChild(startNode.firstChild);
         }
 
@@ -355,12 +355,12 @@
         // Restores extra nodes before a quote such as username and link.
         // Must be done after the common root checking otherwise it will
         // mess up the process.
-        for (var i = 0; i < savedPreviousNodes.length; i++) {
+        for (var k = 0; k < savedPreviousNodes.length; k++) {
             // Use selectors on the copied HTML tree to find the corresponding
             // nodes.
-            var selector = '[data-hyper-quote="'+savedPreviousNodes[i][0]+'"]';
+            var selector = '[data-hyper-quote="'+savedPreviousNodes[k][0]+'"]';
             var copyNode = htmlCopy.querySelector(selector);
-            copyNode.parentNode.insertBefore(savedPreviousNodes[i][1], copyNode);
+            copyNode.parentNode.insertBefore(savedPreviousNodes[k][1], copyNode);
 
             // Delete original document's data-hyper-quote attribute.
             // We don't care about htmlCopy's attributes as it gets reset
@@ -382,8 +382,8 @@
 
         // Otherwise, quote as usual.
         var posts = htmlCopy.querySelectorAll('div[id^="post"],div[id^="msg"]');
-        for (var i = 0; i < posts.length; i++) {
-            QUOTEONE(posts[i]);
+        for (var l = 0; l < posts.length; l++) {
+            QUOTEONE(posts[l]);
         }
     }
 
@@ -565,7 +565,7 @@
             // We have to be careful with newlines otherwise too much whitespace
             // will be added.
             if (id)
-                return bbcodeQuote(quoteType + id[1], quoteNode)
+                return bbcodeQuote(quoteType + id[1], quoteNode);
         }
         // We shouldn't ever reach this.
         return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
@@ -659,7 +659,7 @@
      * @param {HTMLDivElement} buttonDiv Div containing the button and spoiler.
      * @param {HTMLTableElement} mediainfoTable
      */
-    function bbcodeMediainfo(buttonDiv, mediainfoTable) {
+    function bbcodeMediainfo(buttonDiv, mediainfoTable) { // eslint-disable-line no-unused-vars
         if (buttonDiv.children.length < 2) return '';
         return '[mediainfo]' + bbcodeChildren(buttonDiv.children[1]) + '[/mediainfo]';
     }
@@ -854,28 +854,28 @@
             return '';
         }
         switch (node.tagName.toUpperCase()) {
-            case 'DIV': return bbcodeDiv(node);
-            case 'SPAN': return bbcodeSpan(node);
-            case 'BR': return '\n';
-            case 'STRONG': return bbcodeStrong(node);
-            case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
-            case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
-            case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
-            case 'OL': return bbcodeList(node, '[#] ');
-            case 'UL': return bbcodeList(node, '[*] ');
-            case 'A': return bbcodeLink(node);
-            case 'IMG': return bbcodeImage(node);
-            case 'IFRAME': return bbcodeIframe(node);
-            case 'BLOCKQUOTE': return bbcodeQuote('', node);
-            case 'HR': return '[hr]';
-            case 'TABLE': return bbcodeChildren(node); // crude representation of a table
-            case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
-            case 'TBODY': return bbcodeChildren(node);
-            case 'TH': return bbcodeChildren(node) + '\n';
-            case 'TR': return bbcodeChildren(node) + '\n';
-            case 'TD': return bbcodeChildren(node) + '\t';
-            default:
-                return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
+        case 'DIV': return bbcodeDiv(node);
+        case 'SPAN': return bbcodeSpan(node);
+        case 'BR': return '\n';
+        case 'STRONG': return bbcodeStrong(node);
+        case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
+        case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
+        case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
+        case 'OL': return bbcodeList(node, '[#] ');
+        case 'UL': return bbcodeList(node, '[*] ');
+        case 'A': return bbcodeLink(node);
+        case 'IMG': return bbcodeImage(node);
+        case 'IFRAME': return bbcodeIframe(node);
+        case 'BLOCKQUOTE': return bbcodeQuote('', node);
+        case 'HR': return '[hr]';
+        case 'TABLE': return bbcodeChildren(node); // crude representation of a table
+        case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
+        case 'TBODY': return bbcodeChildren(node);
+        case 'TH': return bbcodeChildren(node) + '\n';
+        case 'TR': return bbcodeChildren(node) + '\n';
+        case 'TD': return bbcodeChildren(node) + '\t';
+        default:
+            return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
         }
     }
 
@@ -928,7 +928,7 @@
 
         document.getElementById('quickpost').value += res;
 
-        sel = document.getElementById('quickpost');
+        var sel = document.getElementById('quickpost');
         if (sel !== null)
             sel.scrollIntoView();
     }
