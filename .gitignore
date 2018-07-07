@@ -1,3 +1,4 @@
 .ropeproject/
 node_modules/
 __pycache__/
+delicious-userscripts/dist/
