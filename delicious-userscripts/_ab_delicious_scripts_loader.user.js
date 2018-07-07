@@ -104,9 +104,7 @@
 
     // Hide treats by Alpha
     // Hide treats on profile.
-    if (GM_getValue('delicioustreats') === 'true') {
-        importScriptFile('ab_hide_treats.user.js');
-    }
+    importScriptFile('ab_hide_treats.user.js');
 
 
     // Keyboard shortcuts by Alpha, mod by Megure
