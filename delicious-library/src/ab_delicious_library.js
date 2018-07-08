@@ -338,7 +338,6 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var section = this.createSection(title);
 
             var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
-            enableBox.style.marginTop = '10px';
             section.appendChild(enableBox);
 
             this._insertSorted(title.textContent || title, section, this.rootSettingsList, true);
