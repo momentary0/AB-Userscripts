@@ -117,9 +117,7 @@
 
 
     // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
-    if (/user\.php\?id=/i.test(document.URL)) {
-        importScriptFile('ab_yen_stats.user.js');
-    }
+    importScriptFile('ab_yen_stats.user.js');
 
     // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
     importScriptFile('ab_dynamic_stylesheets.user.js');

@@ -9,6 +9,11 @@
 
 // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
 (function ABYenStats() {
+    delicious.settings.basicScriptCheckbox('deliciousyenperx', 'Delicious Yen Per X',
+        'Shows how much yen you receive per X and as upload equivalent.');
+    delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio',
+        'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
+
     if (!/user\.php\?id=/i.test(document.URL))
         return;
 
@@ -173,8 +178,8 @@
         addDefinitionBefore(ypdNode, 'Yen as upload:', humancount(Math.pow(1024, 2) * ypy * compoundInterest(1 / dpy / 24 / 60 / 60)) + '/s');
         addDefinitionBefore(ypdNode, 'Yen per hour:', (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
     }
-    if (GM_getValue('deliciousratio', 'true') === 'true')
+    if (delicious.settings.get('deliciousratio'))
         addRawStats();
-    if (GM_getValue('deliciousyenperx', 'true') === 'true')
+    if (delicious.settings.get('deliciousyenperx'))
         addYenPerStats();
 })();
