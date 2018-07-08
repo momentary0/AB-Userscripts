@@ -9,6 +9,9 @@
 
 // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
 (function ABYenStats() {
+    if (!/user\.php\?id=/i.test(document.URL))
+        return;
+
     importDeliciousCommon();
 
     function compoundInterest(years) {
