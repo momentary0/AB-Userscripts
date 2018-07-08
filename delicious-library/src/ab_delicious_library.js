@@ -344,6 +344,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return section;
         },
 
+        insertSection: function(section) {
+            this._insertSorted(section.textContent, section, this.rootSettingsList, true);
+        },
+
         _createSettingLI: function(label, rightElements) {
             return newElement('li', {}, [
                 newElement('span', {className: 'ue_left strong'}, [label]),
