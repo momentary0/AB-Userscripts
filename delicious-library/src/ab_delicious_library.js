@@ -313,7 +313,15 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
-        addScriptCheckbox: function(key, label, description, options) {
+        basicScriptCheckbox: function(key, label, description) {
+            this.init(key, true);
+            if (this.ensureSettingsInserted()) {
+                this.addBasicCheckbox(key, label, description);
+            }
+            return this.get(key);
+        },
+
+        addBasicCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
             //this._basicSection.appendChild(checkboxLI);
