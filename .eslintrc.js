@@ -1,7 +1,8 @@
 module.exports = {
     "env": {
         "browser": true,
-        "node": true
+        "node": true,
+        "greasemonkey": true,
     },
     "parserOptions": {
         "ecmaVersion": 6
