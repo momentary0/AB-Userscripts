@@ -406,7 +406,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var section = newElement('div', {className: 'delicious_settings_section'}, [
                 newElement('li', {}, [heading])
             ]);
-            section.style.marginTop = '25px';
+            section.style.marginTop = '30px';
             return section;
         },
 
