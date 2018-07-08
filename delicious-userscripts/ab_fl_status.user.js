@@ -19,7 +19,7 @@
     delicious.settings._migrateStringSetting('deliciousflpoolposition');
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var s = delicious.settings.createSection('Freeleech Pool Status');
+        var s = delicious.settings.createSection('Delicious Freeleech Pool');
         s.appendChild(delicious.settings.createCheckbox(
             'deliciousfreeleechpool',
             'Enable/Disable',
@@ -38,7 +38,7 @@
         ));
         s.appendChild(delicious.settings.createCheckbox(
             'deliciousnavbarpiechart',
-            'Delicious Freeleech Pie Chart',
+            'Freeleech Pie Chart',
             'Adds a dropdown with a pie chart to the freeleech pool progress in the navbar.'
         ));
         delicious.settings.insertSection(s);

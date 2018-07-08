@@ -13,8 +13,8 @@
 (function ABHideTreats(){
     var _enabled = delicious.settings.basicScriptCheckbox(
         'delicioustreats',
-        'Hide treats',
-        'Hide those hideous treats on profile pages.'
+        'Disgusting Treats',
+        'Hide those hideous treats on profile pages!'
     );
     if (!_enabled)
         return;

@@ -14,7 +14,7 @@
 (function ABKeyboardShortcuts() {
     var _enabled = delicious.settings.basicScriptCheckbox(
         'deliciouskeyboard',
-        'Forum Keyboard Shortcuts',
+        'Delicious Keyboard Shortcuts',
         'Keyboard shortcuts to make typing BBCode easier.'
     );
     if (!_enabled)

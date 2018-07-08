@@ -15,7 +15,7 @@
 (function ABTitleInverter() {
     var _enabled = delicious.settings.basicScriptCheckbox(
         'delicioustitleflip',
-        'Title Inverter',
+        'Delicious Title Flip',
         'Flips the tab title.'
     );
     if (!_enabled)

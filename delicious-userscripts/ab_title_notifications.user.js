@@ -12,7 +12,7 @@
 (function ABTitleNotifications() {
     var _enabled = delicious.settings.basicScriptCheckbox(
         'delicioustitlenotifications',
-        'Title Notifications',
+        'Delicious Title Notifications',
         'Display number of notifications in the tab title.'
     );
     if (!_enabled)

@@ -15,7 +15,7 @@
 (function ABHyperQuote() {
     var _enabled = delicious.settings.basicScriptCheckbox(
         'delicioushyperquote',
-        'Hyper Quote',
+        'Delicious Hyper Quote',
         'Select text and press Ctrl+V to instantly quote it.'
     );
     if (!_enabled)
