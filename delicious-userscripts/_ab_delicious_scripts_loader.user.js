@@ -61,10 +61,6 @@
         var linksNode = document.getElementsByClassName('ue_tabs')[0];
         if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
         //addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
-
-        document.getElementById('pose_list').appendChild(document.createElement('hr'));
-        addCheckbox("Delicious Dynamic Stylesheets", "Define rules below for which hour to show what stylesheet.", 'deliciousdynamicstylesheets');
-        document.getElementById('pose_list').appendChild(document.createElement('hr'));
     }
 
     if (/\/user\.php\?.*action=edit/i.test(document.URL)) createSettingsPage();
@@ -118,9 +114,6 @@
 
     // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
     importScriptFile('ab_yen_stats.user.js');
-
-    // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
-    importScriptFile('ab_dynamic_stylesheets.user.js');
 
 
     // Enhanced Torrent View by Megure
