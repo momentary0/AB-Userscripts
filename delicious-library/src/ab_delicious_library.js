@@ -299,6 +299,24 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        _migrateStringSetting: function(key) {
+            var val;
+            try {
+                val = this.get(key);
+            } catch (exc) {
+                if (exc instanceof SyntaxError
+                    && GM_getValue(key, undefined) !== undefined) {
+                    // Assume the current variable is a bare string.
+                    // Re-store it as a JSON string.
+                    val = GM_getValue(key);
+                    this.set(key, val);
+                } else {
+                    throw exc; // Something else happened
+                }
+            }
+            return val;
+        },
+
         _insertSorted: function(newText, newElement, rootElement, skipFirst) {
             var current = rootElement.firstElementChild;
             if (skipFirst)
