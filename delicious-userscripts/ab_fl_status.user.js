@@ -248,8 +248,7 @@
 
         updatePieChart();
 
-        if (/user\.php\?id=/i.test(document.URL) && GM_getValue('deliciousyenperx', 'true') === 'true') {
-            // Only do so on the users' profile pages if Yen per X is activated and Yen per day is present in userstats
+        if (/user\.php\?id=/i.test(document.URL)) {
             var userstats = document.querySelector('#user_rightcol > .box');
             if (userstats != null) {
                 var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
