@@ -13,15 +13,12 @@
 /* global delicious */
 
 (function ABHyperQuote() {
-    delicious.settings.init('delicioushyperquote', true);
-    if (delicious.settings.ensureSettingsInserted()) {
-        delicious.settings.addScriptCheckbox(
-            'delicioushyperquote',
-            'Hyper Quote',
-            'Select text and press Ctrl+V to instantly quote it.'
-        );
-    }
-    if (!delicious.settings.get('delicioushyperquote'))
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioushyperquote',
+        'Hyper Quote',
+        'Select text and press Ctrl+V to instantly quote it.'
+    );
+    if (!_enabled)
         return;
 
     if (document.getElementById('quickpost') === null)

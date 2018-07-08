@@ -5,12 +5,20 @@
 // @include     https://animebytes.tv/*
 // @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
+// @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 
 // Keyboard shortcuts by Alpha, mod by Megure
 // Enables keyboard shortcuts for forum (new post and edit) and PM
 (function ABKeyboardShortcuts() {
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'deliciouskeyboard',
+        'Forum Keyboard Shortcuts',
+        'Keyboard shortcuts to make typing BBCode easier.'
+    );
+    if (!_enabled)
+        return;
     if (document.querySelector('textarea') === null)
         return;
 

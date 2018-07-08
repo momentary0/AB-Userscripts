@@ -13,12 +13,12 @@
 // Forums title inverter by Potatoe
 // Inverts the forums titles.
 (function ABTitleInverter() {
-    delicious.settings.init('delicioustitleflip', true);
-    if (delicious.settings.ensureSettingsInserted()) {
-        delicious.settings.addScriptCheckbox('delicioustitleflip', 'Title Inverter',
-            'Flips the tab title.');
-    }
-    if (!delicious.settings.get('delicioustitleflip'))
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioustitleflip',
+        'Title Inverter',
+        'Flips the tab title.'
+    );
+    if (!_enabled)
         return;
 
     if (document.title.indexOf(' > ') !== -1) {
