@@ -5,6 +5,7 @@
 // @include     https://animebytes.tv/user.php*
 // @version     0.1
 // @icon        http://animebytes.tv/favicon.ico
+// @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
