@@ -34,7 +34,7 @@
             [['Hour', '1'],
                 ['Day', '24'],
                 ['Week', '168']],
-            {default:'1'}
+            {default: '24'}
         ));
         s.appendChild(delicious.settings.createCheckbox(
             'ABTorrentsReqTime',
