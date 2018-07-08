@@ -61,14 +61,7 @@
         var linksNode = document.getElementsByClassName('ue_tabs')[0];
         if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
         //addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
-        addCheckbox("Disgusting Treats", "Hide/Unhide those hideous treats!", 'delicioustreats');
-        addCheckbox("Delicious Keyboard Shortcuts", "Enable/Disable delicious keyboard shortcuts for easier access to Bold/Italics/Underline/Spoiler/Hide and aligning.", 'deliciouskeyboard');
-        addCheckbox("Delicious Title Notifications", "Display number of notifications in title.", 'delicioustitlenotifications');
-        addCheckbox("Delicious Yen per X", "Shows how much yen you receive per X, and as upload equivalent.", 'deliciousyenperx');
-        addCheckbox("Delicious Ratio", "Shows ratio and raw ratio and how much upload / download you need for certain ratio milestones.", 'deliciousratio');
-        addCheckbox("Delicious Freeleech Pool", "Shows current freeleech pool progress in the navbar and on user pages (updated once an hour or when freeleech pool site is visited).", 'deliciousfreeleechpool');
-        addDropdown("FL Pool Navbar Position", "Select position of freeleech pool progress in the navbar or disable it.", 'deliciousflpoolposition', [['Before user info', 'before #userinfo_minor'], ['After user info', 'after #userinfo_minor'], ['Before menu', 'before .main-menu.nobullet'], ['After menu', 'after .main-menu.nobullet'], ['Don\'t display', 'none']], 'after #userinfo_minor');
-        addCheckbox("Delicious Freeleech Pie Chart", "Adds a dropdown with pie-chart to the freeleech pool progress in the navbar.", 'delicousnavbarpiechart');
+
         document.getElementById('pose_list').appendChild(document.createElement('hr'));
         addCheckbox("Delicious Dynamic Stylesheets", "Define rules below for which hour to show what stylesheet.", 'deliciousdynamicstylesheets');
         document.getElementById('pose_list').appendChild(document.createElement('hr'));
@@ -109,24 +102,18 @@
 
     // Keyboard shortcuts by Alpha, mod by Megure
     // Enables keyboard shortcuts for forum (new post and edit) and PM
-    if (GM_getValue('deliciouskeyboard') === 'true') {
-        importScriptFile('ab_keyboard_shortcuts.user.js');
-    }
+    importScriptFile('ab_keyboard_shortcuts.user.js');
 
 
     // Title Notifications by Megure
     // Will prepend the number of notifications to the title
-    if (GM_getValue('delicioustitlenotifications') === 'true') {
-        importScriptFile('ab_title_notifications.user.js');
-    }
+    importScriptFile('ab_title_notifications.user.js');
 
 
     // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
     // Shows current freeleech pool status in navbar with a pie-chart
     // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
-    if (GM_getValue('deliciousfreeleechpool', 'true') === 'true') {
-        importScriptFile('ab_fl_status.user.js');
-    }
+    importScriptFile('ab_fl_status.user.js');
 
 
     // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
