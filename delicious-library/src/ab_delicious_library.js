@@ -355,7 +355,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         _deliciousSaveAndSubmit: function(ev) {
             if (settings.saveAllSettings(ev)) {
                 ev.target.removeEventListener('submit', settings._deliciousSaveAndSubmit);
-                ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
+                if (ev.target.dataset['onsubmit'])
+                    ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
                 ev.target.submit();
             } else {
                 var errorBox = document.querySelector('.error_message');
