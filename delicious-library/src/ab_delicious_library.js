@@ -722,6 +722,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         createColourSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
                 default: '#000000',
+                checkbox: true,
+                resetButton: true,
                 onSave: function(ev) {
                     if (checkbox.checked) {
                         settings.set(key, ev.target.value);
@@ -732,31 +734,47 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var currentColour = this.get(key, options['default']);
-            var checkbox = newElement('input',
-                {type: 'checkbox', checked: currentColour !== null});
+
+            if (options['checkbox']) {
+                var checkbox = newElement('input',
+                    {type: 'checkbox', checked: currentColour !== null});
+            }
 
             var colour = newElement('input', {type: 'color'});
             colour.dataset['settingsKey'] = key;
+
             if (currentColour !== null)
                 colour.value = currentColour;
             else
                 colour.value = options['default'];
+
             if (options['onSave'] !== null)
                 colour.addEventListener('deliciousSave', options['onSave']);
 
-            var reset = newElement('button', {textContent: 'Reset'});
-            reset.addEventListener('click', function(ev) {
-                colour.value = options['default'];
-                ev.preventDefault();
-                ev.stopPropagation();
-            });
+            if (options['resetButton']) {
+                var reset = newElement('button', {textContent: 'Reset'});
+                reset.addEventListener('click', function(ev) {
+                    colour.value = options['default'];
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                });
+            }
 
-            var li = this._createSettingLI(label, [
-                checkbox, ' ',
-                colour, ' ',
-                reset, ' ',
-                description
-            ]);
+            var li = this._createSettingLI(label);
+            if (options['checkbox']) {
+                li.appendChild(checkbox);
+                li.appendChild(document.createTextNode(' '));
+            }
+            li.appendChild(colour);
+            li.appendChild(document.createTextNode(' '));
+            if (options['resetButton']) {
+                li.appendChild(reset);
+                li.appendChild(document.createTextNode(' '));
+            }
+            if (typeof description === 'string')
+                li.appendChild(document.createTextNode(description));
+            else
+                li.appendChild(description);
             return li;
         },
 
