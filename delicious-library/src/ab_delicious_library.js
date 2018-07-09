@@ -760,22 +760,19 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 });
             }
 
-            var li = this._createSettingLI(label);
+            var right = [];
             if (options['checkbox']) {
-                li.appendChild(checkbox);
-                li.appendChild(document.createTextNode(' '));
+                right.push(checkbox);
+                right.push(' ');
             }
-            li.appendChild(colour);
-            li.appendChild(document.createTextNode(' '));
+            right.push(colour);
+            right.push(' ');
             if (options['resetButton']) {
-                li.appendChild(reset);
-                li.appendChild(document.createTextNode(' '));
+                right.push(reset);
+                right.push(' ');
             }
-            if (typeof description === 'string')
-                li.appendChild(document.createTextNode(description));
-            else
-                li.appendChild(description);
-            return li;
+            right.push(description);
+            return this._createSettingLI(label, right);
         },
 
 
