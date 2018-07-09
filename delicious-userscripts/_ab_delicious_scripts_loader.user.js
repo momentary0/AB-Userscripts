@@ -130,6 +130,7 @@
     // Add settings
     if (/\/user\.php\?.*action=edit/i.test(document.URL)) {
         (function () {
+            return;
             function addBooleanSetting(key, name, description, onValue, offValue, myDefault) {
 
                 var __temp = document.createElement('li');
