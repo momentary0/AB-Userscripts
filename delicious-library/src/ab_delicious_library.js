@@ -131,6 +131,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
     var _isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
 
     var settings = {
+        _idPrefix: 'setting_',
+        _eventName: 'deliciousSave',
+        _settingKey: 'settingKey',
+        _settingSubkey: 'settingSubkey',
+
         isSettingsPage: _isSettingsPage,
 
         _createDeliciousPage: function() {
@@ -259,8 +264,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var cancelled = false;
             var settingsItems = ev.target.querySelectorAll('[data-settings-key]');
             for (var i = 0; i < settingsItems.length; i++) {
-                log('Sending save event for setting key: ' + settingsItems[i].dataset['settingsKey']);
-                var saveEvent = new Event('deliciousSave', {cancelable: true});
+                log('Sending save event for setting key: ' + settingsItems[i].dataset[this._settingKey]);
+                var saveEvent = new Event(this._eventName, {cancelable: true});
                 if (!settingsItems[i].dispatchEvent(saveEvent)) {
                     cancelled = true;
                 }
@@ -274,8 +279,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         saveOneElement: function(element, property) {
-            if (element.dataset['settingsKey'])
-                this.set(element.dataset['settingsKey'], element[property]);
+            if (element.dataset[this._settingKey])
+                this.set(element.dataset[this._settingKey], element[property]);
             else
                 log('Skipping blank: ' + element.outerHTML);
         },
@@ -387,21 +392,21 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var checkbox = newElement('input', {type: 'checkbox'});
-            checkbox.dataset['settingsKey'] = key;
-            checkbox.id = 'setting_' + key;
+            checkbox.dataset[this._settingKey] = key;
+            checkbox.id = this._idPrefix + key;
 
             var currentValue = options['default'];
             if (this.get(key, currentValue))
                 checkbox.setAttribute('checked', 'checked');
 
             if (options['onSave'] !== null) {
-                checkbox.addEventListener('deliciousSave', options['onSave']);
+                checkbox.addEventListener(this._eventName, options['onSave']);
             }
 
             var li = this._createSettingLI(label, [
                 checkbox,
                 ' ',
-                newElement('label', {htmlFor: 'setting_'+key}, [description]),
+                newElement('label', {htmlFor: this._idPrefix+key}, [description]),
             ]);
 
             return li;
@@ -428,20 +433,20 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var inputElem = newElement('input', {
                 type: 'text',
-                id: 'setting_'+key
+                id: this._idPrefix+key
             });
             inputElem.value = this.get(key, options['default']);
-            inputElem.dataset['settingsKey'] = key;
+            inputElem.dataset[this._settingKey] = key;
             inputElem.style.width = options['width'];
 
             var li = this._createSettingLI(label, [
                 inputElem,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                newElement('label', {htmlFor: 'setting_'+key}, [description])
+                newElement('label', {htmlFor: this._idPrefix+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
-                inputElem.addEventListener('deliciousSave', options['onSave']);
+                inputElem.addEventListener(this._eventName, options['onSave']);
             }
 
             return li;
@@ -457,8 +462,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var select = newElement('select');
-            select.dataset['settingsKey'] = key;
-            select.id = 'setting_'+key;
+            select.dataset[this._settingKey] = key;
+            select.id = this._idPrefix+key;
 
             var currentValue = null;
             if (options['default'] !== null)
@@ -477,11 +482,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 select,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                newElement('label', {htmlFor: 'setting_'+key}, [description])
+                newElement('label', {htmlFor: this._idPrefix+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
-                select.addEventListener('deliciousSave', options['onSave']);
+                select.addEventListener(this._eventName, options['onSave']);
             }
 
             return li;
@@ -499,8 +504,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var input = newElement('input');
-            input.id = 'setting_'+key;
-            input.dataset['settingsKey'] = key;
+            input.id = this._idPrefix+key;
+            input.dataset[this._settingKey] = key;
             input.type = 'number';
             if (options['allowDecimal'])
                 input.step = 'any';
@@ -511,11 +516,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 input,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                newElement('label', {htmlFor: 'setting_'+key}, [description])
+                newElement('label', {htmlFor: this._idPrefix+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
-                input.addEventListener('deliciousSave', options['onSave']);
+                input.addEventListener(this._eventName, options['onSave']);
             }
 
             return li;
@@ -528,22 +533,22 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     var obj = {};
                     var checkboxes = ev.target.querySelectorAll('[data-settings-subkey]');
                     for (var i = 0; i < checkboxes.length; i++) {
-                        obj[checkboxes[i].dataset['settingsSubkey']] = checkboxes[i].checked;
+                        obj[checkboxes[i].dataset[this._settingSubkey]] = checkboxes[i].checked;
                     }
-                    settings.set(ev.target.dataset['settingsKey'], obj);
+                    settings.set(ev.target.dataset[this._settingKey], obj);
                 }
             });
 
             var fieldset = newElement('span');
-            fieldset.dataset['settingsKey'] = key;
+            fieldset.dataset[this._settingKey] = key;
 
             var currentSettings = this.get(key, {});
 
             for (var i = 0; i < fields.length; i++) {
                 var checkbox = newElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.id = 'setting_'+key+'_'+fields[i][1];
-                checkbox.dataset['settingsSubkey'] = fields[i][1];
+                checkbox.id = this._idPrefix+key+'_'+fields[i][1];
+                checkbox.dataset[this._settingSubkey] = fields[i][1];
 
                 var current = currentSettings[fields[i][1]];
                 if (current === undefined)
@@ -552,7 +557,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 if (current)
                     checkbox.checked = true;
 
-                var newLabel = newElement('label', {htmlFor: 'setting_'+key+'_'+fields[i][1]}, [
+                var newLabel = newElement('label', {htmlFor: this._idPrefix+key+'_'+fields[i][1]}, [
                     checkbox, ' ', fields[i][0]
                 ]);
                 newLabel.style.marginRight = '15px';
@@ -561,7 +566,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
 
             if (options['onSave'] !== null) {
-                fieldset.addEventListener('deliciousSave', options['onSave']);
+                fieldset.addEventListener(this._eventName, options['onSave']);
             }
 
             var li = this._createSettingLI(label, [
@@ -627,7 +632,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     cell.step = 'any';
                 }
                 var subkey = columns[i][1];
-                cell.dataset['settingsSubkey'] = subkey;
+                cell.dataset[this._settingSubkey] = subkey;
                 cell.placeholder = columns[i][0];
                 if (values[subkey] !== undefined) {
                     cell.value = values[subkey];
@@ -670,7 +675,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                             var val = columns[j].value;
                             if (columns[j].type === 'number')
                                 val = parseFloat(val);
-                            obj[columns[j].dataset['settingsSubkey']] = val;
+                            obj[columns[j].dataset[this._settingSubkey]] = val;
                         }
                         list.push(obj);
                     }
@@ -687,10 +692,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var rowDiv = newElement('div', {className: 'ue_right'}, children);
 
             var rowContainer = newElement('div');
-            rowContainer.dataset['settingsKey'] = key;
+            rowContainer.dataset[this._settingKey] = key;
             rowContainer.className = 'row_container';
             if (options['onSave'] !== null)
-                rowContainer.addEventListener('deliciousSave', options['onSave']);
+                rowContainer.addEventListener(this._eventName, options['onSave']);
             if (description)
                 rowContainer.style.marginTop = '5px';
             rowDiv.appendChild(rowContainer);
@@ -746,8 +751,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
 
             var colour = newElement('input', {type: 'color'});
-            colour.dataset['settingsKey'] = key;
-            colour.id = 'setting_'+key;
+            colour.dataset[this._settingKey] = key;
+            colour.id = this._idPrefix+key;
 
             if (currentColour !== null)
                 colour.value = currentColour;
@@ -755,7 +760,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 colour.value = options['default'];
 
             if (options['onSave'] !== null)
-                colour.addEventListener('deliciousSave', options['onSave']);
+                colour.addEventListener(this._eventName, options['onSave']);
 
             if (options['resetButton']) {
                 var reset = newElement('button', {textContent: 'Reset'});
@@ -777,7 +782,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 right.push(reset);
                 right.push(' ');
             }
-            right.push(newElement('label', {htmlFor: 'setting_'+key},
+            right.push(newElement('label', {htmlFor: this._idPrefix+key},
                 [description]));
             return this._createSettingLI(label, right);
         },
