@@ -388,6 +388,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var checkbox = newElement('input', {type: 'checkbox'});
             checkbox.dataset['settingsKey'] = key;
+            checkbox.id = 'setting_' + key;
 
             var currentValue = options['default'];
             if (this.get(key, currentValue))
@@ -400,7 +401,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 checkbox,
                 ' ',
-                newElement('label', {}, [description]),
+                newElement('label', {htmlFor: 'setting_'+key}, [description]),
             ]);
 
             return li;
@@ -426,7 +427,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var inputElem = newElement('input', {
-                type: 'text'
+                type: 'text',
+                id: 'setting_'+key
             });
             inputElem.value = this.get(key, options['default']);
             inputElem.dataset['settingsKey'] = key;
@@ -435,7 +437,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 inputElem,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                description
+                newElement('label', {htmlFor: 'setting_'+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
@@ -456,6 +458,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var select = newElement('select');
             select.dataset['settingsKey'] = key;
+            select.id = 'setting_'+key;
 
             var currentValue = null;
             if (options['default'] !== null)
@@ -474,7 +477,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 select,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                description
+                newElement('label', {htmlFor: 'setting_'+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
@@ -496,6 +499,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var input = newElement('input');
+            input.id = 'setting_'+key;
             input.dataset['settingsKey'] = key;
             input.type = 'number';
             if (options['allowDecimal'])
@@ -507,7 +511,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var li = this._createSettingLI(label, [
                 input,
                 (options['lineBreak'] && description) ? newElement('br') : ' ',
-                description
+                newElement('label', {htmlFor: 'setting_'+key}, [description])
             ]);
 
             if (options['onSave'] !== null) {
@@ -538,6 +542,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             for (var i = 0; i < fields.length; i++) {
                 var checkbox = newElement('input');
                 checkbox.type = 'checkbox';
+                checkbox.id = 'setting_'+key+'_'+fields[i][1];
                 checkbox.dataset['settingsSubkey'] = fields[i][1];
 
                 var current = currentSettings[fields[i][1]];
@@ -547,7 +552,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 if (current)
                     checkbox.checked = true;
 
-                var newLabel = newElement('label', {}, [
+                var newLabel = newElement('label', {htmlFor: 'setting_'+key+'_'+fields[i][1]}, [
                     checkbox, ' ', fields[i][0]
                 ]);
                 newLabel.style.marginRight = '15px';
@@ -742,6 +747,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var colour = newElement('input', {type: 'color'});
             colour.dataset['settingsKey'] = key;
+            colour.id = 'setting_'+key;
 
             if (currentColour !== null)
                 colour.value = currentColour;
@@ -771,7 +777,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 right.push(reset);
                 right.push(' ');
             }
-            right.push(description);
+            right.push(newElement('label', {htmlFor: 'setting_'+key},
+                [description]));
             return this._createSettingLI(label, right);
         },
 
