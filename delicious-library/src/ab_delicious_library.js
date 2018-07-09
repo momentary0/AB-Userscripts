@@ -602,7 +602,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
         createFieldSetSetting: function(key, label, fields, description, options) {
             options = utilities.applyDefaults(options, {
-                default: [fields[0][1]],
+                default: [],
                 onSave: function(ev) {
                     var obj = {};
                     var checkboxes = ev.target.querySelectorAll('['+this._dataSettingSubkey+']');
