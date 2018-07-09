@@ -201,13 +201,17 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         _idPrefix: 'setting_',
         /** Event type used when saving. */
         _eventName: 'deliciousSave',
-        /** Data attribute name */
+        /** Data attribute JS name for primary keys. */
         _settingKey: 'settingKey',
+        /** Data attribute JS name for subkeys. */
         _settingSubkey: 'settingSubkey',
 
+        /** HTML attribute name for primary keys. */
         _dataSettingKey: utilities.toDataAttr('settingKey'),
+        /** HTML attribute name for primary subkeys. */
         _dataSettingSubkey: utilities.toDataAttr('settingSubkey'),
 
+        /** Whether this page is a user settings page. */
         isSettingsPage: _isSettingsPage,
 
         _createDeliciousPage: function() {
@@ -605,11 +609,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 default: [],
                 onSave: function(ev) {
                     var obj = {};
-                    var checkboxes = ev.target.querySelectorAll('['+this._dataSettingSubkey+']');
+                    var checkboxes = ev.target.querySelectorAll('['+settings._dataSettingSubkey+']');
                     for (var i = 0; i < checkboxes.length; i++) {
-                        obj[checkboxes[i].dataset[this._settingSubkey]] = checkboxes[i].checked;
+                        obj[checkboxes[i].dataset[settings._settingSubkey]] = checkboxes[i].checked;
                     }
-                    settings.set(ev.target.dataset[this._settingKey], obj);
+                    settings.set(ev.target.dataset[settings._settingKey], obj);
                 }
             });
 
@@ -744,12 +748,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     var rows = ev.target.querySelectorAll('.setting_row');
                     for (var i = 0; i < rows.length; i++) {
                         var obj = {};
-                        var columns = rows[i].querySelectorAll('['+this._dataSettingSubkey+']');
+                        var columns = rows[i].querySelectorAll('['+settings._dataSettingSubkey+']');
                         for (var j = 0; j < columns.length; j++) {
                             var val = columns[j].value;
                             if (columns[j].type === 'number')
                                 val = parseFloat(val);
-                            obj[columns[j].dataset[this._settingSubkey]] = val;
+                            obj[columns[j].dataset[settings._settingSubkey]] = val;
                         }
                         list.push(obj);
                     }
