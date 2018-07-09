@@ -275,6 +275,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 ev.preventDefault();
                 ev.stopPropagation();
                 return false;
+            } else {
+                return true;
             }
         },
 
