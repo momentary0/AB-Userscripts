@@ -353,7 +353,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {Event} ev Form element.
          */
         _deliciousSaveAndSubmit: function(ev) {
-            if (settings.saveAllSettings(ev)) {
+            if (settings.saveAllSettings(ev.target)) {
                 ev.target.removeEventListener('submit', settings._deliciousSaveAndSubmit);
                 if (ev.target.dataset['onsubmit'])
                     ev.target.setAttribute('onsubmit', ev.target.dataset['onsubmit']);
@@ -362,13 +362,21 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 var errorBox = document.querySelector('.error_message');
                 if (errorBox)
                     errorBox.scrollIntoView();
+                ev.stopPropagation();
+                ev.preventDefault();
             }
         },
 
-        saveAllSettings: function(ev) {
+        /**
+         * Sends the save event to all elements contained within `rootElement`
+         * and with the appropriate `data-` settings attribute set.
+         * @param {HTMLElement} rootElement Root element.
+         * @returns {boolean} True if all elements saved successfully, false otherwise.
+         */
+        saveAllSettings: function(rootElement) {
             log('Saving all settings...');
             var cancelled = false;
-            var settingsItems = ev.target.querySelectorAll('['+this._dataSettingKey+']');
+            var settingsItems = rootElement.querySelectorAll('['+this._dataSettingKey+']');
             for (var i = 0; i < settingsItems.length; i++) {
                 log('Sending save event for setting key: ' + settingsItems[i].dataset[this._settingKey]);
                 var saveEvent = new Event(this._eventName, {cancelable: true});
@@ -378,8 +386,6 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
             log('Form submit cancelled: ' + cancelled);
             if (cancelled) {
-                ev.preventDefault();
-                ev.stopPropagation();
                 return false;
             } else {
                 return true;
