@@ -214,6 +214,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         /** Whether this page is a user settings page. */
         isSettingsPage: _isSettingsPage,
 
+        /**
+         * Creates the delicious settings `div`.
+         * @returns {HTMLDivElement}
+         */
         _createDeliciousPage: function() {
             log('Creating settings page...');
             var settingsDiv = document.createElement('div');
@@ -237,6 +241,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
+         * Click handler for user profile tab links. Displays the clicked page
+         * and hides any other page.
          *
          * @param {MouseEvent} ev
          */
@@ -255,6 +261,9 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return false;
         },
 
+        /**
+         * Attaches our click handler to the existing tab links.
+         */
         _relinkClickHandlers: function() {
             log('Rebinding tab click handlers...');
             var tabLinks = document.querySelectorAll('.ue_tabs a');
@@ -263,6 +272,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        /**
+         * Inserts the given settings div into the user settings page.
+         * @param {string} label Name to display for this page.
+         * @param {HTMLDivElement} settingsPage Element containing the page.
+         */
         insertSettingsPage: function(label, settingsPage) {
             log('Inserting a settings page...');
             var linkItem = document.createElement('li');
@@ -281,6 +295,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             tabs.insertBefore(settingsPage, tabs.lastElementChild);
         },
 
+        /**
+         * Inserts the delicious settings page. Attaches a listener to the
+         * form `submit` event, and temporarily disables the default `onsubmit`
+         * attribute which is set.
+         */
         _insertDeliciousSettings: function() {
             this.insertSettingsPage('Userscript Settings',
                 this._createDeliciousPage());
@@ -297,6 +316,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
         _settingsInserted: !!document.getElementById('delicious_settings'),
 
+        /**
+         * Ensures the settings page has been inserted, creating and inserting
+         * it if the page is a user settings page.
+         *
+         * Returns true if on the user settings page, false otherwise.
+         */
         ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
                 if (!this.rootSettingsList) {
@@ -323,6 +348,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        /**
+         * Saves the settings and submits the rest of the user settings form.
+         * @param {Event} ev Form element.
+         */
         _deliciousSaveAndSubmit: function(ev) {
             if (settings.saveAllSettings(ev)) {
                 ev.target.removeEventListener('submit', settings._deliciousSaveAndSubmit);
