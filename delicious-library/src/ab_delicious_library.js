@@ -479,7 +479,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     throw 'refElement is not a direct child of rootElement';
                 current = refElement.nextElementSibling;
             }
-            while (current && (current.textContent < newText)) {
+            while (current && (current.textContent <= newText)) {
                 current = current.nextElementSibling;
             }
             if (current) {
