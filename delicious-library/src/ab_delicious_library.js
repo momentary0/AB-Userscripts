@@ -77,13 +77,18 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {MouseEvent} ev
          */
         toggleSubnav: function(ev) {
+            // Begin at the bound element.
             var current = ev.target;
+            // Keep traversing up the node's parents until we find an
+            // adjacent .subnav element.
             while (current && !current.nextSibling.classList.contains('subnav')) {
                 current = current.parentNode;
             }
             if (!current)
                 return;
             var subnav = current.nextSibling;
+
+            // Logic to toggle visibility.
             var willShow = (subnav.style.display==='none');
             subnav.style.display = willShow?'block':'none';
             if (willShow)
@@ -96,9 +101,15 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
-         * @param {Object.<string, any>} options
-         * @param {Object.<string, any>} defaults
-         * @returns {Object.<string, any>}
+         * Applies default options to an object containing possibly
+         * incomplete options.
+         *
+         * Note: only returns keys which are present in `defaults`.
+         *
+         * @param {Object.<string, any>} options User-specified options.
+         * @param {Object.<string, any>} defaults Default options.
+         * @returns {Object.<string, any>} Object containing user-specified
+         * option if it is present, else the default.
          */
         applyDefaults: function(options, defaults) {
             if (!options)
@@ -116,52 +127,86 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
-         * @param {string} text
+         * Makes the given text suitable for inserting into HTML as text.
+         *
+         * @param {string} text Bare text.
+         * @returns {string} HTML escaped text.
          */
         htmlEscape: function(text) {
             return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
 
-        _bytes_units: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'],
-        _bytes_base: 1024,
+        /** A non-breaking space character. */
         nbsp: '\xa0',
 
+        _bytes_units: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'],
+        _bytes_base: 1024,
+
         /**
-         * @param {string} bytesString
+         * Parses a string containing a number of bytes (e.g. "4.25 GiB") and
+         * returns the number of bytes.
+         *
+         * Note: uses IEC prefixes (KiB, MiB, etc.).
+         *
+         * @param {string} bytesString Bytes as string.
+         * @returns {number} Number of bytes.
          */
         parseBytes: function(bytesString) {
             var split = bytesString.split(/\s+/);
             var significand = parseFloat(split[0]);
             var magnitude = this._bytes_units.indexOf(split[1]);
             if (magnitude === -1)
-                throw 'Bytes unit not recognised. Make sure you are using KiB, MiB, or similar.';
+                throw 'Bytes unit not recognised. Make sure you are using IEC prefixes (KiB, MiB, etc.)';
             return significand * Math.pow(this._bytes_base, magnitude);
         },
 
-
         /**
-         * Adapted from https://stackoverflow.com/a/18650828
+         * Formats a number of bytes as a string with an appropriate unit.
          *
-         * @param {number} numBytes
-         * @param {number} decimals
+         * @param {number} numBytes Number of bytes
+         * @param {number} [decimals=2] Number of decimal places to use.
+         * @returns {string} Bytes formatted as string.
          */
         formatBytes: function(numBytes, decimals) {
-            if (numBytes === 0) return '0 ' + this._bytes_units[0];
+            // Adapted from https://stackoverflow.com/a/18650828
+            if (numBytes === 0)
+                return '0 ' + this._bytes_units[0];
+            if (decimals === undefined)
+                decimals = 2;
             var magnitude = Math.floor(Math.log(numBytes) / Math.log(this._bytes_base));
             // Extra parseFloat is so trailing 0's are removed.
             return parseFloat(
                 (numBytes / Math.pow(this._bytes_base, magnitude)).toFixed(decimals)
             ) + ' ' + this._bytes_units[magnitude];
+        },
+
+        /**
+         * Given a element.dataset property name in camelCase, returns the corresponding
+         * data- attribute name with hyphens.
+         * @param {string} str JS `dataset` name.
+         * @returns {string} HTML `data-` name.
+         */
+        toDataAttr: function(str) {
+            return 'data-'+str.replace(/[A-Z]/g, function(a){return '-'+a.toLowerCase();});
         }
     };
 
     var _isSettingsPage = window.location.href.indexOf('/user.php?action=edit') !== -1;
 
+    /**
+     * Container for all setting-related functions.
+     */
     var settings = {
+        /** Prefix used when setting element ID attributes. */
         _idPrefix: 'setting_',
+        /** Event type used when saving. */
         _eventName: 'deliciousSave',
+        /** Data attribute name */
         _settingKey: 'settingKey',
         _settingSubkey: 'settingSubkey',
+
+        _dataSettingKey: utilities.toDataAttr('settingKey'),
+        _dataSettingSubkey: utilities.toDataAttr('settingSubkey'),
 
         isSettingsPage: _isSettingsPage,
 
@@ -289,7 +334,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         saveAllSettings: function(ev) {
             log('Saving all settings...');
             var cancelled = false;
-            var settingsItems = ev.target.querySelectorAll('[data-settings-key]');
+            var settingsItems = ev.target.querySelectorAll('['+this._dataSettingKey+']');
             for (var i = 0; i < settingsItems.length; i++) {
                 log('Sending save event for setting key: ' + settingsItems[i].dataset[this._settingKey]);
                 var saveEvent = new Event(this._eventName, {cancelable: true});
@@ -560,7 +605,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 default: [fields[0][1]],
                 onSave: function(ev) {
                     var obj = {};
-                    var checkboxes = ev.target.querySelectorAll('[data-settings-subkey]');
+                    var checkboxes = ev.target.querySelectorAll('['+this._dataSettingSubkey+']');
                     for (var i = 0; i < checkboxes.length; i++) {
                         obj[checkboxes[i].dataset[this._settingSubkey]] = checkboxes[i].checked;
                     }
@@ -699,7 +744,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     var rows = ev.target.querySelectorAll('.setting_row');
                     for (var i = 0; i < rows.length; i++) {
                         var obj = {};
-                        var columns = rows[i].querySelectorAll('[data-settings-subkey]');
+                        var columns = rows[i].querySelectorAll('['+this._dataSettingSubkey+']');
                         for (var j = 0; j < columns.length; j++) {
                             var val = columns[j].value;
                             if (columns[j].type === 'number')
