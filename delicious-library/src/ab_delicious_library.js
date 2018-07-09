@@ -77,7 +77,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {MouseEvent} ev
          */
         toggleSubnav: function(ev) {
-            var subnav = ev.currentTarget.parentNode.children[1];
+            var current = ev.target;
+            while (current && !current.nextSibling.classList.contains('subnav')) {
+                current = current.parentNode;
+            }
+            if (!current)
+                return;
+            var subnav = current.nextSibling;
             var willShow = (subnav.style.display==='none');
             subnav.style.display = willShow?'block':'none';
             if (willShow)
