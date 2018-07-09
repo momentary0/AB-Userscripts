@@ -24,6 +24,16 @@
 var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused-vars
     "use strict";
 
+    /**
+     * A helper function for creating a HTML element, defining some properties
+     * on it and appending child nodes.
+     *
+     * @param {string} tagName The type of element to create.
+     * @param {Object.<string, any>} properties
+     * An object containing properties to set on the new element.
+     * Note: does not support nested elements (e.g. "style.width" does _not_ work).
+     * @param {Array.<Node|string>} children Child nodes and/or text to append.
+     */
     function newElement(tagName, properties, children) {
         var elem = document.createElement(tagName);
         if (properties) {
@@ -45,14 +55,25 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         return elem;
     }
 
+    /**
+     * Logs a message to the debug console, prefixing it if it is a string.
+     *
+     * @param {any} message
+     */
     function log(message) {
         console.debug(
             typeof message === 'string' ? ('[Delicious] '+message) : message
         );
     }
 
+    /**
+     * Uesful Javascript functions related to AnimeBytes.
+     */
     var utilities = {
         /**
+         * Click handler for those triangles which drop down menus. Toggles
+         * displaying the associated submenu.
+         *
          * @param {MouseEvent} ev
          */
         toggleSubnav: function(ev) {
