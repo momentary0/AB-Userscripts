@@ -415,9 +415,9 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return section;
         },
 
-        createTextField: function(key, label, description, options) {
+        createTextSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                width: 50,
+                width: null,
                 lineBreak: false,
                 default: '',
                 onSave: function(ev) {
@@ -426,11 +426,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             });
 
             var inputElem = newElement('input', {
-                type: 'text',
-                size: options['width']
+                type: 'text'
             });
             inputElem.value = this.get(key, options['default']);
             inputElem.dataset['settingsKey'] = key;
+            inputElem.style.width = options['width'];
 
             var li = this._createSettingLI(label, [
                 inputElem,
@@ -719,6 +719,46 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return li;
         },
 
+        createColourSetting: function(key, label, description, options) {
+            options = utilities.applyDefaults(options, {
+                default: '#000000',
+                onSave: function(ev) {
+                    if (checkbox.checked) {
+                        settings.set(key, ev.target.value);
+                    } else {
+                        settings.set(key, null);
+                    }
+                }
+            });
+
+            var currentColour = this.get(key, options['default']);
+            var checkbox = newElement('input',
+                {type: 'checkbox', checked: currentColour !== null});
+
+            var colour = newElement('input', {type: 'color'});
+            colour.dataset['settingsKey'] = key;
+            if (currentColour !== null)
+                colour.value = currentColour;
+            else
+                colour.value = options['default'];
+            if (options['onSave'] !== null)
+                colour.addEventListener('deliciousSave', options['onSave']);
+
+            var reset = newElement('button', {textContent: 'Reset'});
+            reset.addEventListener('click', function(ev) {
+                colour.value = options['default'];
+                ev.preventDefault();
+                ev.stopPropagation();
+            });
+
+            var li = this._createSettingLI(label, [
+                checkbox, ' ',
+                colour, ' ',
+                reset, ' ',
+                description
+            ]);
+            return li;
+        },
 
 
         showErrorMessage: function(message, errorId) {
