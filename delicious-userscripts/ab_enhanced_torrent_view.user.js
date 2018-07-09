@@ -68,7 +68,7 @@
     var sort_rows = GM_getValue('ABSortTorrents', 'true') === 'true';
     var filter_torrents = GM_getValue('ABTorrentsFilter', 'true') === 'true';
     var dynamic_load = GM_getValue('ABHistDynLoad', 'true') === 'true';
-    var time_frame = parseInt(GM_getValue('ABTorrentsYenTimeFrame', '24'), 10);
+    var time_frame = parseInt(delicious.settings.get('ABTorrentsYenTimeFrame', '24'), 10);
     var time_frame_string = time_frame + ' hours';
     if (time_frame === 1) {
         time_frame_string = 'hour';
