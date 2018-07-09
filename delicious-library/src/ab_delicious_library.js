@@ -392,6 +392,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        /**
+         * Saves an element, reading the key from its dataset and
+         * the value from its `property` attribute.
+         * @param {HTMLElement} element
+         * @param {string} property
+         */
         saveOneElement: function(element, property) {
             if (element.dataset[this._settingKey])
                 this.set(element.dataset[this._settingKey], element[property]);
@@ -399,16 +405,29 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 log('Skipping blank: ' + element.outerHTML);
         },
 
+        /**
+         * If `key` is not set, set it to `defaultValue`. Otherwise, do nothing.
+         * @param {string} key
+         * @param {any} defaultValue
+         */
         init: function(key, defaultValue) {
             if (GM_getValue(key, undefined) === undefined) {
                 this.set(key, defaultValue);
             }
         },
 
+        /**
+         * Sets `key` to `value`. Currently uses GM_setValue, storing internally
+         * as JSON.
+         */
         set: function(key, value) {
             GM_setValue(key, JSON.stringify(value));
         },
 
+        /**
+         * Gets `key`, returns `defaultValue` if it is not set.
+         * Currently uses GM_getValue, storing internally as JSON.
+         */
         get: function(key, defaultValue) {
             var value = GM_getValue(key, undefined);
             if (value !== undefined) {
@@ -418,6 +437,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        /**
+         * Migrates a string stored in `key` as a bare string to a
+         * JSON encoded string.
+         * @param {string} key Setting key.
+         * @returns {any} String value.
+         */
         _migrateStringSetting: function(key) {
             var val;
             try {
@@ -436,6 +461,17 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return val;
         },
 
+        /**
+         * Inserts `newElement` as a chlid of `rootElement` sorted, by comparing
+         * `newText` to each element's textContent.
+         *
+         * If `refElement` is specified, will start _after_ `refElement`.
+         *
+         * @param {string} newText Comparison text for `newElement`.
+         * @param {HTMLElement} newElement Element to insert.
+         * @param {HTMLElement} rootElement Parent element to insert `newElement` into.
+         * @param {HTMLElement} [refElement] Reference element to insert after this or later.
+         */
         _insertSorted: function(newText, newElement, rootElement, refElement) {
             var current = rootElement.firstElementChild;
             if (refElement) {
