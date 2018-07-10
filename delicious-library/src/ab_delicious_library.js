@@ -32,7 +32,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
      * @param {Object.<string, any>} properties
      * An object containing properties to set on the new element.
      * Note: does not support nested elements (e.g. "style.width" does _not_ work).
-     * @param {Array.<Node|string>} children Child nodes and/or text to append.
+     * @param {(Node[]|string[])} children Child nodes and/or text to append.
      */
     function newElement(tagName, properties, children) {
         var elem = document.createElement(tagName);
@@ -489,6 +489,21 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             }
         },
 
+        /**
+         * Inserts a checkbox with the given parameters to the basic settings
+         * section. Returns true if the stored `key` value is true, false otherwise.
+         *
+         * @param {string} key Setting key.
+         * @param {string} label Label for setting, placed in left column.
+         * @param {string} description Description for setting, placed right of checkbox.
+         * @returns {boolean} Value of the `key` setting.
+         * @example
+         * // Very basic enable/disable script setting.
+         * if (!delicious.settings.basicScriptCheckbox('EnableHideTreats', 'Hides Treats', 'Hide those hideous treats!')) {
+         *      return;
+         * }
+         * // Rest of userscript here.
+         */
         basicScriptCheckbox: function(key, label, description) {
             this.init(key, true);
             if (this.ensureSettingsInserted()) {
@@ -497,10 +512,18 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return this.get(key);
         },
 
+        /**
+         * Inserts a checkbox to the basic section and returns it.
+         *
+         * @param {string} key Setting key.
+         * @param {string} label Left label.
+         * @param {string} description Right description.
+         * @param {Object.<string, any>} options Further options for the checkbox.
+         * @see {settings.createCheckbox} for accepted `options`.
+         */
         addBasicCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
-            //this._basicSection.appendChild(checkboxLI);
             this.addBasicSetting(checkboxLI);
             return checkboxLI;
         },
@@ -804,7 +827,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         /**
          * @param {string} key
          * @param {string | HTMLElement} label
-         * @param {Array.<[string, string, string]>} columns
+         * @param {string[][]} columns
          * @param {string | HTMLElement} description
          * @param {Object} options
          */
