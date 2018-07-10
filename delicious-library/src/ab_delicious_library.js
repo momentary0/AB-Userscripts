@@ -528,11 +528,25 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return checkboxLI;
         },
 
+        /**
+         * Adds an element containing a basic setting to the basic settings
+         * section, at the top of the settings page.
+         * @param {HTMLElement} setting Setting element.
+         */
         addBasicSetting: function(setting) {
             this._insertSorted(setting.textContent,
                 setting, this._basicSection);
         },
 
+        /**
+         * Creates, inserts and returns a script section to the settings page.
+         * Inserts an Enable/Disable checkbox associated with `key` into
+         * the section.
+         * @param {string} key Setting key.
+         * @param {string} title Section title.
+         * @param {string} description Basic description.
+         * @param {Object.<string, any>} options Further options for the checkbox.
+         */
         addScriptSection: function(key, title, description, options) {
             var section = this.createSection(title);
 
@@ -544,6 +558,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return section;
         },
 
+        /**
+         * Inserts a section into the settings page, placing it after the
+         * basic settings and sorting it alphabetically.
+         * @param {HTMLElement} section Setting section.
+         */
         insertSection: function(section) {
             this._insertSorted(section.textContent, section, this.rootSettingsList,
                 this._basicSection);
@@ -585,6 +604,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return li;
         },
 
+        /**
+         * Creates a setting section, returns it but does not insert it into
+         * the page.
+         */
         createSection: function(title) {
             var heading = newElement('h3', {}, [title]);
             var section = newElement('div', {className: 'delicious_settings_section'}, [
@@ -625,6 +648,25 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return li;
         },
 
+        /**
+         * Creates and returns a drop-down setting.
+         *
+         * `valuesArray` must contain 2-tuples of strings; values will
+         * be stored as strings.
+         *
+         * The default value specified in `options` must be identical to a
+         * setting value in `valuesArray`.
+         * @example
+         * // Creates a drop-down with 2 options, and the second option default.
+         * delicious.settings.createDropdown('TimeUnit', 'Select time',
+         * 'Select a time unit to use', [['Hour', '1'], ['Day', '24']],
+         * {default: '24'})
+         * @param {string} key Setting key.
+         * @param {string} label Left label.
+         * @param {string} description Right description.
+         * @param {[string, string][]} valuesArray Array of 2-tuples containing [text, setting value].
+         * @param {Object.<string, any>} options Further options for the checkbox.
+         */
         createDropDown: function(key, label, description, valuesArray, options) {
             options = utilities.applyDefaults(options, {
                 lineBreak: false,
