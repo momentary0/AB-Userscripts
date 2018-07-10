@@ -44,6 +44,7 @@
         delicious.settings.insertSection(s);
     }
     delicious.settings.init('deliciousfreeleechpool', true);
+    delicious.settings.init('deliciousnavbarpiechart', true);
     if (!delicious.settings.get('deliciousfreeleechpool'))
         return;
 
@@ -234,8 +235,7 @@
             li = document.createElement('li');
         a.href = '/konbini/pool';
         nav.appendChild(a);
-        if (delicious.settings.get('delicousnavbarpiechart')) {
-
+        if (delicious.settings.get('deliciousnavbarpiechart')) {
             function dropPie2(event) { // eslint-disable-line no-inner-declarations
                 // because who doesn't love dropping their pies
                 if ((typeof $j).toString() !== 'undefined') {
