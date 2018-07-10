@@ -575,6 +575,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             ]);
         },
 
+        /**
+         * @param {string} key Setting key.
+         * @param {string} label Label text.
+         * @param {string} description Short description.
+         * @param {Object.<string, any>} options Further options (see source code).
+         */
         createCheckbox: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
                 default: true,
@@ -617,6 +623,12 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return section;
         },
 
+        /**
+         * @param {string} key Setting key.
+         * @param {string} label Label text.
+         * @param {string} description Short description.
+         * @param {Object.<string, any>} options Further options (see source code).
+         */
         createTextSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
                 width: null,
@@ -665,7 +677,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {string} label Left label.
          * @param {string} description Right description.
          * @param {[string, string][]} valuesArray Array of 2-tuples containing [text, setting value].
-         * @param {Object.<string, any>} options Further options for the checkbox.
+         * @param {Object.<string, any>} options Further options.
          */
         createDropDown: function(key, label, description, valuesArray, options) {
             options = utilities.applyDefaults(options, {
@@ -707,6 +719,15 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             return li;
         },
 
+        /**
+         * Returns a number setting element. Value is stored as a number.
+         * Note that an empty input is stored as `null`.
+         *
+         * @param {string} key Setting key.
+         * @param {string} label Label text.
+         * @param {string} description Short description.
+         * @param {Object.<string, any>} options Further options (see source code).
+         */
         createNumberInput: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
                 lineBreak: false,
