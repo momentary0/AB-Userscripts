@@ -1,6 +1,6 @@
 /**
- * @file   Library for userscripts on AnimeBytes.
- * @author TheFallingMan
+ * @file    Library for userscripts on AnimeBytes.
+ * @author  TheFallingMan
  * @version 0.0.1
  * @license GPL-3.0
  *
