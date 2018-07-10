@@ -1045,14 +1045,22 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var currentColour = this.get(key, options['default']);
 
+            var disabled = currentColour === null;
             if (options['checkbox']) {
                 var checkbox = newElement('input',
-                    {type: 'checkbox', checked: currentColour !== null});
+                    {type: 'checkbox', checked: !disabled});
+                checkbox.addEventListener('change', function(ev) {
+                    colour.disabled = !ev.target.checked;
+                    if (reset)
+                        reset.disabled = !ev.target.checked;
+                    ev.stopPropagation();
+                });
             }
 
             var colour = newElement('input', {type: 'color'});
             colour.dataset[this._settingKey] = key;
             colour.id = this._idPrefix+key;
+            colour.disabled = disabled;
 
             if (currentColour !== null)
                 colour.value = currentColour;
@@ -1069,6 +1077,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     ev.preventDefault();
                     ev.stopPropagation();
                 });
+                reset.disabled = disabled;
             }
 
             var right = [];
