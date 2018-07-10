@@ -1035,10 +1035,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 checkbox: true,
                 resetButton: true,
                 onSave: function(ev) {
-                    if (checkbox.checked) {
-                        settings.set(key, ev.target.value);
-                    } else {
+                    if (options['checkbox'] && !checkbox.checked) {
                         settings.set(key, null);
+                    } else {
+                        settings.set(key, ev.target.value);
                     }
                 }
             });
