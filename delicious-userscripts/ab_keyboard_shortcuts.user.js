@@ -5,6 +5,8 @@
 // @include     https://animebytes.tv/*
 // @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
+// @grant       GM_setValue
+// @grant       GM_getValue
 // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 

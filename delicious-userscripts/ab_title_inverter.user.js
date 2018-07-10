@@ -6,7 +6,8 @@
 // @icon https://animebytes.tv/favicon.ico
 // @include https://animebytes.tv/forums.php?*
 // @match https://animebytes.tv/forums.php?*
-// @grant none
+// @grant       GM_setValue
+// @grant       GM_getValue
 // @require https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
