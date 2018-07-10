@@ -1026,8 +1026,16 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
-         * Returns a colour input, possibly with checkbox to enable/disable
-         * the whole setting.
+         * Returns a colour input, with optional checkbox to enable/disable
+         * the whole setting and reset to default value.
+         *
+         * If the checkbox is unchecked, a `null` will be stored as the value.
+         * Else, the colour will be stored as #rrggbb.
+         *
+         * @param {string} key Setting key.
+         * @param {string} label Left label.
+         * @param {string} description Short description on right.
+         * @param {Object.<string, any>} options Further options (see source code).
          */
         createColourSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
@@ -1097,6 +1105,17 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
 
+        /**
+         * Shows an error message in a friendly red box near the top of the
+         * page.
+         *
+         * `errorId` should be a unique string identifying the type of error.
+         * It is used to remove previous errors of the same type before
+         * displaying the new error.
+         *
+         * @param {string | HTMLElement} message
+         * @param {string} errorId
+         */
         showErrorMessage: function(message, errorId) {
             var errorDiv = newElement('div', {className: 'error_message'},
                 [message]);
