@@ -14,6 +14,8 @@
 // Keyboard shortcuts by Alpha, mod by Megure
 // Enables keyboard shortcuts for forum (new post and edit) and PM
 (function ABKeyboardShortcuts() {
+    var _debug = false;
+
     var _enabled = delicious.settings.basicScriptCheckbox(
         'deliciouskeyboard',
         'Delicious Keyboard Shortcuts',
@@ -38,7 +40,7 @@
                 elem.setSelectionRange(startPos + open.length, endPos + open.length);
         } else if (document.selection && document.selection.createRange) {
             elem.focus();
-            sel = document.selection.createRange();
+            var sel = document.selection.createRange();
             sel.text = open + sel.text + close;
             if (close.length != 0) {
                 sel.move("character", -close.length);
