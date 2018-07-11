@@ -14,9 +14,10 @@ if __name__ == '__main__':
 
     if folderPath.parts[-1] == 'delicious-userscripts':
         sys.path.append(str(folderPath))
-        import assemble_delicious_script
+        sys.path.insert(0, './delicious-userscripts')
+        import concat_userscripts
         print('Assembling delicious bundle.')
-        assemble_delicious_script._main()
+        concat_userscripts._main()
     else:
         webpack = folderPath / '../node_modules/.bin/webpack.cmd'
         for f in os.listdir(str(folderPath)):

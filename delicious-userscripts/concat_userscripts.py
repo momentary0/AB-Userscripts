@@ -63,9 +63,11 @@ class Concat:
         for l in lines:
             self._out_file_obj.write(indent + prefix.ljust(margin) + l + suffix)
 
-
-if __name__ == '__main__':
+def _main():
     os.chdir(os.path.dirname(__file__))
     Concat('./_ab_delicious_template.js').write_bundle(
         './dist/ab_delicious_scripts.user.js',
         glob.glob('./src/*.user.js'))
+
+if __name__ == '__main__':
+    _main()
