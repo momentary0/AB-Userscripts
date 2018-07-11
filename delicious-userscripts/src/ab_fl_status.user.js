@@ -46,7 +46,7 @@
     if (!delicious.settings.get('deliciousfreeleechpool'))
         return;
 
-    importDeliciousCommon();
+
 
     function niceNumber(num) {
         var res = '';

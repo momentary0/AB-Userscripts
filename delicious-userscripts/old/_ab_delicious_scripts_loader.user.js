@@ -22,7 +22,7 @@
     }
 
     // Some GM_ functions and Javascript polyfills
-    importDeliciousCommon();
+
 
     // Better Quote no longer necessary.
 

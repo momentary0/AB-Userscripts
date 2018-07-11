@@ -20,7 +20,7 @@
     if (!/user\.php\?id=/i.test(document.URL))
         return;
 
-    importDeliciousCommon();
+
 
     function compoundInterest(years) {
         return (Math.pow(2, years) - 1) / Math.log(2);
