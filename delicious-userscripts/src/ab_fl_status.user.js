@@ -209,7 +209,7 @@
         var pieChart = getPieChart();
         p.innerHTML = pieChart;
         p3.innerHTML = pieChart;
-        if (delicious.settings.get('delicousnavbarpiechart')) {
+        if (delicious.settings.get('deliciousnavbarpiechart')) {
             li.innerHTML = pieChart;
         }
         p2.innerHTML = 'There is currently ' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' / ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' yen in the donation box.<br/>';
