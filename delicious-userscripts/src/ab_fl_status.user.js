@@ -41,12 +41,11 @@
         ));
         delicious.settings.insertSection(s);
     }
+    delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
     delicious.settings.init('deliciousfreeleechpool', true);
     delicious.settings.init('deliciousnavbarpiechart', true);
     if (!delicious.settings.get('deliciousfreeleechpool'))
         return;
-
-
 
     function niceNumber(num) {
         var res = '';
