@@ -7,7 +7,7 @@ import os.path
 if __name__ == '__main__':
     folderPath = pathlib.PurePath(sys.argv[1])
     if folderPath.parts[-1] in ('dist', 'src'):
-        folderPath = folderPath / '..'
+        folderPath = folderPath.parent
     elif folderPath.parts[-1] == 'ab-userscripts':
         print('Incorrect folder specified: ' + str(folderPath), file=sys.stderr)
         sys.exit(1)
