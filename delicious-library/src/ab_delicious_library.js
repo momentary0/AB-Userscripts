@@ -467,19 +467,18 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          *
          * If `refElement` is specified, will start _after_ `refElement`.
          *
-         * @param {string} newText Comparison text for `newElement`.
          * @param {HTMLElement} newElement Element to insert.
          * @param {HTMLElement} rootElement Parent element to insert `newElement` into.
          * @param {HTMLElement} [refElement] Reference element to insert after this or later.
          */
-        _insertSorted: function(newText, newElement, rootElement, refElement) {
+        _insertSorted: function(newElement, rootElement, refElement) {
             var current = rootElement.firstElementChild;
             if (refElement) {
                 if (refElement.parentNode !== rootElement)
                     throw 'refElement is not a direct child of rootElement';
                 current = refElement.nextElementSibling;
             }
-            while (current && (current.textContent <= newText)) {
+            while (current && (current.textContent <= newElement.textContent)) {
                 current = current.nextElementSibling;
             }
             if (current) {
@@ -534,8 +533,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {HTMLElement} setting Setting element.
          */
         addBasicSetting: function(setting) {
-            this._insertSorted(setting.textContent,
-                setting, this._basicSection);
+            this._insertSorted(setting, this._basicSection);
         },
 
         /**
@@ -559,8 +557,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 section.appendChild(enableBox);
             }
 
-            this._insertSorted(title.textContent || title, section,
-                this.rootSettingsList, this._basicSection);
+            this._insertSorted(section, this.rootSettingsList,
+                this._basicSection);
             return section;
         },
 
@@ -570,7 +568,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {HTMLElement} section Setting section.
          */
         insertSection: function(section) {
-            this._insertSorted(section.textContent, section, this.rootSettingsList,
+            this._insertSorted(section, this.rootSettingsList,
                 this._basicSection);
         },
 
