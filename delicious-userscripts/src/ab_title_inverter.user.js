@@ -8,7 +8,7 @@
 // @match https://animebytes.tv/forums.php?*
 // @grant       GM_setValue
 // @grant       GM_getValue
-// @require https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+// @require https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 // Forums title inverter by Potatoe
