@@ -550,8 +550,14 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         addScriptSection: function(key, title, description, options) {
             var section = this.createSection(title);
 
-            var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
-            section.appendChild(enableBox);
+            var checkbox = options['checkbox'];
+            if (checkbox === undefined)
+                checkbox = false;
+
+            if (checkbox) {
+                var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
+                section.appendChild(enableBox);
+            }
 
             this._insertSorted(title.textContent || title, section,
                 this.rootSettingsList, this._basicSection);
