@@ -7,7 +7,7 @@
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_getValue
 // @grant       GM_setValue
-// @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 (function AnimeBytesDeliciousUserScripts() {
@@ -21,7 +21,7 @@
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Enhanced Torrent View by Megure
@@ -958,7 +958,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_getValue
     // @grant       GM_setValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
@@ -1160,12 +1160,12 @@
             var pieChart = getPieChart();
             p.innerHTML = pieChart;
             p3.innerHTML = pieChart;
-            if (delicious.settings.get('delicousnavbarpiechart')) {
+            if (delicious.settings.get('deliciousnavbarpiechart')) {
                 li.innerHTML = pieChart;
             }
-            p2.innerHTML = 'There is currently ' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' / ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' yen in the donation box.<br/>';
-            p2.innerHTML += '(That means we are ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' yen away from getting sitewide freeleech!)<br/>';
-            p2.innerHTML += 'In total, you\'ve donated ' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' yen to the freeleech pool.<br/>';
+            p2.innerHTML = 'We currently have ¥' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + '&thinsp;/&thinsp;¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' in our donation box.<br/>';
+            p2.innerHTML += '(That means we\'re ¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' away from sitewide freeleech!)<br/>';
+            p2.innerHTML += 'In total, you\'ve donated ¥' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' to the freeleech pool.<br/>';
             p2.innerHTML += 'Last updated ' + Math.round((Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', Date.now()), 10)) / 60000) + ' minutes ago.';
             a.textContent = 'FL: ' + (100 * parseInt(GM_getValue('FLPoolCurrent', '0'), 10) / parseInt(GM_getValue('FLPoolMax', '50000000'), 10)).toFixed(1) + '%';
             nav.replaceChild(a, nav.firstChild);
@@ -1252,7 +1252,7 @@
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     //import '../delicious-library/src/ab_delicious_library'
@@ -1685,7 +1685,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Hide treats by Alpha
@@ -1715,7 +1715,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     //import '../delicious-library/src/ab_delicious_library';
@@ -2658,7 +2658,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     
@@ -2828,7 +2828,7 @@
     // @match https://animebytes.tv/forums.php?*
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Forums title inverter by Potatoe
@@ -2859,7 +2859,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Title Notifications by Megure
@@ -2895,7 +2895,7 @@
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require     https://raw.githubusercontent.com/momentary0/AB-Userscripts/delicious-settings/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
