@@ -72,6 +72,8 @@ section.appendChild(delicious.settings.createTextSetting('FooText', 'Text for fo
 delicious.settings.insertSection(section); // Insert onto the settings page.
 ```
 
+### Available Setting Types
+
 ### Custom Save Handlers
 
 ### Custom Settings Pages
