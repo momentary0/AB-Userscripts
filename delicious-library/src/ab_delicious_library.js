@@ -590,7 +590,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createCheckbox: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                default: true,
+                default: true, // Default state of checkbox.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'checked');
                 }
@@ -638,10 +638,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createTextSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                width: null,
-                lineBreak: false,
-                default: '',
-                required: false,
+                width: null, // CSS 'width' for the text box.
+                lineBreak: false, // Whether to place the description on its own line.
+                default: '', // Default text.
+                required: false, // If true, text cannot be blank.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'value');
                 }
@@ -685,13 +685,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {string} key Setting key.
          * @param {string} label Left label.
          * @param {string} description Right description.
-         * @param {[string, string][]} valuesArray Array of 2-tuples containing [text, setting value].
+         * @param {[string, string][]} valuesArray Array of 2-tuples [text, setting value].
          * @param {Object.<string, any>} options Further options.
          */
         createDropDown: function(key, label, description, valuesArray, options) {
             options = utilities.applyDefaults(options, {
-                lineBreak: false,
-                default: null,
+                lineBreak: false, // Whether to place the description on its own line.
+                default: null, // Default value.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'value');
                 }
@@ -740,11 +740,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createNumberInput: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                lineBreak: false,
-                default: '',
+                lineBreak: false, // Whether to place the description on its own line.
+                default: '', // Default value.
                 allowDecimal: true,
                 allowNegative: false,
-                required: false,
+                required: false, // If true, input cannot be blank.
                 onSave: function(ev) {
                     settings.set(key, parseFloat(ev.target.value));
                 }
@@ -838,10 +838,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 fieldset.addEventListener(this._eventName, options['onSave']);
             }
 
-            var li = this._createSettingLI(label, [
-                fieldset, newElement('br'),
-                description
-            ]);
+            var children = [fieldset];
+            if (description) {
+                children.push(newElement('br'));
+                children.push(description);
+            }
+
+            var li = this._createSettingLI(label, children);
 
             return li;
         },
