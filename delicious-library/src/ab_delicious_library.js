@@ -104,8 +104,6 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * Applies default options to an object containing possibly
          * incomplete options.
          *
-         * Note: only returns keys which are present in `defaults`.
-         *
          * @param {Object.<string, any>} options User-specified options.
          * @param {Object.<string, any>} defaults Default options.
          * @returns {Object.<string, any>} Object containing user-specified
@@ -121,6 +119,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                         newObject[key] = options[key];
                     else
                         newObject[key] = defaults[key];
+                }
+            }
+            for (var key2 in options) {
+                if (!newObject.hasOwnProperty(key2)) {
+                    newObject[key2] = options[key2];
                 }
             }
             return newObject;
@@ -546,13 +549,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {Object.<string, any>} options Further options for the checkbox.
          */
         addScriptSection: function(key, title, description, options) {
+            options = utilities.applyDefaults(options, {
+                checkbox: false
+            });
+
             var section = this.createSection(title);
 
-            var checkbox = options['checkbox'];
-            if (checkbox === undefined)
-                checkbox = false;
-
-            if (checkbox) {
+            if (options['checkbox']) {
                 var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
                 section.appendChild(enableBox);
             }
