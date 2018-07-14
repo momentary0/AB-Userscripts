@@ -1,6 +1,7 @@
 import re
 import os
 import glob
+import pathlib
 
 class Concat:
     _placeholder_re = re.compile(r'^(\s*)/\* \{([^:}]+)(?::(\d+))?\} \*/\n$')
@@ -17,7 +18,8 @@ class Concat:
     def write_bundle(self, out_file, userscripts):
         for f in userscripts:
             print('Reading script', f)
-            self._script_lines.append('/* Begin ' + f + ' */\n')
+            p = pathlib.PurePath(f).as_posix()
+            self._script_lines.append('/* Begin ' + p + ' */\n')
 
             with open(f, 'r', encoding='utf-8') as script_file:
                 for l in script_file:
@@ -34,7 +36,7 @@ class Concat:
                         self._requires.append(require_match[1])
             if not self._script_lines[len(self._script_lines)-1].endswith('\n'):
                 self._script_lines[len(self._script_lines)-1] += '\n'
-            self._script_lines.append('/* End ' + f + ' */\n\n\n')
+            self._script_lines.append('/* End ' + p + ' */\n\n\n')
 
         print('Writing bundle script')
         with open(out_file, 'w', encoding='utf-8') as out:
