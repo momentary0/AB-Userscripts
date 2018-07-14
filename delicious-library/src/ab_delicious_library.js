@@ -1063,7 +1063,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var currentColour = this.get(key, options['default']);
 
-            var disabled = currentColour === null;
+            var disabled = currentColour === null && options['checkbox'];
             if (options['checkbox']) {
                 var checkbox = newElement('input',
                     {type: 'checkbox', checked: !disabled});
