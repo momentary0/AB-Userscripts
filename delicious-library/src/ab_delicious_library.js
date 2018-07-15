@@ -81,12 +81,23 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var current = ev.target;
             // Keep traversing up the node's parents until we find an
             // adjacent .subnav element.
-            while (current && !current.nextSibling.classList.contains('subnav')) {
+            while (current
+                    && !(current.nextSibling && current.nextSibling.classList.contains('subnav'))) {
                 current = current.parentNode;
             }
             if (!current)
                 return;
             var subnav = current.nextSibling;
+
+            // Remove already open menus.
+            var l = document.querySelectorAll('ul.subnav');
+            for (var i = 0; i < l.length; i++) {
+                l[i].style.display = 'none';
+            }
+            var k = document.querySelectorAll('li.navmenu.selected');
+            for (var j = 0; j < k.length; j++) {
+                k[j].classList.remove('selected');
+            }
 
             // Logic to toggle visibility.
             var willShow = (subnav.style.display==='none');
@@ -95,6 +106,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 subnav.parentNode.classList.add('selected');
             else
                 subnav.parentNode.classList.remove('selected');
+
             ev.stopPropagation();
             ev.preventDefault();
             return false;
@@ -342,6 +354,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     this._settingsInserted = true;
 
                     this._insertDeliciousSettings();
+                } else {
+                    log('Settings already inserted; continuing...');
                 }
                 if (!this.rootSettingsList) {
                     this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
