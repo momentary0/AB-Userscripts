@@ -5,9 +5,17 @@ among other things.
 
 You can use this library from a userscript by adding
 ```
+// @grant   GM_setValue
+// @grant   GM_getValue
 // @require https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 ```
 to your header.
+
+### Example Usage
+
+ - [Hide Treats](../delicious-userscripts/src/ab_hide_treats.user.js) --- Most basic checkbox.
+ - [FL Pool Status](../delicious-userscripts/src/ab_fl_status.user.js) --- Script section containing drop down and fieldset.
+ - [Forum Search Enhancements](../delicious-userscripts/src/ab_forum_search_enhancement.user.js) --- Script section containing checkbox, text and colour settings.
 
 ## Settings
 
@@ -74,11 +82,15 @@ delicious.settings.insertSection(section); // Insert onto the settings page.
 
 ### Available Settings
 
+### `settings.add*`
+
 In general, the `settings.add*` functions create and insert a setting element for you. `settings.create*` return settings elements which you need to insert somewhere. `settings.insert*` inserts a given setting element.
 
 The following `add` functions are available (see source code for more details, and the delicious bundle for examples):
 
  - `addBasicCheckbox(key, label, description, options)` — Creates and inserts a checkbox to the basic section.
+
+### `settings.insert*`
 
 The following `insert` functions are available:
 
@@ -88,11 +100,35 @@ The following `insert` functions are available:
 
  - `insertSettingsPage(label, settingsPage)` — Inserts `settingsPage` onto the user settings page, with `label` as the tab bar label. This shouldn't be needed for most scripts.
 
+### `settings.create*`
+
+> **Note.** Specifying a default when creating a setting _does not_ store that
+> value into the setting until "Save Profile" is clicked.
+> This results in the following behaviour:
+> ```js
+> settings.createTextSetting('TextSetting', 'Text', 'Some text',
+>     {default: "Default Value"});
+> settings.get('TextSetting'); // Returns undefined.
+> ```
+> You can either specify a default when calling `settings.get` or use
+> `settings.init` (see above) to store the default. If you use `settings.init`,
+> specifying the default when creating the setting would be unnecessary.
+> ```js
+> settings.init('TextSetting', 'Default Value');
+> // Text setting will still have "Default Value" as default.
+> settings.createTextSetting('TextSetting', 'Text', 'Some text');
+> settings.get('TextSetting'); // Returns "Default Value".
+> ```
+
 The following `create` functions are provided. `key` is the setting key to store in, `label` is the label in the left column, `description` is placed on the right side near the input element. A default can be specified with `{default: ...}` as `options`. The given default value must match the setting's format. Some `options` properties are mentioned, see source code for more.
+
+In all cases, you will need to insert the returned setting element onto the page yourself.
 
  - `createCheckbox(key, label, description, options)` - Creates a checkbox setting.
 
  - `createSection(title)` — Creates and returns a setting section with the given title as a heading.
+ Use `appendChild` on the returned section to add setting elements.
+
  - `createTextSetting(key, label, description, options)` — Creates a text box setting.
  - `createDropDown(key, label, description, valuesArray, options)` — Creates a drop-down setting. `valuesArray` is an array of 2-tuples which are `[label, value]` (both should be strings). `label` will be shown in the dropdown. When that option is selected, its corresponding `value` will be stored. If given, the default property should be a `value`.
  - `createNumberInput(key, label, description, options)` — Creats a numeric setting. Value will be stored as a number (empty inputs will be stored as null). Within options, `allowDecimal` (default true) and `allowNegative` (default false) work as expected, `required` (default false) is whether input must be non-empty.
