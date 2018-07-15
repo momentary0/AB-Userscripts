@@ -81,12 +81,23 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             var current = ev.target;
             // Keep traversing up the node's parents until we find an
             // adjacent .subnav element.
-            while (current && !current.nextSibling.classList.contains('subnav')) {
+            while (current
+                    && !(current.nextSibling && current.nextSibling.classList.contains('subnav'))) {
                 current = current.parentNode;
             }
             if (!current)
                 return;
             var subnav = current.nextSibling;
+
+            // Remove already open menus.
+            var l = document.querySelectorAll('ul.subnav');
+            for (var i = 0; i < l.length; i++) {
+                l[i].style.display = 'none';
+            }
+            var k = document.querySelectorAll('li.navmenu.selected');
+            for (var j = 0; j < k.length; j++) {
+                k[j].classList.remove('selected');
+            }
 
             // Logic to toggle visibility.
             var willShow = (subnav.style.display==='none');
@@ -95,6 +106,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 subnav.parentNode.classList.add('selected');
             else
                 subnav.parentNode.classList.remove('selected');
+
             ev.stopPropagation();
             ev.preventDefault();
             return false;
@@ -103,8 +115,6 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         /**
          * Applies default options to an object containing possibly
          * incomplete options.
-         *
-         * Note: only returns keys which are present in `defaults`.
          *
          * @param {Object.<string, any>} options User-specified options.
          * @param {Object.<string, any>} defaults Default options.
@@ -121,6 +131,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                         newObject[key] = options[key];
                     else
                         newObject[key] = defaults[key];
+                }
+            }
+            for (var key2 in options) {
+                if (!newObject.hasOwnProperty(key2)) {
+                    newObject[key2] = options[key2];
                 }
             }
             return newObject;
@@ -324,6 +339,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
+                log('Not a profile settings page; doing nothing...');
                 if (!this.rootSettingsList) {
                     this._basicSection = newElement('div',
                         {id: 'delicious_basic_settings',
@@ -339,8 +355,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     this._settingsInserted = true;
 
                     this._insertDeliciousSettings();
+                } else {
+                    log('Settings already inserted; continuing...');
                 }
                 if (!this.rootSettingsList) {
+                    log('Locating settings div...');
                     this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
                     this._basicSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
                 }
@@ -406,13 +425,19 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
-         * If `key` is not set, set it to `defaultValue`. Otherwise, do nothing.
+         * If `key` is not set, set it to `defaultValue` and returns `defaultValue`.
+         * Otherwise, returns the stored value.
          * @param {string} key
          * @param {any} defaultValue
+         * @returns {any}
          */
         init: function(key, defaultValue) {
-            if (GM_getValue(key, undefined) === undefined) {
+            var value = this.get(key, undefined);
+            if (value === undefined) {
                 this.set(key, defaultValue);
+                return defaultValue;
+            } else {
+                return value;
             }
         },
 
@@ -467,19 +492,18 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          *
          * If `refElement` is specified, will start _after_ `refElement`.
          *
-         * @param {string} newText Comparison text for `newElement`.
          * @param {HTMLElement} newElement Element to insert.
          * @param {HTMLElement} rootElement Parent element to insert `newElement` into.
          * @param {HTMLElement} [refElement] Reference element to insert after this or later.
          */
-        _insertSorted: function(newText, newElement, rootElement, refElement) {
+        _insertSorted: function(newElement, rootElement, refElement) {
             var current = rootElement.firstElementChild;
             if (refElement) {
                 if (refElement.parentNode !== rootElement)
                     throw 'refElement is not a direct child of rootElement';
                 current = refElement.nextElementSibling;
             }
-            while (current && (current.textContent <= newText)) {
+            while (current && (current.textContent <= newElement.textContent)) {
                 current = current.nextElementSibling;
             }
             if (current) {
@@ -524,18 +548,17 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         addBasicCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
-            this.addBasicSetting(checkboxLI);
+            this.insertBasicSetting(checkboxLI);
             return checkboxLI;
         },
 
         /**
-         * Adds an element containing a basic setting to the basic settings
-         * section, at the top of the settings page.
+         * Inserts an element containing a basic setting to the basic settings
+         * section, above the individual script sections.
          * @param {HTMLElement} setting Setting element.
          */
-        addBasicSetting: function(setting) {
-            this._insertSorted(setting.textContent,
-                setting, this._basicSection);
+        insertBasicSetting: function(setting) {
+            this._insertSorted(setting, this._basicSection);
         },
 
         /**
@@ -548,13 +571,19 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {Object.<string, any>} options Further options for the checkbox.
          */
         addScriptSection: function(key, title, description, options) {
+            options = utilities.applyDefaults(options, {
+                checkbox: false
+            });
+
             var section = this.createSection(title);
 
-            var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
-            section.appendChild(enableBox);
+            if (options['checkbox']) {
+                var enableBox = this.createCheckbox(key, 'Enable/Disable', description, options);
+                section.appendChild(enableBox);
+            }
 
-            this._insertSorted(title.textContent || title, section,
-                this.rootSettingsList, this._basicSection);
+            this._insertSorted(section, this.rootSettingsList,
+                this._basicSection);
             return section;
         },
 
@@ -564,7 +593,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {HTMLElement} section Setting section.
          */
         insertSection: function(section) {
-            this._insertSorted(section.textContent, section, this.rootSettingsList,
+            this._insertSorted(section, this.rootSettingsList,
                 this._basicSection);
         },
 
@@ -583,7 +612,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createCheckbox: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                default: true,
+                default: true, // Default state of checkbox.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'checked');
                 }
@@ -631,10 +660,10 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createTextSetting: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                width: null,
-                lineBreak: false,
-                default: '',
-                required: false,
+                width: null, // CSS 'width' for the text box.
+                lineBreak: false, // Whether to place the description on its own line.
+                default: '', // Default text.
+                required: false, // If true, text cannot be blank.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'value');
                 }
@@ -678,13 +707,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          * @param {string} key Setting key.
          * @param {string} label Left label.
          * @param {string} description Right description.
-         * @param {[string, string][]} valuesArray Array of 2-tuples containing [text, setting value].
+         * @param {[string, string][]} valuesArray Array of 2-tuples [text, setting value].
          * @param {Object.<string, any>} options Further options.
          */
         createDropDown: function(key, label, description, valuesArray, options) {
             options = utilities.applyDefaults(options, {
-                lineBreak: false,
-                default: null,
+                lineBreak: false, // Whether to place the description on its own line.
+                default: null, // Default value.
                 onSave: function(ev) {
                     settings.saveOneElement(ev.target, 'value');
                 }
@@ -733,11 +762,11 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         createNumberInput: function(key, label, description, options) {
             options = utilities.applyDefaults(options, {
-                lineBreak: false,
-                default: '',
+                lineBreak: false, // Whether to place the description on its own line.
+                default: '', // Default value.
                 allowDecimal: true,
                 allowNegative: false,
-                required: false,
+                required: false, // If true, input cannot be blank.
                 onSave: function(ev) {
                     settings.set(key, parseFloat(ev.target.value));
                 }
@@ -831,10 +860,13 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 fieldset.addEventListener(this._eventName, options['onSave']);
             }
 
-            var li = this._createSettingLI(label, [
-                fieldset, newElement('br'),
-                description
-            ]);
+            var children = [fieldset];
+            if (description) {
+                children.push(newElement('br'));
+                children.push(description);
+            }
+
+            var li = this._createSettingLI(label, children);
 
             return li;
         },
@@ -1053,7 +1085,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
 
             var currentColour = this.get(key, options['default']);
 
-            var disabled = currentColour === null;
+            var disabled = currentColour === null && options['checkbox'];
             if (options['checkbox']) {
                 var checkbox = newElement('input',
                     {type: 'checkbox', checked: !disabled});
