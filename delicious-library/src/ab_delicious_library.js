@@ -532,16 +532,16 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         addBasicCheckbox: function(key, label, description, options) {
             var checkboxLI = this.createCheckbox(
                 key, label, description, options);
-            this.addBasicSetting(checkboxLI);
+            this.insertBasicSetting(checkboxLI);
             return checkboxLI;
         },
 
         /**
-         * Adds an element containing a basic setting to the basic settings
-         * section, at the top of the settings page.
+         * Inserts an element containing a basic setting to the basic settings
+         * section, above the individual script sections.
          * @param {HTMLElement} setting Setting element.
          */
-        addBasicSetting: function(setting) {
+        insertBasicSetting: function(setting) {
             this._insertSorted(setting, this._basicSection);
         },
 
