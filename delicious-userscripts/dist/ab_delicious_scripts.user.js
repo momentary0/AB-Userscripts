@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (function AnimeBytesDeliciousUserScripts() {
-    /* Begin ./src\ab_enhanced_torrent_view.user.js */
+    /* Begin src/ab_enhanced_torrent_view.user.js */
     // ==UserScript==
     // @name        Enhanced Torrent View
     // @namespace   Megure@AnimeBytes.tv
@@ -945,10 +945,10 @@
             }
         }
     }).call(this);
-    /* End ./src\ab_enhanced_torrent_view.user.js */
+    /* End src/ab_enhanced_torrent_view.user.js */
 
 
-    /* Begin ./src\ab_fl_status.user.js */
+    /* Begin src/ab_fl_status.user.js */
     // ==UserScript==
     // @name        AB - Freeleech Pool Status
     // @author      Megure (inspired by Lemma, Alpha, NSC)
@@ -966,6 +966,14 @@
     // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
     (function ABFLStatus() {
         delicious.settings._migrateStringSetting('deliciousflpoolposition');
+    
+        delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
+        delicious.settings.init('deliciousfreeleechpool', true);
+        delicious.settings.init('deliciousnavbarpiechart', true);
+        var pieLocations = delicious.settings.init('deliciousflpiepositions', {
+            'navbar': delicious.settings.get('deliciousnavbarpiechart'),
+            'profile': delicious.settings.get('deliciousnavbarpiechart')
+        });
     
         if (delicious.settings.ensureSettingsInserted()) {
             var s = delicious.settings.createSection('Delicious Freeleech Pool');
@@ -985,16 +993,14 @@
                     ['Don\'t display', 'none']],
                 {default: 'after #userinfo_minor'}
             ));
-            s.appendChild(delicious.settings.createCheckbox(
-                'deliciousnavbarpiechart',
-                'Freeleech Pie Chart',
-                'Adds a dropdown with a pie chart to the freeleech pool progress in the navbar.'
+            s.appendChild(delicious.settings.createFieldSetSetting(
+                'deliciousflpiepositions',
+                'FL Pie Chart Locations',
+                [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
             ));
             delicious.settings.insertSection(s);
         }
-        delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
-        delicious.settings.init('deliciousfreeleechpool', true);
-        delicious.settings.init('deliciousnavbarpiechart', true);
+    
         if (!delicious.settings.get('deliciousfreeleechpool'))
             return;
     
@@ -1160,7 +1166,7 @@
             var pieChart = getPieChart();
             p.innerHTML = pieChart;
             p3.innerHTML = pieChart;
-            if (delicious.settings.get('deliciousnavbarpiechart')) {
+            if (pieLocations['navbar']) {
                 li.innerHTML = pieChart;
             }
             p2.innerHTML = 'We currently have ¥' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + '&thinsp;/&thinsp;¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' in our donation box.<br/>';
@@ -1183,7 +1189,7 @@
                 li = document.createElement('li');
             a.href = '/konbini/pool';
             nav.appendChild(a);
-            if (delicious.settings.get('deliciousnavbarpiechart')) {
+            if (pieLocations['navbar']) {
                 var outerSpan = document.createElement('span');
                 outerSpan.className += "dropit hover clickmenu";
                 outerSpan.addEventListener('click', delicious.utilities.toggleSubnav);
@@ -1214,7 +1220,7 @@
     
             updatePieChart();
     
-            if (/user\.php\?id=/i.test(document.URL)) {
+            if (pieLocations['profile'] && /user\.php\?id=/i.test(document.URL)) {
                 var userstats = document.querySelector('#user_rightcol > .box');
                 if (userstats != null) {
                     var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
@@ -1238,10 +1244,10 @@
             }
         }
     })();
-    /* End ./src\ab_fl_status.user.js */
+    /* End src/ab_fl_status.user.js */
 
 
-    /* Begin ./src\ab_forum_search_enhancement.user.js */
+    /* Begin src/ab_forum_search_enhancement.user.js */
     // ==UserScript==
     // @name        AnimeBytes - Forum Search - Enhancement
     // @namespace   Megure@AnimeBytes.tv
@@ -1672,10 +1678,10 @@
             }, true);
         }
     }).call(this);
-    /* End ./src\ab_forum_search_enhancement.user.js */
+    /* End src/ab_forum_search_enhancement.user.js */
 
 
-    /* Begin ./src\ab_hide_treats.user.js */
+    /* Begin src/ab_hide_treats.user.js */
     // ==UserScript==
     // @name        AB - Hide treats
     // @author      Alpha
@@ -1702,10 +1708,10 @@
         var treatsnode = document.evaluate('//*[@id="user_leftcol"]/div[@class="box" and div[@class="head" and .="Treats"]]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         if (treatsnode) treatsnode.style.display = "none";
     })();
-    /* End ./src\ab_hide_treats.user.js */
+    /* End src/ab_hide_treats.user.js */
 
 
-    /* Begin ./src\ab_hyper_quote.user.js */
+    /* Begin src/ab_hyper_quote.user.js */
     // ==UserScript==
     // @name        AB - HYPER QUOTE!
     // @author      Megure, TheFallingMan
@@ -2645,10 +2651,10 @@
                 QUOTEALL();
         });
     })();
-    /* End ./src\ab_hyper_quote.user.js */
+    /* End src/ab_hyper_quote.user.js */
 
 
-    /* Begin ./src\ab_keyboard_shortcuts.user.js */
+    /* Begin src/ab_keyboard_shortcuts.user.js */
     // ==UserScript==
     // @name        AnimeBytes - Forum Keyboard Shortcuts
     // @author      Alpha, modified by Megure
@@ -2814,10 +2820,10 @@
         var mutationObserver = new MutationObserver(mutationHandler);
         mutationObserver.observe(document.querySelector('body'), { childList: true, subtree: true });
     })();
-    /* End ./src\ab_keyboard_shortcuts.user.js */
+    /* End src/ab_keyboard_shortcuts.user.js */
 
 
-    /* Begin ./src\ab_title_inverter.user.js */
+    /* Begin src/ab_title_inverter.user.js */
     // ==UserScript==
     // @name AnimeBytes forums title inverter
     // @author potatoe
@@ -2846,10 +2852,10 @@
             document.title = document.title.split(" :: ")[0].split(" > ").reverse().join(" < ") + " :: AnimeBytes";
         }
     })();
-    /* End ./src\ab_title_inverter.user.js */
+    /* End src/ab_title_inverter.user.js */
 
 
-    /* Begin ./src\ab_title_notifications.user.js */
+    /* Begin src/ab_title_notifications.user.js */
     // ==UserScript==
     // @name        AnimeBytes - Title Notifications
     // @author      Megure
@@ -2882,10 +2888,10 @@
         if (new_count > 0)
             document.title = '(' + new_count + ') ' + document.title;
     })();
-    /* End ./src\ab_title_notifications.user.js */
+    /* End src/ab_title_notifications.user.js */
 
 
-    /* Begin ./src\ab_yen_stats.user.js */
+    /* Begin src/ab_yen_stats.user.js */
     // ==UserScript==
     // @name        AB - Yen per X and ratio milestones
     // @author      Megure, Lemma, NSC, et al.
@@ -2905,10 +2911,10 @@
         delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio',
             'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
     
+        var _debug = false;
+    
         if (!/user\.php\?id=/i.test(document.URL))
             return;
-    
-    
     
         function compoundInterest(years) {
             return (Math.pow(2, years) - 1) / Math.log(2);
@@ -3074,7 +3080,7 @@
         if (delicious.settings.get('deliciousyenperx'))
             addYenPerStats();
     })();
-    /* End ./src\ab_yen_stats.user.js */
+    /* End src/ab_yen_stats.user.js */
 
 
 })();
