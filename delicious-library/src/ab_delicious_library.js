@@ -1,7 +1,7 @@
 /**
  * @file    Library for userscripts on AnimeBytes.
  * @author  TheFallingMan
- * @version 0.0.1
+ * @version 1.0.0
  * @license GPL-3.0
  *
  * Exports `delicious`, containing `delicious.settings` and
@@ -406,11 +406,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                 }
             }
             log('Form submit cancelled: ' + cancelled);
-            if (cancelled) {
-                return false;
-            } else {
-                return true;
-            }
+            return !cancelled;
         },
 
         /**
