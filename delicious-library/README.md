@@ -110,7 +110,7 @@ The following `create` functions are provided. `key` is the setting key to store
    };
    ```
 
-- `createRowSetting(key, label, columns, description, options)` —  Creates a multi-row setting. That is, a setting with certain columns and a variable number of rows. `columns` is an array of 3-tuples of `[column label, subkey, type]` (all strings, type should be `text` or `number`). Value (and `options.default`) is stored as an array of objects. Each object represents one wor, with the specified subkeys as properties and the cell value as property values. In `options`,
+- `createRowSetting(key, label, columns, description, options)` —  Creates a multi-row setting. That is, a setting with certain columns and a variable number of rows. `columns` is an array of 3-tuples of `[column label, subkey, type]` (all strings, type should be `text` or `number`). Value (and `options.default`) is stored as an array of objects. Each object represents one row, with the specified subkeys as properties and the cell value as property values. In `options`,
 
     - `allowSort` (default true) allows reordering rows with provided buttons,
     - `allowDelete` (default true) allows deleting rows,
@@ -130,16 +130,41 @@ Also,
 
 ### Custom Save Handlers
 
+On clicking the "Save Profile" button, a `deliciousSave` event is sent to all
+elements with a `data-setting-key` attribute. The attached event handler is
+responsible for storing the setting value.
+
+If, for whatever reason, the setting cannot be saved, the event handler can
+call `event.preventDefault()` which will prevent the form from being submitted.
+`settings.showErrorMessage` is provided to display an error message.
+
 ### Custom Settings Pages
+
+It is possible to create and use a completely new settings page. Refer to:
+
+ - `settings._createDeliciousPage` — Creates the delicious settings page, with required structure and sections.
+ - `settings._insertDeliciousSettings` — Creates and inserts the delicious settings page, attaching event handlers.
+ - `settings.insertSettingsPage` — Inserts a setting page into the user profile settings.
 
 ## Utilities
 
-### `toggleSubnav`
+Various utility functions related to AnimeBytes.
 
-### `applyDefaults`
+ - `toggleSubnav(ev)` — Event handler to be attached to the little drop-down triangles.
+ Toggles displaying the adjacent menu.
 
-### `htmlEscape`
+ - `applyDefaults(options, defaults)` — Accepts two objects with properties. Returns an
+ objetc combining the two, using values from `options` if present, `default` otherwise.
+ Essentially used to define defaults on parameters specified as objects.
 
-### `parseBytes` / `formatBytes`
+ - `htmlEscape(text)` --- Returns `text` escaped for HTML (e.g. `&` is replaced with `&amp;`).
 
-### `toDataAttr`
+ - `parseBytes(bytesString)` --- Accepts `bytesString`, a string containing a
+ number and a bytes unit. Returns the number of bytes. **Note:** Unit must use
+ IEC prefixes (KiB, GiB, etc.).
+
+ - `formatBytes(numBytes, decimals)` --- Formats a number of bytes as a string
+ with an appropriate unit, to a certain number of decimal places.
+
+ - `toDataAttr(str)` --- Given an `element.dataset` property name in camelCase,
+ returns the corresponding `data-` attribute name with hyphens.
