@@ -339,6 +339,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
          */
         ensureSettingsInserted: function() {
             if (!this.isSettingsPage) {
+                log('Not a profile settings page; doing nothing...');
                 if (!this.rootSettingsList) {
                     this._basicSection = newElement('div',
                         {id: 'delicious_basic_settings',
@@ -358,6 +359,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
                     log('Settings already inserted; continuing...');
                 }
                 if (!this.rootSettingsList) {
+                    log('Locating settings div...');
                     this.rootSettingsList = document.querySelector('#delicious_settings .ue_list');
                     this._basicSection = this.rootSettingsList.querySelector('#delicious_basic_settings');
                 }
