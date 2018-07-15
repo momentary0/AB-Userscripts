@@ -92,6 +92,8 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             // Remove already open menus.
             var l = document.querySelectorAll('ul.subnav');
             for (var i = 0; i < l.length; i++) {
+                if (l[i] === subnav)
+                    continue;
                 l[i].style.display = 'none';
             }
             var k = document.querySelectorAll('li.navmenu.selected');
