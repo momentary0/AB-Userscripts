@@ -63,6 +63,24 @@ This will create and insert a checkbox into the basic section. `basicScriptCheck
 
 > **Note.** This basic section is sorted alphabetically. This means there is no guarantee that two settings will be adjacent to each other. If you have two or more related settings, it is recommended to use a separate section (see below).
 
+### Ensure Settings Inserted
+
+**Important.** Wrap all settings page related activity inside `settings.ensureSettingsInserted`.
+This checks the URL is a profile settings page, and ensure the settings page is inserted and valid.
+For example,
+```js
+delicious.settings.init('Key', true);
+if (delicious.settings.ensureSettingsInserted()) {
+    var section = delicious.settings.createSection('Script Section');
+    // Do whatever...
+    delicious.settings.insertSection(section);
+}
+// Rest of script.
+```
+This is not required for merely accessing/storing values (`get`, `set`, etc.). Also,
+this is not needed for `basicScriptCheckbox`, as it does this automatically.
+
+
 ### Custom Script Sections
 
 If your userscript has more than one setting, I recommend you create a section to keep everything tidy and grouped. To do this, you have a few options:
