@@ -17,10 +17,10 @@
     delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio',
         'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
 
+    var _debug = false;
+
     if (!/user\.php\?id=/i.test(document.URL))
         return;
-
-
 
     function compoundInterest(years) {
         return (Math.pow(2, years) - 1) / Math.log(2);
