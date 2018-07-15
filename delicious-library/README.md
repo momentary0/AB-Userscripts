@@ -13,9 +13,10 @@ to your header.
 
 ### Example Usage
 
- - [Hide Treats](../delicious-userscripts/src/ab_hide_treats.user.js) --- Most basic checkbox.
- - [FL Pool Status](../delicious-userscripts/src/ab_fl_status.user.js) --- Script section containing drop down and fieldset.
- - [Forum Search Enhancements](../delicious-userscripts/src/ab_forum_search_enhancement.user.js) --- Script section containing checkbox, text and colour settings.
+ - [Hide Treats](../delicious-userscripts/src/ab_hide_treats.user.js) — Most basic checkbox.
+ - [FL Pool Status](../delicious-userscripts/src/ab_fl_status.user.js) — Script section containing drop down and fieldset.
+ - [Forum Search Enhancements](../delicious-userscripts/src/ab_forum_search_enhancement.user.js) — Script section containing checkbox, text and colour settings.
+ - [Quick Links](../quick-links/src/ab_quick_links.user.js) — Script section with multi-row setting.
 
 ## Settings
 
@@ -193,14 +194,14 @@ Various utility functions related to AnimeBytes.
  objetc combining the two, using values from `options` if present, `default` otherwise.
  Essentially used to define defaults on parameters specified as objects.
 
- - `htmlEscape(text)` --- Returns `text` escaped for HTML (e.g. `&` is replaced with `&amp;`).
+ - `htmlEscape(text)` — Returns `text` escaped for HTML (e.g. `&` is replaced with `&amp;`).
 
- - `parseBytes(bytesString)` --- Accepts `bytesString`, a string containing a
+ - `parseBytes(bytesString)` — Accepts `bytesString`, a string containing a
  number and a bytes unit. Returns the number of bytes. **Note:** Unit must use
  IEC prefixes (KiB, GiB, etc.).
 
- - `formatBytes(numBytes, decimals)` --- Formats a number of bytes as a string
+ - `formatBytes(numBytes, decimals)` — Formats a number of bytes as a string
  with an appropriate unit, to a certain number of decimal places.
 
- - `toDataAttr(str)` --- Given an `element.dataset` property name in camelCase,
+ - `toDataAttr(str)` — Given an `element.dataset` property name in camelCase,
  returns the corresponding `data-` attribute name with hyphens.
