@@ -409,13 +409,19 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
         },
 
         /**
-         * If `key` is not set, set it to `defaultValue`. Otherwise, do nothing.
+         * If `key` is not set, set it to `defaultValue` and returns `defaultValue`.
+         * Otherwise, returns the stored value.
          * @param {string} key
          * @param {any} defaultValue
+         * @returns {any}
          */
         init: function(key, defaultValue) {
-            if (GM_getValue(key, undefined) === undefined) {
+            var value = this.get(key, undefined);
+            if (value === undefined) {
                 this.set(key, defaultValue);
+                return defaultValue;
+            } else {
+                return value;
             }
         },
 
