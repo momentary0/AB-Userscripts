@@ -86,7 +86,7 @@ this is not needed for `basicScriptCheckbox`, as it does this automatically.
 If your userscript has more than one setting, I recommend you create a section to keep everything tidy and grouped. To do this, you have a few options:
 
  - `addScriptSection()` will create, insert and return a section element. Additionally, it can insert an "Enable/Disable" checkbox as the first setting in this section (use `checkbox: true` in `options`).
- - `createScriptSection()` will create and return a section element. You will need to insert it into the page with `insertSection()`.
+ - `createSection()` will create and return a section element. You will need to insert it into the page with `insertSection()`.
 
 
 In both cases, the function returns a HTMLElement. To add settings, use any of the `settings.create*` functions, then append that element. For example, to add a text box,
