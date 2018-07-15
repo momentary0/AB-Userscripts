@@ -16,6 +16,14 @@
 (function ABFLStatus() {
     delicious.settings._migrateStringSetting('deliciousflpoolposition');
 
+    delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
+    delicious.settings.init('deliciousfreeleechpool', true);
+    delicious.settings.init('deliciousnavbarpiechart', true);
+    var pieLocations = delicious.settings.init('deliciousflpiepositions', {
+        'navbar': delicious.settings.get('deliciousnavbarpiechart'),
+        'profile': delicious.settings.get('deliciousnavbarpiechart')
+    });
+
     if (delicious.settings.ensureSettingsInserted()) {
         var s = delicious.settings.createSection('Delicious Freeleech Pool');
         s.appendChild(delicious.settings.createCheckbox(
@@ -34,16 +42,14 @@
                 ['Don\'t display', 'none']],
             {default: 'after #userinfo_minor'}
         ));
-        s.appendChild(delicious.settings.createCheckbox(
-            'deliciousnavbarpiechart',
-            'Freeleech Pie Chart',
-            'Adds a dropdown with a pie chart to the freeleech pool progress in the navbar.'
+        s.appendChild(delicious.settings.createFieldSetSetting(
+            'deliciousflpiepositions',
+            'FL Pie Chart Locations',
+            [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
         ));
         delicious.settings.insertSection(s);
     }
-    delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
-    delicious.settings.init('deliciousfreeleechpool', true);
-    delicious.settings.init('deliciousnavbarpiechart', true);
+
     if (!delicious.settings.get('deliciousfreeleechpool'))
         return;
 
@@ -209,7 +215,7 @@
         var pieChart = getPieChart();
         p.innerHTML = pieChart;
         p3.innerHTML = pieChart;
-        if (delicious.settings.get('deliciousnavbarpiechart')) {
+        if (pieLocations['navbar']) {
             li.innerHTML = pieChart;
         }
         p2.innerHTML = 'We currently have ¥' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + '&thinsp;/&thinsp;¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' in our donation box.<br/>';
@@ -232,7 +238,7 @@
             li = document.createElement('li');
         a.href = '/konbini/pool';
         nav.appendChild(a);
-        if (delicious.settings.get('deliciousnavbarpiechart')) {
+        if (pieLocations['navbar']) {
             var outerSpan = document.createElement('span');
             outerSpan.className += "dropit hover clickmenu";
             outerSpan.addEventListener('click', delicious.utilities.toggleSubnav);
@@ -263,7 +269,7 @@
 
         updatePieChart();
 
-        if (/user\.php\?id=/i.test(document.URL)) {
+        if (pieLocations['profile'] && /user\.php\?id=/i.test(document.URL)) {
             var userstats = document.querySelector('#user_rightcol > .box');
             if (userstats != null) {
                 var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
