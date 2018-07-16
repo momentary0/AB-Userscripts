@@ -73,8 +73,7 @@
             delicious.settings.insertSection(s);
         }
     
-    
-    
+        var _debug = false;
     
         var days_per_year = 365.256363;
         var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
