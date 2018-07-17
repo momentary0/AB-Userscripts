@@ -132,9 +132,9 @@ Apart from this, it looks and functions identically to a normal section.
 
 ### Available Settings
 
-### `settings.add*`
-
 In general, the `settings.add*` functions create and insert a setting element for you. `settings.create*` return settings elements which you need to insert somewhere. `settings.insert*` inserts a given setting element.
+
+### `settings.add*`
 
 The following `add` functions are available (see source code for more details, and the delicious bundle for examples):
 
