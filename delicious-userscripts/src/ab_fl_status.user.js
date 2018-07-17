@@ -25,7 +25,8 @@
     });
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var s = delicious.settings.createSection('Delicious Freeleech Pool');
+        var section = delicious.settings.createCollapsibleSection('Delicious Freeleech Pool');
+        var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox(
             'deliciousfreeleechpool',
             'Enable/Disable',
@@ -47,7 +48,7 @@
             'FL Pie Chart Locations',
             [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
         ));
-        delicious.settings.insertSection(s);
+        delicious.settings.insertSection(section);
     }
 
     if (!delicious.settings.get('deliciousfreeleechpool'))

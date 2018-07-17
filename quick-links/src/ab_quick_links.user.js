@@ -21,7 +21,7 @@
     delicious.settings.init('ABQuickLinks', defaultLinks);
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var section = delicious.settings.createCollapsibleSection('Quick Links', true);
+        var section = delicious.settings.createCollapsibleSection('Quick Links');
         var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox(
             'ABQuickLinksEnabled',

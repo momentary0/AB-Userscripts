@@ -29,7 +29,8 @@
         delicious.settings.set('ABForumSearchHighlightFG', null);
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var s = delicious.settings.createSection('Forum Search Enhancements');
+        var section = delicious.settings.createCollapsibleSection('Forum Search Enhancements');
+        var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox(
             'ABForumSearchWorkInFS',
             'Load posts into search results',
@@ -56,7 +57,7 @@
             'The text to be shown for forum links that have been loaded and can now be toggled.',
             {default: '(Toggle)', width: '8em'}));
 
-        delicious.settings.insertSection(s);
+        delicious.settings.insertSection(section);
     }
 
     if (!( (/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL))

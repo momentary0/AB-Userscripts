@@ -21,7 +21,8 @@
     delicious.settings.init('ABTorrentsYenTimeFrame', '24');
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var s = delicious.settings.createSection('Enhanced Torrent View');
+        var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
+        var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox(
             'ABTorrentsShowYen',
             'Show yen generation',
@@ -56,7 +57,7 @@
             'Dynamic history tables',
             'Dynamically load more pages into the transfer history page.'
         ));
-        delicious.settings.insertSection(s);
+        delicious.settings.insertSection(section);
     }
 
     var _debug = false;
