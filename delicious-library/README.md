@@ -86,7 +86,7 @@ this is not needed for `basicScriptCheckbox`, as it does this automatically.
 If your userscript has more than one setting, I recommend you create a section to keep everything tidy and grouped. To do this, you have a few options:
 
  - `addScriptSection()` will create, insert and return a section element. Additionally, it can insert an "Enable/Disable" checkbox as the first setting in this section (use `checkbox: true` in `options`).
- - `createSection()` will create and return a section element. You will need to insert it into the page with `insertSection()`. **Note:** It is recommended to use collapsible sections,
+ - `createSection()` will create and return a section element. You will need to insert it into the page with `insertSection()`. **Note:** It is recommended to use collapsible sections instead,
  explained in the next section.
 
 In both cases, the function returns a HTMLElement. To add settings, use any of the `settings.create*` functions, then append that element. For example, to add a text box,
@@ -113,17 +113,20 @@ resulting in a neater Userscript Settings page. To do this, use this function:
 not work. You must append to the section's body div.
 
 Correct example:
+```js
    var section = delicious.settings.createCollapsibleSection('Script Name');
    var sectionBody = section.querySelector('.settings_section_body');
    sectionBody.appendChild(delicious.settings.createCheckbox( ... ));
    delicious.setttings.insertSection(section);
+```
 
 Incorrect example:
-
+```js
    var section = delicious.settings.createCollapsibleSection('Script Name');
    // This will not be able to collapse/expand the section correctly!
    section.appendChild(delicious.settings.createCheckbox( ... ));
    delicious.setttings.insertSection(section);
+```
 
 Apart from this, it looks and functions identically to a normal section.
 
