@@ -114,18 +114,18 @@ not work. You must append to the section's body div.
 
 Correct example:
 ```js
-   var section = delicious.settings.createCollapsibleSection('Script Name');
-   var sectionBody = section.querySelector('.settings_section_body');
-   sectionBody.appendChild(delicious.settings.createCheckbox( ... ));
-   delicious.setttings.insertSection(section);
+var section = delicious.settings.createCollapsibleSection('Script Name');
+var sectionBody = section.querySelector('.settings_section_body');
+sectionBody.appendChild(delicious.settings.createCheckbox( ... ));
+delicious.setttings.insertSection(section);
 ```
 
 Incorrect example:
 ```js
-   var section = delicious.settings.createCollapsibleSection('Script Name');
-   // This will not be able to collapse/expand the section correctly!
-   section.appendChild(delicious.settings.createCheckbox( ... ));
-   delicious.setttings.insertSection(section);
+var section = delicious.settings.createCollapsibleSection('Script Name');
+// This will not be able to collapse/expand the section correctly!
+section.appendChild(delicious.settings.createCheckbox( ... ));
+delicious.setttings.insertSection(section);
 ```
 
 Apart from this, it looks and functions identically to a normal section.
