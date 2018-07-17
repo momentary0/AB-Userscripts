@@ -21,7 +21,8 @@
     delicious.settings.init('ABQuickLinks', defaultLinks);
 
     if (delicious.settings.ensureSettingsInserted()) {
-        var s = delicious.settings.createSection('Quick Links');
+        var section = delicious.settings.createCollapsibleSection('Quick Links', true);
+        var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox(
             'ABQuickLinksEnabled',
             'Enable/Disable',
@@ -34,7 +35,7 @@
             null,
             {newButtonText: '+ Add Link'}
         ));
-        delicious.settings.insertSection(s);
+        delicious.settings.insertSection(section);
     }
 
     var rootLI = document.createElement('li');
