@@ -49,13 +49,13 @@
             {default: false}));
         s.appendChild(delicious.settings.createTextSetting('ABForumLoadText',
             'Text for links to be loaded', 'The text to be shown for forum links that have not been loaded yet.',
-            {default: '(Load)', width: '8em'}));
+            {default: '(Load) ', width: '8em'}));
         s.appendChild(delicious.settings.createTextSetting('ABForumLoadingText', 'Text for loading links',
             'The text to be shown for forum links that are currently being loaded.',
-            {default: '(Loading)', width: '8em'}));
+            {default: '(Loading) ', width: '8em'}));
         s.appendChild(delicious.settings.createTextSetting('ABForumToggleText', 'Text for loaded links',
             'The text to be shown for forum links that have been loaded and can now be toggled.',
-            {default: '(Toggle)', width: '8em'}));
+            {default: '(Toggle) ', width: '8em'}));
 
         delicious.settings.insertSection(section);
     }
@@ -71,11 +71,11 @@
 
     text_color = delicious.settings.get('ABForumSearchHighlightFG', '#000000');
 
-    toggleText = delicious.settings.get('ABForumToggleText', '(Toggle)');
+    toggleText = delicious.settings.get('ABForumToggleText', '(Toggle) ');
 
-    loadText = delicious.settings.get('ABForumLoadText', '(Load)');
+    loadText = delicious.settings.get('ABForumLoadText', '(Load) ');
 
-    loadingText = delicious.settings.get('ABForumLoadingText', '(Loading)');
+    loadingText = delicious.settings.get('ABForumLoadingText', '(Loading) ');
 
     hideSubSelection = delicious.settings.get('ABForumSearchHideSubfor', true);
 
