@@ -152,7 +152,9 @@
             }
             user_id = tP[threadPage][sR[id].index].className.split('_');
             user_id = user_id[user_id.length - 1];
-            sR[id].user = tP[threadPage][sR[id].index].querySelector('a[href="/user.php?id=' + user_id + '"]').textContent;
+            // It looks lke sR is the search results, and tP is a thread page.
+            // This line gets the username from the author's profile link.
+            sR[id].user = tP[threadPage][sR[id].index].querySelector('.num_author > a[href^="/user"]').textContent;
             linkbox = document.createElement('div');
             pagenums = document.createElement('div');
             linkbox.className = 'linkbox';
