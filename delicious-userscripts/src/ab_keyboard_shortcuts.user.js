@@ -3,14 +3,26 @@
 // @author      Alpha, modified by Megure
 // @description Enables keyboard shortcuts for forum (new post and edit) and PM
 // @include     https://animebytes.tv/*
-// @version     0.1.1
+// @version     0.1.2
 // @icon        http://animebytes.tv/favicon.ico
+// @grant       GM_setValue
+// @grant       GM_getValue
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 
 // Keyboard shortcuts by Alpha, mod by Megure
 // Enables keyboard shortcuts for forum (new post and edit) and PM
 (function ABKeyboardShortcuts() {
+    var _debug = false;
+
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'deliciouskeyboard',
+        'Delicious Keyboard Shortcuts',
+        'Keyboard shortcuts to make typing BBCode easier.'
+    );
+    if (!_enabled)
+        return;
     if (document.querySelector('textarea') === null)
         return;
 
@@ -28,7 +40,7 @@
                 elem.setSelectionRange(startPos + open.length, endPos + open.length);
         } else if (document.selection && document.selection.createRange) {
             elem.focus();
-            sel = document.selection.createRange();
+            var sel = document.selection.createRange();
             sel.text = open + sel.text + close;
             if (close.length != 0) {
                 sel.move("character", -close.length);

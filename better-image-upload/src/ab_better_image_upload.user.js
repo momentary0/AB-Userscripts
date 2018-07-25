@@ -324,7 +324,7 @@
      * */
     var SKIP_LAST_STEP = true;
     /**
-     * If this is false, no downscaling will be done using <canvas>.
+     * If this is true, no downscaling will be done using <canvas>.
      * The full resolution will be inserted into <img> and sized using CSS.
      */
     var SKIP_ALL_RESIZING = false;

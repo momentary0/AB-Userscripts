@@ -3,16 +3,64 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.01
+// @version     1.02
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 // Enhanced Torrent View by Megure
 // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 (function EnhancedTorrentView() {
-    importDeliciousCommon();
+    var settingsKeys = ['ABTorrentsShowYen', 'ABTorrentsReqTime',
+        'ABSortTorrents', 'ABTorrentsFilter', 'ABHistDynLoad'];
+    for (let i = 0; i < settingsKeys.length; i++) {
+        delicious.settings.init(settingsKeys[i], true);
+    }
+    delicious.settings.init('ABTorrentsYenTimeFrame', '24');
+
+    if (delicious.settings.ensureSettingsInserted()) {
+        var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
+        var s = section.querySelector('.settings_section_body');
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsShowYen',
+            'Show yen generation',
+            'Show yen generation for torrents, with detailed information when hovered.'
+        ));
+        s.appendChild(delicious.settings.createDropDown(
+            'ABTorrentsYenTimeFrame',
+            'Yen time frame',
+            'Shows yen generated in this amount of time.',
+            [['Hour', '1'],
+                ['Day', '24'],
+                ['Week', '168']],
+            {default: '24'}
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsReqTime',
+            'Show required seeding time',
+            'Shows minimal required seeding time for torrents in their description and when size is hovered.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsFilter',
+            'Filter torrents',
+            'Shows a box above torrent tables, where you can filter the torrents from that table.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABSortTorrents',
+            'Sort torrents',
+            'Allows torrent tables to be sorted.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABHistDynLoad',
+            'Dynamic history tables',
+            'Dynamically load more pages into the transfer history page.'
+        ));
+        delicious.settings.insertSection(section);
+    }
+
+    var _debug = false;
 
     var days_per_year = 365.256363;
     var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
@@ -20,7 +68,7 @@
     var sort_rows = GM_getValue('ABSortTorrents', 'true') === 'true';
     var filter_torrents = GM_getValue('ABTorrentsFilter', 'true') === 'true';
     var dynamic_load = GM_getValue('ABHistDynLoad', 'true') === 'true';
-    var time_frame = parseInt(GM_getValue('ABTorrentsYenTimeFrame', '24'), 10);
+    var time_frame = parseInt(delicious.settings.get('ABTorrentsYenTimeFrame', '24'), 10);
     var time_frame_string = time_frame + ' hours';
     if (time_frame === 1) {
         time_frame_string = 'hour';
