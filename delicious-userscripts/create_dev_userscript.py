@@ -25,7 +25,7 @@ if __name__ == '__main__':
         with open('./dist/ab_delicious_scripts.auto.user.js', 'w', encoding='utf-8') as f:
             f.write('''// ==UserScript==
 // @name AnimeBytes Delicious Bundle (Automatic)
-// @version 1.0.0
+// @version 1.0.1
 // @grant GM_getValue
 // @grant GM_setValue
 // @grant GM_deleteValue

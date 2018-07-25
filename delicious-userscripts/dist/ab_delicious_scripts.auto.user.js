@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name AnimeBytes Delicious Bundle (Automatic)
-// @version 1.0.0
+// @version 1.0.1
 // @grant GM_getValue
 // @grant GM_setValue
 // @grant GM_deleteValue
