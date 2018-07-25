@@ -3,7 +3,7 @@
 // @author      Megure
 // @description Will prepend the number of notifications to the title
 // @include     https://animebytes.tv/*
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_setValue
 // @grant       GM_getValue

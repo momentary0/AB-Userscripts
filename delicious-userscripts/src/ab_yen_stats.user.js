@@ -3,7 +3,7 @@
 // @author      Megure, Lemma, NSC, et al.
 // @description Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
 // @include     https://animebytes.tv/user.php*
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_setValue
 // @grant       GM_getValue

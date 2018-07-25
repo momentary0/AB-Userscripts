@@ -4,7 +4,7 @@
 // @description Load posts into search results; highlight search terms; filter authors; slide through posts
 // @include     http*://animebytes.tv/forums.php*
 // @exclude     *action=viewthread*
-// @version     0.72.1
+// @version     0.72.2
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico

@@ -3,7 +3,7 @@
 // @author      Alpha
 // @description Hide treats on profile.
 // @include     https://animebytes.tv/*
-// @version     0.1
+// @version     0.1.1
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_setValue
 // @grant       GM_getValue

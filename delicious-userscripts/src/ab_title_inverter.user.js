@@ -1,14 +1,14 @@
 // ==UserScript==
-// @name AnimeBytes forums title inverter
-// @author potatoe
-// @version 0.1
+// @name        AnimeBytes forums title inverter
+// @author      potatoe
+// @version     0.1.1
 // @description Inverts the forums titles.
-// @icon https://animebytes.tv/favicon.ico
-// @include https://animebytes.tv/forums.php?*
-// @match https://animebytes.tv/forums.php?*
+// @icon        https://animebytes.tv/favicon.ico
+// @include     https://animebytes.tv/forums.php?*
+// @match       https://animebytes.tv/forums.php?*
 // @grant       GM_setValue
 // @grant       GM_getValue
-// @require https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 // Forums title inverter by Potatoe

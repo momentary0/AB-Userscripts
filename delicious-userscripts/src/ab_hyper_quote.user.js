@@ -3,7 +3,7 @@
 // @author      Megure, TheFallingMan
 // @description Select text and press CTRL+V to quote
 // @include     https://animebytes.tv/*
-// @version     0.2.3
+// @version     0.2.4
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_setValue
 // @grant       GM_getValue

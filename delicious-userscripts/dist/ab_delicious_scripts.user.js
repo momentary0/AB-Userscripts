@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AnimeBytes delicious user scripts (updated)
 // @author      aldy, potatoe, alpha, Megure
-// @version     2.1.2
+// @version     2.1.3
 // @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
 // @match       https://*.animebytes.tv/*
 // @icon        http://animebytes.tv/favicon.ico
@@ -17,7 +17,7 @@
     // @namespace   Megure@AnimeBytes.tv
     // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     // @include     http*://animebytes.tv*
-    // @version     1.01
+    // @version     1.02
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
@@ -954,7 +954,7 @@
     // @author      Megure (inspired by Lemma, Alpha, NSC)
     // @description Shows current freeleech pool status in navbar with a pie-chart
     // @include     https://animebytes.tv/*
-    // @version     0.1.1.1
+    // @version     0.1.1.2
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_getValue
     // @grant       GM_setValue
@@ -1255,7 +1255,7 @@
     // @description Load posts into search results; highlight search terms; filter authors; slide through posts
     // @include     http*://animebytes.tv/forums.php*
     // @exclude     *action=viewthread*
-    // @version     0.72.1
+    // @version     0.72.2
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
@@ -1691,7 +1691,7 @@
     // @author      Alpha
     // @description Hide treats on profile.
     // @include     https://animebytes.tv/*
-    // @version     0.1
+    // @version     0.1.1
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
@@ -1721,7 +1721,7 @@
     // @author      Megure, TheFallingMan
     // @description Select text and press CTRL+V to quote
     // @include     https://animebytes.tv/*
-    // @version     0.2.3
+    // @version     0.2.4
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
@@ -2664,7 +2664,7 @@
     // @author      Alpha, modified by Megure
     // @description Enables keyboard shortcuts for forum (new post and edit) and PM
     // @include     https://animebytes.tv/*
-    // @version     0.1.1
+    // @version     0.1.2
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
@@ -2829,16 +2829,16 @@
 
     /* Begin src/ab_title_inverter.user.js */
     // ==UserScript==
-    // @name AnimeBytes forums title inverter
-    // @author potatoe
-    // @version 0.1
+    // @name        AnimeBytes forums title inverter
+    // @author      potatoe
+    // @version     0.1.1
     // @description Inverts the forums titles.
-    // @icon https://animebytes.tv/favicon.ico
-    // @include https://animebytes.tv/forums.php?*
-    // @match https://animebytes.tv/forums.php?*
+    // @icon        https://animebytes.tv/favicon.ico
+    // @include     https://animebytes.tv/forums.php?*
+    // @match       https://animebytes.tv/forums.php?*
     // @grant       GM_setValue
     // @grant       GM_getValue
-    // @require https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Forums title inverter by Potatoe
@@ -2865,7 +2865,7 @@
     // @author      Megure
     // @description Will prepend the number of notifications to the title
     // @include     https://animebytes.tv/*
-    // @version     0.1
+    // @version     0.1.1
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
@@ -2901,7 +2901,7 @@
     // @author      Megure, Lemma, NSC, et al.
     // @description Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
     // @include     https://animebytes.tv/user.php*
-    // @version     0.1
+    // @version     0.1.1
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
