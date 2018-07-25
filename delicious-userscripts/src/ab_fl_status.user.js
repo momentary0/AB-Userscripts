@@ -3,105 +3,56 @@
 // @author      Megure (inspired by Lemma, Alpha, NSC)
 // @description Shows current freeleech pool status in navbar with a pie-chart
 // @include     https://animebytes.tv/*
-// @version     0.1.1.1
+// @version     0.1.1.2
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_getValue
 // @grant       GM_setValue
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
 // Shows current freeleech pool status in navbar with a pie-chart
 // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
 (function ABFLStatus() {
-    /* === Inserted from _delicious_common.js === */
-    // Common functions used by many scripts.
-    // Will be inserted once into the delicious bundle,
-    // and prepended to each individual userscript.
-    
-    // Debug flag. Used to enable/disable some verbose console logging.
-    var _debug = false;
-    
-    // jQuery, just for Pale Moon.
-    // Note: this doesn't actually import jQuery successfully,
-    // but for whatever reason, it lets PM load the script.
-    if ((typeof jQuery) === 'undefined') {
-        _debug && console.log('setting window.jQuery');
-        jQuery = window.jQuery;
-        $ = window.$;
-        $j = window.$j;
+    delicious.settings._migrateStringSetting('deliciousflpoolposition');
+
+    delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
+    delicious.settings.init('deliciousfreeleechpool', true);
+    delicious.settings.init('deliciousnavbarpiechart', true);
+    var pieLocations = delicious.settings.init('deliciousflpiepositions', {
+        'navbar': delicious.settings.get('deliciousnavbarpiechart'),
+        'profile': delicious.settings.get('deliciousnavbarpiechart')
+    });
+
+    if (delicious.settings.ensureSettingsInserted()) {
+        var section = delicious.settings.createCollapsibleSection('Delicious Freeleech Pool');
+        var s = section.querySelector('.settings_section_body');
+        s.appendChild(delicious.settings.createCheckbox(
+            'deliciousfreeleechpool',
+            'Enable/Disable',
+            'Shows current freeleech pool progress in the navbar and on user pages'
+            + ' (updated once an hour or when freeleech pool site is visited).'));
+        s.appendChild(delicious.settings.createDropDown(
+            'deliciousflpoolposition',
+            'Navbar Position',
+            'Select position of freeleech pool progress in the navbar or disable it.',
+            [['Before user info', 'before #userinfo_minor'],
+                ['After user info', 'after #userinfo_minor'],
+                ['Before menu', 'before .main-menu.nobullet'],
+                ['After menu', 'after .main-menu.nobullet'],
+                ['Don\'t display', 'none']],
+            {default: 'after #userinfo_minor'}
+        ));
+        s.appendChild(delicious.settings.createFieldSetSetting(
+            'deliciousflpiepositions',
+            'FL Pie Chart Locations',
+            [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
+        ));
+        delicious.settings.insertSection(section);
     }
-    
-    // Super duper important functions
-    // Do not delete or something might break and stuff!! :(
-    HTMLCollection.prototype.each = function (f) { for (var i = 0, e = null; e = this[i]; i++) f.call(e, e); return this; };
-    HTMLElement.prototype.clone = function (o) { var n = this.cloneNode(); n.innerHTML = this.innerHTML; if (o !== undefined) for (var e in o) n[e] = o[e]; return n; };
-    // Thank firefox for this ugly shit. Holy shit firefox get your fucking shit together >:(
-    function forEach(arr, fun) { return HTMLCollection.prototype.each.call(arr, fun); }
-    function clone(ele, obj) { return HTMLElement.prototype.clone.call(ele, obj); }
-    
-    function injectScript(content, id) {
-        var script = document.createElement('script');
-        if (id) script.setAttribute('id', id);
-        script.textContent = content.toString();
-        document.body.appendChild(script);
-        return script;
-    }
-    if (typeof GM_getValue === 'undefined'
-            || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") > -1)) {
-        _debug && console.log('Setting fallback localStorage GM_* functions');
-        // There is some difference between this.GM_getValue and just GM_getValue.
-        _debug && console.log(this.GM_getValue);
-        _debug && typeof GM_getValue !== 'undefined' && console.log(GM_getValue.toString());
-        // Previous versions lacked a @grant GM_getValue header, which resulted
-        // in these being used when they shouldn't have been.
-        this.GM_getValue = function (key, def) { return localStorage[key] || def; };
-        this.GM_setValue = function (key, value) { return localStorage[key] = value; };
-        this.GM_deleteValue = function (key) { return delete localStorage[key]; };
-        // We set this when we have used localStorage so if in future we switch,
-        // it will be imported.
-        GM_setValue('deliciousSettingsImported', 'false');
-        _debug && console.log(GM_getValue);
-    } else {
-        _debug&& console.log('Using default GM_* functions.');
-        // For backwards compatibility,
-        // we'll implement migrating localStorage to GM settings.
-        // However, we can't implement the reverse because when localStorage is
-        // used, GM_getValue isn't even defined so we obviously can't import.
-        if (GM_getValue('deliciousSettingsImported', 'false') !== 'true') {
-            _debug && console.log('Importing localStorage to GM settings');
-            GM_setValue('deliciousSettingsImported', 'true');
-            var keys = Object.keys(localStorage);
-            keys.forEach(function(key){
-                if (GM_getValue(key, 'undefined') === 'undefined') {
-                    _debug && console.log('Imported ' + key);
-                    GM_setValue(key, localStorage[key]);
-                } else {
-                    _debug && console.log('Key exists ' + key);
-                }
-            });
-        }
-    }
-    
-    function initGM(gm, def, json, overwrite) {
-        if (typeof def === "undefined") throw "shit";
-        if (typeof overwrite !== "boolean") overwrite = true;
-        if (typeof json !== "boolean") json = true;
-        var that = GM_getValue(gm);
-        if (that != null) {
-            var err = null;
-            try { that = ((json) ? JSON.parse(that) : that); }
-            catch (e) { if (e.message.match(/Unexpected token .*/)) err = e; }
-            if (!err && Object.prototype.toString.call(that) === Object.prototype.toString.call(def)) { return that; }
-            else if (overwrite) {
-                GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-                return def;
-            } else { if (err) { throw err; } else { return that; } }
-        } else {
-            GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-            return def;
-        }
-    }
-    /* === End _delicious_common.js === */
+
+    if (!delicious.settings.get('deliciousfreeleechpool'))
+        return;
 
     function niceNumber(num) {
         var res = '';
@@ -265,18 +216,18 @@
         var pieChart = getPieChart();
         p.innerHTML = pieChart;
         p3.innerHTML = pieChart;
-        if (GM_getValue('delicousnavbarpiechart', 'false') === 'true') {
+        if (pieLocations['navbar']) {
             li.innerHTML = pieChart;
         }
-        p2.innerHTML = 'There is currently ' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' / ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' yen in the donation box.<br/>';
-        p2.innerHTML += '(That means we are ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' yen away from getting sitewide freeleech!)<br/>';
-        p2.innerHTML += 'In total, you\'ve donated ' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' yen to the freeleech pool.<br/>';
+        p2.innerHTML = 'We currently have ¥' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + '&thinsp;/&thinsp;¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' in our donation box.<br/>';
+        p2.innerHTML += '(That means we\'re ¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' away from sitewide freeleech!)<br/>';
+        p2.innerHTML += 'In total, you\'ve donated ¥' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' to the freeleech pool.<br/>';
         p2.innerHTML += 'Last updated ' + Math.round((Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', Date.now()), 10)) / 60000) + ' minutes ago.';
         a.textContent = 'FL: ' + (100 * parseInt(GM_getValue('FLPoolCurrent', '0'), 10) / parseInt(GM_getValue('FLPoolMax', '50000000'), 10)).toFixed(1) + '%';
         nav.replaceChild(a, nav.firstChild);
     }
 
-    var pos = GM_getValue('deliciousflpoolposition', 'after #userinfo_minor');
+    var pos = delicious.settings.get('deliciousflpoolposition');
 
     if (pos !== 'none' || /user\.php\?id=/i.test(document.URL) || /konbini\/pool/i.test(document.URL)) {
         var p = document.createElement('p'),
@@ -288,27 +239,10 @@
             li = document.createElement('li');
         a.href = '/konbini/pool';
         nav.appendChild(a);
-        if (GM_getValue('delicousnavbarpiechart', 'false') === 'true') {
-
-            function dropPie2(event) {
-                // because who doesn't love dropping their pies
-                if ((typeof $j).toString() !== 'undefined') {
-                    // below copied from https://animebytes.tv/static/functions/global-2acd7ec19a.js
-                    $j(event.target).parent().find("ul.subnav").is(":hidden") ?
-                        ($j("ul.subnav").hide(),
-                            $j("li.navmenu").removeClass("selected"),
-                            $j(this).parent().addClass("selected").find("ul.subnav").show())
-                        : $j(event.target).parent().removeClass("selected").find("ul.subnav").hide();
-                }
-
-                // prevents global click handler from immediately closing the menu
-                event.stopPropagation();
-                return false;
-            }
-
+        if (pieLocations['navbar']) {
             var outerSpan = document.createElement('span');
             outerSpan.className += "dropit hover clickmenu";
-            outerSpan.onclick = (dropPie2);
+            outerSpan.addEventListener('click', delicious.utilities.toggleSubnav);
             outerSpan.innerHTML += '<span class="stext">▼</span>';
 
             // nav is the li.navmenu
@@ -336,8 +270,7 @@
 
         updatePieChart();
 
-        if (/user\.php\?id=/i.test(document.URL) && GM_getValue('deliciousyenperx', 'true') === 'true') {
-            // Only do so on the users' profile pages if Yen per X is activated and Yen per day is present in userstats
+        if (pieLocations['profile'] && /user\.php\?id=/i.test(document.URL)) {
             var userstats = document.querySelector('#user_rightcol > .box');
             if (userstats != null) {
                 var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });

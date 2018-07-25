@@ -1,2011 +1,80 @@
 // ==UserScript==
-// @name AnimeBytes delicious user scripts (updated)
-// @author aldy, potatoe, alpha, Megure
-// @version 2.0.1.9
-// @description Variety of userscripts to fully utilise the site and stylesheet. (Updated by TheFallingMan)
-// @grant GM_getValue
-// @grant GM_setValue
-// @grant GM_deleteValue
-// @include *animebytes.tv/*
-// @match https://*.animebytes.tv/*
-// @icon http://animebytes.tv/favicon.ico
+// @name        AnimeBytes delicious user scripts (updated)
+// @author      aldy, potatoe, alpha, Megure
+// @version     2.1.3
+// @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
+// @match       https://*.animebytes.tv/*
+// @icon        http://animebytes.tv/favicon.ico
+// @grant       GM_getValue
+// @grant       GM_setValue
+// @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 (function AnimeBytesDeliciousUserScripts() {
-
-    // Placeholder function. Imports are done by an external Python script
-    // inserting script files where needed.
-    // This should never be executed.
-    function importScriptFile(filename) {
-        console.error(filename + ' was not imported into the delicious userscript');
-    }
-
-    // Some GM_ functions and Javascript polyfills
-    /* === Inserted from _delicious_common.js === */
-    // Common functions used by many scripts.
-    // Will be inserted once into the delicious bundle,
-    // and prepended to each individual userscript.
-    
-    // Debug flag. Used to enable/disable some verbose console logging.
-    var _debug = false;
-    
-    // jQuery, just for Pale Moon.
-    // Note: this doesn't actually import jQuery successfully,
-    // but for whatever reason, it lets PM load the script.
-    if ((typeof jQuery) === 'undefined') {
-        _debug && console.log('setting window.jQuery');
-        jQuery = window.jQuery;
-        $ = window.$;
-        $j = window.$j;
-    }
-    
-    // Super duper important functions
-    // Do not delete or something might break and stuff!! :(
-    HTMLCollection.prototype.each = function (f) { for (var i = 0, e = null; e = this[i]; i++) f.call(e, e); return this; };
-    HTMLElement.prototype.clone = function (o) { var n = this.cloneNode(); n.innerHTML = this.innerHTML; if (o !== undefined) for (var e in o) n[e] = o[e]; return n; };
-    // Thank firefox for this ugly shit. Holy shit firefox get your fucking shit together >:(
-    function forEach(arr, fun) { return HTMLCollection.prototype.each.call(arr, fun); }
-    function clone(ele, obj) { return HTMLElement.prototype.clone.call(ele, obj); }
-    
-    function injectScript(content, id) {
-        var script = document.createElement('script');
-        if (id) script.setAttribute('id', id);
-        script.textContent = content.toString();
-        document.body.appendChild(script);
-        return script;
-    }
-    if (typeof GM_getValue === 'undefined'
-            || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") > -1)) {
-        _debug && console.log('Setting fallback localStorage GM_* functions');
-        // There is some difference between this.GM_getValue and just GM_getValue.
-        _debug && console.log(this.GM_getValue);
-        _debug && typeof GM_getValue !== 'undefined' && console.log(GM_getValue.toString());
-        // Previous versions lacked a @grant GM_getValue header, which resulted
-        // in these being used when they shouldn't have been.
-        this.GM_getValue = function (key, def) { return localStorage[key] || def; };
-        this.GM_setValue = function (key, value) { return localStorage[key] = value; };
-        this.GM_deleteValue = function (key) { return delete localStorage[key]; };
-        // We set this when we have used localStorage so if in future we switch,
-        // it will be imported.
-        GM_setValue('deliciousSettingsImported', 'false');
-        _debug && console.log(GM_getValue);
-    } else {
-        _debug&& console.log('Using default GM_* functions.');
-        // For backwards compatibility,
-        // we'll implement migrating localStorage to GM settings.
-        // However, we can't implement the reverse because when localStorage is
-        // used, GM_getValue isn't even defined so we obviously can't import.
-        if (GM_getValue('deliciousSettingsImported', 'false') !== 'true') {
-            _debug && console.log('Importing localStorage to GM settings');
-            GM_setValue('deliciousSettingsImported', 'true');
-            var keys = Object.keys(localStorage);
-            keys.forEach(function(key){
-                if (GM_getValue(key, 'undefined') === 'undefined') {
-                    _debug && console.log('Imported ' + key);
-                    GM_setValue(key, localStorage[key]);
-                } else {
-                    _debug && console.log('Key exists ' + key);
-                }
-            });
-        }
-    }
-    
-    function initGM(gm, def, json, overwrite) {
-        if (typeof def === "undefined") throw "shit";
-        if (typeof overwrite !== "boolean") overwrite = true;
-        if (typeof json !== "boolean") json = true;
-        var that = GM_getValue(gm);
-        if (that != null) {
-            var err = null;
-            try { that = ((json) ? JSON.parse(that) : that); }
-            catch (e) { if (e.message.match(/Unexpected token .*/)) err = e; }
-            if (!err && Object.prototype.toString.call(that) === Object.prototype.toString.call(def)) { return that; }
-            else if (overwrite) {
-                GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-                return def;
-            } else { if (err) { throw err; } else { return that; } }
-        } else {
-            GM_setValue(gm, ((json) ? JSON.stringify(def) : def));
-            return def;
-        }
-    }
-    /* === End _delicious_common.js === */
-
-    function createSettingsPage() {
-        function addCheckbox(title, description, varName, onValue, offValue) {
-            if (typeof onValue !== "string" || typeof offValue !== "string" || onValue === offValue) onValue = 'true', offValue = 'false';
-            var newLi = document.createElement('li');
-            this[varName] = initGM(varName, onValue, false);
-            newLi.innerHTML = "<span class='ue_left strong'>" + title + "</span>\n<span class='ue_right'><input type='checkbox' onvalue='" + onValue + "' offvalue='" + offValue + "' name='" + varName + "' id='" + varName + "'" + ((this[varName] === onValue) ? " checked='checked'" : " ") + ">\n<label for='" + varName + "'>" + description + "</label></span>";
-            newLi.addEventListener('click', function (e) { var t = e.target; if (typeof t.checked === "boolean") { if (t.checked) { GM_setValue(t.id, t.getAttribute('onvalue')); } else { GM_setValue(t.id, t.getAttribute('offvalue')); } } });
-            var poselistNode = document.getElementById('pose_list');
-            poselistNode.appendChild(newLi);
-            return newLi;
-        }
-        function addDropdown(title, description, varName, list, def) {
-            var newLi = document.createElement('li'), innerHTML = '';
-            this[varName] = initGM(varName, def, false);
-            innerHTML += "<span class='ue_left strong'>" + title + "</span>\n<span class='ue_right'><select name='" + varName + "' id='" + varName + "'>";
-            for (var i = 0; i < list.length; i++) {
-                var el = list[i], selected = '';
-                if (el[1] === GM_getValue(varName)) selected = " selected='selected'";
-                innerHTML += "<option value='" + el[1] + "'" + selected + ">" + el[0] + "</option>";
-            }
-            innerHTML += "</select><label for='" + varName + "'>" + description + "</label></span>";
-            newLi.innerHTML = innerHTML;
-            newLi.addEventListener('change', function (e) { GM_setValue(varName, e.target.value); });
-            var poseList = document.getElementById('pose_list');
-            poseList.appendChild(newLi);
-            return newLi;
-        }
-        function relink() { $j(function () { var stuff = $j('#tabs > div'); $j('ul.ue_tabs a').click(function () { stuff.hide().filter(this.hash).show(); $j('ul.ue_tabs a').removeClass('selected'); $j(this).addClass('selected'); return false; }).filter(':first,a[href="' + window.location.hash + '"]').slice(-1)[0].click(); }); }
-        var pose = document.createElement('div');
-        pose.id = "potatoes_settings";
-        pose.innerHTML = '<div class="head colhead_dark strong">User Script Settings</div><ul id="pose_list" class="nobullet ue_list"></ul>';
-        var poseanc = document.createElement('li');
-        poseanc.innerHTML = '&bull;<a href="#potatoes_settings">User Script Settings</a>';
-        var tabsNode = document.getElementById('tabs');
-        var linksNode = document.getElementsByClassName('ue_tabs')[0];
-        if (document.getElementById('potatoes_settings') == null) { tabsNode.insertBefore(pose, tabsNode.childNodes[tabsNode.childNodes.length - 2]); linksNode.appendChild(poseanc); document.body.removeChild(injectScript('(' + relink.toString() + ')();', 'settings_relink')); }
-        //addCheckbox("Delicious Better Quote", "Enable/Disable delicious better <span style='color: green; font-family: Courier New;'>&gt;quoting</span>", 'deliciousquote');
-        addCheckbox("Delicious HYPER Quote", "Enable/Disable experimental HYPER quoting: select text and press CTRL+V to instant-quote. [EXPERIMENTAL]", 'delicioushyperquote');
-        addCheckbox("Delicious Title Flip", "Enable/Disable delicious flipping of Forum title tags.", 'delicioustitleflip');
-        addCheckbox("Disgusting Treats", "Hide/Unhide those hideous treats!", 'delicioustreats');
-        addCheckbox("Delicious Keyboard Shortcuts", "Enable/Disable delicious keyboard shortcuts for easier access to Bold/Italics/Underline/Spoiler/Hide and aligning.", 'deliciouskeyboard');
-        addCheckbox("Delicious Title Notifications", "Display number of notifications in title.", 'delicioustitlenotifications');
-        addCheckbox("Delicious Yen per X", "Shows how much yen you receive per X, and as upload equivalent.", 'deliciousyenperx');
-        addCheckbox("Delicious Ratio", "Shows ratio and raw ratio and how much upload / download you need for certain ratio milestones.", 'deliciousratio');
-        addCheckbox("Delicious Freeleech Pool", "Shows current freeleech pool progress in the navbar and on user pages (updated once an hour or when freeleech pool site is visited).", 'deliciousfreeleechpool');
-        addDropdown("FL Pool Navbar Position", "Select position of freeleech pool progress in the navbar or disable it.", 'deliciousflpoolposition', [['Before user info', 'before #userinfo_minor'], ['After user info', 'after #userinfo_minor'], ['Before menu', 'before .main-menu.nobullet'], ['After menu', 'after .main-menu.nobullet'], ['Don\'t display', 'none']], 'after #userinfo_minor');
-        addCheckbox("Delicious Freeleech Pie Chart", "Adds a dropdown with pie-chart to the freeleech pool progress in the navbar.", 'delicousnavbarpiechart');
-        document.getElementById('pose_list').appendChild(document.createElement('hr'));
-        addCheckbox("Delicious Dynamic Stylesheets", "Define rules below for which hour to show what stylesheet.", 'deliciousdynamicstylesheets');
-        document.getElementById('pose_list').appendChild(document.createElement('hr'));
-    }
-
-    if (/\/user\.php\?.*action=edit/i.test(document.URL)) createSettingsPage();
-
-
-    // A couple GM variables that need initializing
-    var gm_deliciousquote = initGM('deliciousquote', 'true', false);
-    var gm_delicioushyperquote = initGM('delicioushyperquote', 'true', false);
-    var gm_delicioustitleflip = initGM('delicioustitleflip', 'true', false);
-    var gm_delicioustreats = initGM('delicioustreats', 'true', false);
-    var gm_deliciouskeyboard = initGM('deliciouskeyboard', 'true', false);
-    var gm_delicioustitlenotifications = initGM('delicioustitlenotifications', 'true', false);
-    var gm_deliciousyenperx = initGM('deliciousyenperx', 'true', false);
-    var gm_deliciousratio = initGM('deliciousratio', 'true', false);
-    var gm_deliciousfreeleechpool = initGM('deliciousfreeleechpool', 'true', false);
-    var gm_delicousnavbarpiechart = initGM('delicousnavbarpiechart', 'false', false);
-    var gm_deliciousdynamicstylesheets = initGM('deliciousdynamicstylesheets', 'false', false);
-
-    // Better Quote no longer necessary.
-
-    // HYPER QUOTE by Megure
-    // Select text and press CTRL+V to quote
-    if (GM_getValue('delicioushyperquote') === 'true') {
-        /* === Inserted from ab_hyper_quote.user.js === */
-        // ==UserScript==
-        // @name        AB - HYPER QUOTE!
-        // @author      Megure, TheFallingMan
-        // @description Select text and press CTRL+V to quote
-        // @include     https://animebytes.tv/*
-        // @version     0.2.3
-        // @icon        http://animebytes.tv/favicon.ico
-        // ==/UserScript==
-        
-        (function ABHyperQuote() {
-            if (document.getElementById('quickpost') === null)
-                return;
-            /** Debug flag. */
-            var _debug = false;
-        
-            function formattedUTCString(date, timezone) {
-                var creation = new Date(date);
-                if (isNaN(creation.getTime()))
-                    return date;
-                else {
-                    creation = creation.toUTCString().split(' ');
-                    return creation[1] + ' ' + creation[2] + ' ' + creation[3] + ', ' + creation[4].substring(0, 5) + (timezone !== false ? ' ' + creation[5] : '');
-                }
-            }
-        
-            /**
-             * Quotes the entire selection.
-             *
-             * Handles combining adjacent selection ranges, then calls
-             * QUOTEMANY.
-             * */
-            function QUOTEALL() {
-                var sel = window.getSelection();
-                if (sel.rangeCount === 0) return;
-                // If there's only one range, happy days.
-                if (sel.rangeCount === 1) {
-                    _debug && console.log('Quoting one range:');
-                    _debug && console.log(sel.getRangeAt(0));
-                    QUOTEMANY(sel.getRangeAt(0));
-                } else {
-                    _debug && console.log('Dealing with multiple ranges.');
-                    // Ohhh boy.... firefox, why...?
-                    var allRanges = [];
-                    // Start range of the current continguous selection range.
-                    // The aim of this code is to join contiguous ranges into one range
-                    // so they can be parsed properly, without being split into multiple
-                    // quotes.
-                    var startRange = sel.getRangeAt(0);
-                    // Previous range we encountered.
-                    var previousRange = startRange;
-                    // Current range. Set in loop.
-                    var thisRange = null;
-                    // rangeCount+1 to make it loop one time after list is exhausted, to append
-                    // last range to list.
-                    // Start at 2nd range, because we have already set startRange
-                    // and previousRange above. Also, first range has no previous
-                    // range to compare to.
-                    for (var i = 1; i < sel.rangeCount+1; i++) {
-                        if (i < sel.rangeCount)
-                            thisRange = sel.getRangeAt(i);
-                        else
-                            thisRange = null;
-                        // If this range starts at the beginning and picks up
-                        // exactly where the previous range left off.
-                        // After trial/error, this code should work.
-                        // endOffset+1 is to get the childNode _after_ the previous
-                        // range ends, since ranges don't overlap (hopefully)
-                        if (thisRange !== null && thisRange.startOffset === 0 &&
-                            previousRange.endContainer.childNodes[previousRange.endOffset+1] === thisRange.startContainer) {
-                            // Store this range as the previous and continue looping.
-                            previousRange = thisRange;
-                        } else {
-                            // Else, the current range does not continue from
-                            // the previous one.
-                            if (startRange !== previousRange) {
-                                // Create and append a new, more sensible, range.
-                                var newRange = document.createRange();
-                                newRange.setStart(startRange.startContainer, startRange.startOffset);
-                                newRange.setEnd(previousRange.endContainer, previousRange.endOffset);
-                                allRanges.push(newRange);
-                            } else {
-                                // No adjacent ranges to startRange.
-                                // They're both the same, append either.
-                                allRanges.push(previousRange);
-                            }
-                            // Set these for the next iteration.
-                            startRange = thisRange;
-                            previousRange = thisRange;
-                        }
-                    }
-                    for (var j = 0; j < allRanges.length; j++) {
-                        QUOTEMANY(allRanges[j]);
-                    }
-                }
-            }
-        
-            /**
-             * Quotes many posts.
-             *
-             * Clones each post and deletes text outside of the selection
-             * range.
-             *
-             * @param {Range} range Selection range to quote.
-             */
-            function QUOTEMANY(range) {
-                /**
-                 * Removes all siblings of 'node' which occur before or after it,
-                 * depending on the value of 'prev'.
-                 *
-                 * @param {Node} node
-                 * @param {boolean} prev
-                 */
-                function removeChildren(node, prev) {
-                    if (node === null || node.parentNode === null) return;
-                    if (prev === true)
-                        while (node.parentNode.firstChild !== node)
-                            node.parentNode.removeChild(node.parentNode.firstChild);
-                    else
-                        while (node.parentNode.lastChild !== node)
-                            node.parentNode.removeChild(node.parentNode.lastChild);
-                    removeChildren(node.parentNode, prev);
-                }
-                /**
-                 * Essentailly indexOf for any array-like object.
-                 *
-                 * @param {Array} arr
-                 * @param {object} elem
-                 */
-                function inArray(arr, elem) {
-                    for (var i = 0; i < arr.length; i++) {
-                        if (arr[i] === elem)
-                            return i;
-                    }
-                    _debug && console.log(elem);
-                    return -1;
-                }
-        
-                // TODO: refactor bbcodeChildren to use these functions.
-        
-                /**
-                 *
-                 * @param {HTMLElement} quoteNode
-                 */
-                function isSmartQuote(quoteNode) {
-                    try {
-                        var colon = quoteNode.previousSibling;
-                        var link = colon.previousSibling;
-                        var span = link.firstElementChild;
-                        var strong = link.previousElementSibling;
-                        return (colon.nodeValue === ':\n'
-                            && span.tagName.toUpperCase() === 'SPAN'
-                            && span.title
-                            && link.tagName.toUpperCase() === 'A'
-                            && link.textContent.slice(0, 6) === 'wrote '
-                            && strong.tagName.toUpperCase() === 'STRONG'
-                            && strong.firstElementChild.href.indexOf('/user.php?id=') !== -1);
-                    } catch (e) {
-                        return false;
-                    }
-                }
-        
-                function isUsernameQuote(quoteNode) {
-                    try {
-                        var wrote = quoteNode.previousSibling;
-                        var strong = wrote.previousSibling;
-                        return (wrote.nodeValue === ' wrote:\n'
-                            && strong.nodeType === Node.ELEMENT_NODE
-                            && strong.tagName.toUpperCase() === 'STRONG'
-                            && strong.childNodes.length === 1
-                            && strong.firstChild.nodeType === Node.TEXT_NODE
-                        );
-                    } catch (e) {
-                        return false;
-                    }
-                }
-        
-                /**
-                 * Returns a new documentFragment containing 'num' many nodes
-                 * which are previous siblings of 'node', cloned.
-                 * Assumes said siblings exist.
-                 *
-                 * @param {number} num
-                 * @param {Node} node
-                 */
-                function savePreviousNodes(num, node) {
-                    var docFrag = document.createDocumentFragment();
-                    var index = inArray(node.parentNode.childNodes, node);
-                    for (var q = 0; q < num; q++) {
-                        docFrag.appendChild(
-                            node.parentNode.childNodes[index-num+q].cloneNode(true));
-                    }
-                    return docFrag;
-                }
-        
-                /**
-                 * Array of [number, docFrag] pairs where number is a
-                 * data-hyper-quote value referencing a unique node
-                 * and the corresponding document fragment
-                 * contains the nodes to insert before it.
-                 *
-                 * @type {[number, DocumentFragment][]}
-                 */
-                var savedPreviousNodes = [];
-                /**
-                 * Checks if 'node' has previous siblings which should be kept
-                 * (e.g. usernames of quotes or buttons of spoilers).
-                 *
-                 * @param {Node} node
-                 */
-                function preserveIfNeeded(node) {
-                    var numToSave = 0;
-                    if (isSmartQuote(node))
-                        numToSave = 4;
-                    else if (isUsernameQuote(node))
-                        numToSave = 2;
-        
-                    if (numToSave) {
-                        var num;
-                        if (savedPreviousNodes.length) num = savedPreviousNodes.slice(-1)[0] + 1;
-                        else num = 1;
-                        var pair = [num, savePreviousNodes(numToSave, node)];
-                        node.dataset['hyperQuote'] = num;
-                        savedPreviousNodes.push(pair);
-                        return pair;
-                    }
-                    return null;
-                }
-        
-                /**
-                 * Traverses upwards from 'node' to the topmost element in the document.
-                 *
-                 * If preserve is true, will check for previous nodes to preserve.
-                 *
-                 * @param {Node} bottomNode
-                 * @param {boolean} preserve
-                 * @returns {[Node, number[]]} Tuple of topmost parent element and array of indexes.
-                 */
-                function traverseUpwards(bottomNode, preserve) {
-                    var path = [];
-                    while (bottomNode.parentNode !== null) {
-                        path.push(inArray(bottomNode.parentNode.childNodes, bottomNode));
-                        if (preserve)
-                            preserveIfNeeded(bottomNode);
-                        bottomNode = bottomNode.parentNode;
-                    }
-                    return [bottomNode, path];
-                }
-        
-                /**
-                 * Reverse of traverseUpwards,
-                 * descending to the element in the original position using a known
-                 * array of indexes.
-                 *
-                 * @param {Node} topNode
-                 * @param {number[]} path
-                 */
-                function traverseDownwards(topNode, path) {
-                    for (var i = path.length - 1; i >= 0; i--) {
-                        if (path[i] === -1) return;
-                        topNode = topNode.childNodes[path[i]];
-                    }
-                    return topNode;
-                }
-        
-                if (range.collapsed === true) return;
-        
-                // Goes from the startContainer to root document node, storing its
-                // path in 'start'.
-                var html1 = range.startContainer;
-                var t = traverseUpwards(html1, true);
-                var html1 = t[0];
-                var start = t[1];
-        
-                // Similarly for the endContainer.
-                var html2 = range.endContainer;
-                var u = traverseUpwards(html2, false);
-                var html2 = u[0];
-                var end = u[1];
-        
-                // These should be equal as they originate from the same <html> tag.
-                if (html1 !== html2 || html1 === null) return;
-                // Take a copy which we can edit as we need.
-                var htmlCopy = html1.cloneNode(true);
-        
-                // Descends the copied HTML tree to get to the startContainer
-                // and endContainer, using the indexes stored previously.
-                var startNode = traverseDownwards(htmlCopy, start);
-                var endNode = traverseDownwards(htmlCopy, end);
-        
-                // Slices the start and end containers so they contain only
-                // the selected text.
-                if (endNode.nodeType === 3)
-                    endNode.data = endNode.data.substr(0, range.endOffset);
-                else if (endNode.nodeType === 1)
-                    for (var i = endNode.childNodes.length; i > range.endOffset; i--)
-                        endNode.removeChild(endNode.lastChild);
-                if (range.startOffset > 0) {
-                    if (startNode.nodeType === 3)
-                        startNode.data = startNode.data.substr(range.startOffset);
-                    else if (startNode.nodeType === 1)
-                        for (var i = 0; i < range.startOffset; i++)
-                            startNode.removeChild(startNode.firstChild);
-                }
-        
-                // Removes all elements before startNode and after endNode.
-                removeChildren(startNode, true);
-                removeChildren(endNode, false);
-        
-                // Finds the bottommost element which is a parent of both
-                // startNode and endNode. This is done to find the deepest quote
-                // which was quoted.
-                // Implemented by searching recursing downwards while the parent node
-                // only has one child or one whild + whitespace.
-                var commonRoot = htmlCopy;
-                var rootQuote = null;
-                var secondChild = null; // Set in 'while' conditional.
-                while ( // I'm really sorry about this code ;-;
-                    (commonRoot.childNodes.length === 1) // If only one child, the result is obvious.
-                    || (
-                        commonRoot.childNodes.length === 2 // If 2 children.
-                        && (secondChild = commonRoot.childNodes[1])
-                        && ( // If second child is a text node, we require it be whitespace.
-                            (secondChild.nodeType === Node.TEXT_NODE && !secondChild.nodeValue.trim())
-                            || // If it is an element, we require it to be <br>.
-                            (secondChild.tagName && secondChild.tagName.toUpperCase() === 'BR')
-                        )
-                    )
-                ) {
-                    // If these conditions hold, the child is a common parent of both
-                    // startNode and endNode, as other elements were deleted earlier.
-                    commonRoot = commonRoot.firstChild;
-                    // Moreover, if it's a quote, we store it so we only quote within
-                    // the deepest common quote.
-                    if (commonRoot.classList && commonRoot.classList.contains('blockquote')) {
-                        rootQuote = commonRoot;
-                    }
-                }
-        
-                // Restores extra nodes before a quote such as username and link.
-                // Must be done after the common root checking otherwise it will
-                // mess up the process.
-                for (var i = 0; i < savedPreviousNodes.length; i++) {
-                    // Use selectors on the copied HTML tree to find the corresponding
-                    // nodes.
-                    var selector = '[data-hyper-quote="'+savedPreviousNodes[i][0]+'"]';
-                    var copyNode = htmlCopy.querySelector(selector);
-                    copyNode.parentNode.insertBefore(savedPreviousNodes[i][1], copyNode);
-        
-                    // Delete original document's data-hyper-quote attribute.
-                    // We don't care about htmlCopy's attributes as it gets reset
-                    // every time.
-                    delete document.querySelector(selector).dataset['hyperQuote'];
-                }
-                savedPreviousNodes = [];
-        
-                // If there is a [quote] common to start and end. In other worse,
-                // the selection is contained entirely within one quote.
-                if (rootQuote) {
-                    // Then, we only quote within the deepest quote, as that makes
-                    // the most sense.
-                    var sel = document.getElementById('quickpost');
-                    sel.value += bbcodeChildrenTrim(rootQuote.parentNode);
-                    sel.scrollIntoView();
-                    return;
-                }
-        
-                // Otherwise, quote as usual.
-                var posts = htmlCopy.querySelectorAll('div[id^="post"],div[id^="msg"]');
-                for (var i = 0; i < posts.length; i++) {
-                    QUOTEONE(posts[i]);
-                }
-            }
-        
-            /**
-             * Returns BBCode of one whole div.post.
-             *
-             * @param {HTMLDivElement} postDiv
-             */
-            function bbcodeChildrenTrim(postDiv) {
-                return bbcodeChildren(postDiv).trim();
-            }
-        
-            /**
-             * Returns BBCode of parentNode's children.
-             *
-             * BBCode which relies on adjacent siblings (e.g. quotes) must be placed
-             * here, as other functions consider one HTML element only.
-             *
-             * Returns children's BBCode only; assumes the parent BBCode has
-             * been generated elsewhere.
-             *
-             * @param {Node} parentNode
-             */
-            function bbcodeChildren(parentNode) {
-                _debug && console.log('parentNode: ');
-                _debug && console.log(parentNode);
-                if (!(parentNode.childNodes && parentNode.childNodes.length))
-                    return '';
-                var bbcodeString = '';
-                for (var i = 0; i < parentNode.childNodes.length; i++) {
-                    var thisNode = parentNode.childNodes[i];
-                    if (thisNode.nodeType === Node.TEXT_NODE) {
-                        // Handles text nodes.
-                        var text = thisNode.nodeValue;
-                        // If this isn't the first child and previous is a <br>,
-                        // collapse leading space.
-                        if (i > 0 && parentNode.childNodes[i-1].nodeType === Node.ELEMENT_NODE
-                            && parentNode.childNodes[i-1].tagName.toUpperCase() === 'BR')
-                            text = text.replace(/^\s+/, '');
-                        // If this isn't the last child and next is a <br>,
-                        // collapse trailing space.
-                        if (i+1 < parentNode.childNodes.length
-                            && parentNode.childNodes[i+1].nodeType === Node.ELEMENT_NODE
-                            && parentNode.childNodes[i+1].tagName.toUpperCase() === 'BR')
-                            text = text.replace(/\s+$/, '');
-                        bbcodeString += text;
-                        continue;
-                    }
-        
-                    /**
-                     * Whether this element represents the start of a
-                     * post number (e.g. `[quote=#1559283]`) quote.
-                     */
-                    var isSmartQuote = false;
-                    try {
-                        // We fully expect this to throw exceptions if the element
-                        // is not a quote block, as the surrounding structure
-                        // will not be there.
-                        //debugger;
-                        isSmartQuote = (
-                            (i+4 < parentNode.childNodes.length)
-                            // thisNode is a <strong></strong> node containing the
-                            // user link.
-                            && thisNode.nodeType === Node.ELEMENT_NODE
-                            && thisNode.tagName.toUpperCase() === 'STRONG'
-                            && thisNode.firstElementChild.href.indexOf('user.php?id=') !== -1
-                            // i+1 is a " " text node.
-                            && !parentNode.childNodes[i+1].nodeValue.trim()
-                            // i+2 is the <a> node linking to the post.
-                            && parentNode.childNodes[i+2].textContent.indexOf('wrote') !== -1
-                            && parentNode.childNodes[i+2].firstElementChild.tagName.toUpperCase() === 'SPAN'
-                            && parentNode.childNodes[i+2].firstElementChild.title
-                            // i+3 is the :
-                            && parentNode.childNodes[i+3].nodeValue.indexOf(':') !== -1
-                            // i+4 is the quote.
-                            && parentNode.childNodes[i+4].classList.contains('blockquote')
-                        );
-                    } catch (exception) { _debug && console.log(exception); }
-                    _debug && console.log('isSmartQuote: ' + isSmartQuote);
-                    if (isSmartQuote) {
-                        bbcodeString += bbcodeSmartQuote(thisNode,
-                            parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
-                        i += 4; // Skip the next 4 nodes.
-                        continue;
-                    }
-        
-                    /**
-                     * Whether this element represents the start of a
-                     * `[quote=username]` quote.
-                     * */
-                    var isBasicQuote = false;
-                    try {
-                        // Strictly speaking, we don't have to handle this here;
-                        // handling it with the generic code
-                        // (i.e. [b]username[/b] wrote ...)
-                        // results in identical rendered output.
-                        isBasicQuote = (
-                            // Similar logic as above.
-                            (i+2 < parentNode.childNodes.length)
-                            && thisNode.nodeType === Node.ELEMENT_NODE
-                            && thisNode.tagName.toUpperCase() === 'STRONG'
-                            && thisNode.childNodes.length === 1
-                            && thisNode.firstChild.nodeType === Node.TEXT_NODE
-                            && parentNode.childNodes[i+1].nodeValue.trim() === 'wrote:'
-                            && parentNode.childNodes[i+2].classList.contains('blockquote')
-                        );
-                    } catch (exception) { _debug && console.log(exception); }
-                    if (isBasicQuote) {
-                        bbcodeString += bbcodeQuote(thisNode.firstChild.nodeValue, parentNode.childNodes[i+2]);
-                        i += 2;
-                        continue;
-                    }
-        
-                    var isMediainfo = false;
-                    try {
-                        isMediainfo = (
-                            // Spoiler button
-                            thisNode.classList.contains('hideContainer')
-                            && (
-                                (// Either followed by a .mediainfo table
-                                    (i+1 < parentNode.childNodes.length)
-                                    && parentNode.childNodes[i+1].tagName.toUpperCase() === 'TABLE'
-                                    && parentNode.childNodes[i+1].classList.contains('mediainfo'))
-                                || ( // OR, which was originally followed by a mediainfo table.
-                                    (i+1 === parentNode.childNodes.length)
-                                    && thisNode.firstElementChild.value.length > 4
-                                    && thisNode.firstElementChild.value.indexOf('.') !== -1
-                                    && document.querySelector(
-                                        '.hideContainer > .spoilerButton[value="'
-                                        + thisNode.firstElementChild.value+'"]'
-                                    ).parentNode.nextElementSibling.classList.contains('mediainfo'))
-                            )
-                        );
-                    } catch (exception) { _debug && console.log(exception); }
-                    if (isMediainfo) {
-                        bbcodeString += bbcodeMediainfo(thisNode,
-                            parentNode.childNodes[i+1]);
-                        i += 1;
-                        continue;
-                    }
-        
-                    // Otherwise, we handle it as a normal node.
-                    bbcodeString += bbcodeOneElement(thisNode);
-                }
-                return bbcodeString;
-            }
-        
-            /**
-             * Returns a quote BBCode, with quoteName as the = parameter, containing
-             * the contents of quoteNode.
-             *
-             * @param {string} quoteName
-             * @param {HTMLQuoteElement} quoteNode
-             */
-            function bbcodeQuote(quoteName, quoteNode) {
-                var contents = bbcodeChildrenTrim(quoteNode);
-                return (
-                    '[quote'+(quoteName?'='+quoteName:'')+']\n'
-                    +contents
-                    +'\n[/quote]\n');
-            }
-        
-            /**
-             * Returns an appropriate [quote] tag using a post number.
-             *
-             * @param {HTMLElement} strongNode Node containing username link.
-             * @param {HTMLAnchorElement} wroteLink Post link element.
-             * @param {HTMLQuoteElement} quoteNode Blockquote element.
-             */
-            function bbcodeSmartQuote(strongNode, wroteLink, quoteNode) {
-                var quoteType = '';
-                var href = wroteLink.href;
-                if (href.indexOf('/forums.php') !== -1) quoteType = '#';
-                else if (href.indexOf('/user.php') !== -1) quoteType = '*';
-                else if (href.indexOf('/torrents.php') !== -1) quoteType = '-1';
-                else if (href.indexOf('/torrents2.php') !== -1) quoteType = '-2';
-                if (quoteType !== '') {
-                    var id = /#(?:msg|post)?(\d+)$/.exec(href); // post number
-                    // We have to be careful with newlines otherwise too much whitespace
-                    // will be added.
-                    if (id)
-                        return bbcodeQuote(quoteType + id[1], quoteNode)
-                }
-                // We shouldn't ever reach this.
-                return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
-                    +bbcodeChildren(quoteNode)+'[/quote]');
-            }
-        
-            /**
-             * Returns BBCode of one <strong> node.
-             *
-             * @param {HTMLElement} strongNode
-             */
-            function bbcodeStrong(strongNode) {
-                // Special case of "Added on ..." text.
-                if (strongNode.childNodes.length === 1
-                && strongNode.firstChild.nodeType === Node.TEXT_NODE
-                && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
-                    var dateString = strongNode.firstChild.nodeValue.slice(9);
-                    var end = '';
-                    if (dateString.slice(-1) === ':') {
-                        dateString = dateString.slice(0, -1);
-                        end = ':';
-                    }
-                    return '[b]Added on '+formattedUTCString(dateString)+end+'[/b]';
-                } else {
-                    return '[b]'+bbcodeChildren(strongNode)+'[/b]';
-                }
-            }
-        
-            /**
-             * Returns BBCode of a div element.
-             *
-             * Possible cases:
-             *
-             *  - [align=...] tag.
-             *  - [code] tag.
-             *  - [spoiler] or [hide] tag.
-             *
-             * @param {HTMLDivElement} divNode
-             */
-            function bbcodeDiv(divNode) {
-                if (divNode.style.textAlign) {
-                    var align = divNode.style.textAlign;
-                    return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]';
-                }
-                if (divNode.classList.contains('codeBox')) {
-                    return '[code]'+divNode.firstElementChild.firstChild.nodeValue+'[/code]';
-                }
-                if (divNode.classList.contains('spoilerContainer')) {
-                    return bbcodeSpoiler(divNode);
-                }
-                // This fallback shouldn't ever occur.
-                return bbcodeChildren(divNode);
-            }
-        
-            /**
-             * Returns BBCode of a spoiler element, considering for
-             * custom button text.
-             *
-             * @param {HTMLDivElement} spoilerDiv
-             */
-            function bbcodeSpoiler(spoilerDiv) {
-                var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
-                // [hide] or [spoiler]
-                var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
-        
-                // If we have less than 2 children, then this is an abnormal spoiler.
-                if (spoilerDiv.children.length < 2) {
-                    // If the only child of this div isn't the spoiler's contents,
-                    // it must be the button and we return.
-                    if (!spoilerDiv.firstElementChild.classList.contains('spoiler')) {
-                        return '';
-                    }
-                    // Otherwise, only the inside of a spoiler is selected.
-                    // In this case, we have no button to work with. Compromise.
-                    return '['+bbcodeTag+']'+bbcodeChildren(spoilerDiv.firstElementChild)+'[/'+bbcodeTag+']';
-                }
-                var label = spoilerDiv.firstElementChild.value.replace(/^(Hide|Show)/, '');
-                if (isSpoiler) // ' spoiler' is appended automatically to spoiler buttons
-                    label = label.replace(/ spoiler$/, '');
-                if (label) {
-                    label = label.slice(1); // slice space.
-                }
-                return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
-                    bbcodeChildrenTrim(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
-            }
-        
-        
-            /**
-             * Returns BBCode for a [mediainfo] tag.
-             *
-             * @param {HTMLDivElement} buttonDiv Div containing the button and spoiler.
-             * @param {HTMLTableElement} mediainfoTable
-             */
-            function bbcodeMediainfo(buttonDiv, mediainfoTable) {
-                if (buttonDiv.children.length < 2) return '';
-                return '[mediainfo]' + bbcodeChildren(buttonDiv.children[1]) + '[/mediainfo]';
-            }
-        
-        
-            /**
-             * Returns BBCode of a <ol> or <ul> tag.
-             *
-             * @param {HTMLUListElement} listNode
-             * @param {String} bbcodeTag Tag to insert before each line.
-             */
-            function bbcodeList(listNode, bbcodeTag) {
-                var str = '';
-                for (var c = 0; c < listNode.childElementCount; c++) {
-                    // Only consider element children, which we assume are
-                    // <li> or <ol>/<ul>.
-                    str += bbcodeTag + bbcodeChildren(listNode.children[c]);
-                    // For whitespace.
-                    if (str.slice(-1) !== '\n') str += '\n';
-                }
-                return str;
-            }
-        
-            /**
-             * Returns BBCode of an image element, possibly a smiley.
-             *
-             * @param {HTMLImageElement} imgNode
-             */
-            function bbcodeImage(imgNode) {
-                if (imgNode.classList.contains('bbcode_smiley')) {
-                    return imgNode.alt;
-                }
-                // Note: AB proxies images, so quoted images will not
-                // necessarily use the same URL as the original did.
-                // Original URL is b64 encoded within the CDN URL.
-                return '[img]'+imgNode.src+'[/img]';
-            }
-        
-            /**
-             * Returns a string containing the hex representation of a number,
-             * padded to 2 hex digits.
-             *
-             * @param {Number} num
-             */
-            function numToHex(num) {
-                var h = num.toString(16);
-                while (h.length < 2)
-                    h = '0' + h;
-                return h;
-            }
-        
-            /** Regex matching colour in rgb(x, y, z) format. */
-            var rgbRegex = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/i;
-            /**
-             * Returns BBCode of a HTML <span> element.
-             *
-             * Possible cases:
-             *
-             *  - Smiley
-             *  - Color
-             *  - Size
-             *  - Secret
-             *
-             * @param {HTMLSpanElement} spanNode
-             */
-            function bbcodeSpan(spanNode) {
-                if (spanNode.className.indexOf('smiley-') !== -1) {
-                    return bbcodeSmiley(spanNode);
-                }
-                var colour = spanNode.style.color;
-                if (colour) {
-                    var rgbMatch = rgbRegex.exec(colour);
-                    // Check for rgb() format colours.
-                    if (rgbMatch)
-                        colour = ('#' + numToHex(parseInt(rgbMatch[1]))
-                        +numToHex(parseInt(rgbMatch[2]))
-                        +numToHex(parseInt(rgbMatch[3])));
-                    return '[color='+colour+']' + bbcodeChildren(spanNode) + '[/color]';
-                }
-                if (spanNode.className.slice(0, 4) === 'size') {
-                    var size = spanNode.className.replace('size', '');
-                    return '[size='+size+']'+bbcodeChildren(spanNode)+'[/size]';
-                }
-                if (spanNode.className === 'last-edited') {
-                    return '';
-                }
-                if (spanNode.classList.contains('secret')) {
-                    return '[secret]' + bbcodeChildren(spanNode) + '[/secret]';
-                }
-                if (spanNode.title)
-                    return formattedUTCString(spanNode.title);
-                return bbcodeChildren(spanNode);
-            }
-        
-            /**
-             * Given a HTML span element representing a smiley, finds and returns
-             * the smiley's BBCode.
-             *
-             * @param {HTMLSpanElement} smileySpan
-             */
-            function bbcodeSmiley(smileySpan) {
-                var smiley = smileySpan.title;
-                var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
-                if (smileyNode === null)
-                    smileyNode = document.querySelector('span[style*="/' + smiley + '.png"]');
-                if (smileyNode === null)
-                    smileyNode = document.querySelector('span[style*="/' + smiley.replace(/-/g, '_') + '.png"]');
-                if (smileyNode === null)
-                    smileyNode = document.querySelector('span[style*="/' +
-                        smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
-                if (smileyNode === null)
-                    smileyNode = document.querySelector('span[style*="/' + smiley.replace(/face/g, '~_~') + '.png"]');
-                if (smileyNode !== null && smileyNode.parentNode !== null) {
-                    smileyNode = smileyNode.getAttribute('onclick').match(/'(.+?)'/i);
-                    if (smileyNode !== null)
-                        return smileyNode[1];
-                }
-                return ':' + smiley + ':';
-            }
-        
-        
-            var userRegex = /^\/user\.php\?id=(\d+)$/;
-            var torrentRegex = /^torrents2?\.php\?id=\d+&torrentid=(\d+)$/;
-        
-            /**
-             *
-             * @param {HTMLAnchorElement} linkElement
-             */
-            function bbcodeLink(linkElement) {
-                // <img> tags are often wrapped around a <a> pointing to the same image.
-                if (linkElement.classList.contains('scaledImg')) {
-                    return bbcodeImage(linkElement.firstElementChild);
-                }
-                /** href with relative links resolved. */
-                var href = linkElement.href;
-                /** Actual href as typed into HTML */
-                var realHref = linkElement.getAttribute('href');
-        
-                var userMatch = userRegex.exec(realHref);
-                if (userMatch)
-                    return '[user='+href+']'+bbcodeChildren(linkElement)+'[/user]';
-                var torrentMatch = torrentRegex.exec(realHref);
-                if (torrentMatch) {
-                    // If the link's text contains &nbsp; we assume it is a torrent
-                    // link.
-                    if (linkElement.textContent.indexOf('\xa0\xa0[') !== -1)
-                        return '[torrent]'+href+'[/torrent]';
-                    else
-                        return '[torrent='+href+']'+bbcodeChildren(linkElement)+'[/torrent]';
-                }
-                // Actually, torrent and user links could be written using [url=]
-                // and the rendered output would be the same.
-                return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
-            }
-        
-            var youtubeRegex = /\/embed\/([^?]+)\?/i;
-            var soundcloudRegex = /\/player\/\?url=([^&]+)&/i;
-        
-            /**
-             * Returns BBCode for embedded media.
-             *
-             * @param {HTMLIFrameElement} iframeNode
-             */
-            function bbcodeIframe(iframeNode) {
-                var src = iframeNode.src;
-                if (src.indexOf('youtube.com/embed') !== -1) {
-                    return '[youtube]https://youtube.com/watch?v='+youtubeRegex.exec(src)[1]+'[/youtube]';
-                }
-                if (src.indexOf('soundcloud.com/player') !== -1) {
-                    // The original soundcloud URL is encoded and forms a part of the
-                    // embed URL.
-                    return '[soundcloud]'+decodeURIComponent(soundcloudRegex.exec(src)[1])+'[/soundcloud]';
-                }
-                return 'Embedded media: ' + src;
-            }
-        
-            /**
-             * Returns BBCode for one element.
-             *
-             * Handles simple cases and routes more complex cases
-             * to the appropriate function.
-             *
-             * @param {HTMLElement} node
-             */
-            function bbcodeOneElement(node) {
-                if (node.nodeType !== Node.ELEMENT_NODE) {
-                    // Text nodes should be handled in bbcodeChildren.
-                    if (node.nodeType === Node.TEXT_NODE)
-                        return node.nodeValue;
-                    if (node.nodeType === Node.COMMENT_NODE && node.nodeValue === 'n')
-                        return '[n]';
-                    return '';
-                }
-                switch (node.tagName.toUpperCase()) {
-                    case 'DIV': return bbcodeDiv(node);
-                    case 'SPAN': return bbcodeSpan(node);
-                    case 'BR': return '\n';
-                    case 'STRONG': return bbcodeStrong(node);
-                    case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
-                    case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
-                    case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
-                    case 'OL': return bbcodeList(node, '[#] ');
-                    case 'UL': return bbcodeList(node, '[*] ');
-                    case 'A': return bbcodeLink(node);
-                    case 'IMG': return bbcodeImage(node);
-                    case 'IFRAME': return bbcodeIframe(node);
-                    case 'BLOCKQUOTE': return bbcodeQuote('', node);
-                    case 'HR': return '[hr]';
-                    case 'TABLE': return bbcodeChildren(node); // crude representation of a table
-                    case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
-                    case 'TBODY': return bbcodeChildren(node);
-                    case 'TH': return bbcodeChildren(node) + '\n';
-                    case 'TR': return bbcodeChildren(node) + '\n';
-                    case 'TD': return bbcodeChildren(node) + '\t';
-                    default:
-                        return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
-                }
-            }
-        
-            /**
-             * Quotes one post, with post number.
-             *
-             * @param {Node} post
-             */
-            function QUOTEONE(post) {
-                //_debug && console.log(post.querySelector('div.post,div.body').innerHTML);
-                //var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
-                var res = bbcodeChildrenTrim(post.querySelector('div.post, div.body'));
-                var author, creation, postid, type = '';
-                if (res === '') return;
-        
-                postid = post.id.match(/(?:msg|post)(\d+)/i);
-                if (postid === null)
-                    return;
-        
-                if (window.location.pathname === '/forums.php') type = '#';
-                if (window.location.pathname === '/user.php') type = '*';
-                if (window.location.pathname === '/torrents.php') type = '-1';
-                if (window.location.pathname === '/torrents2.php') type = '-2';
-                if (type !== '')
-                    res = '[quote=' + type + postid[1] + ']' + res + '[/quote]\n';
-                else {
-                    author = post.className.match(/user_(\d+)/i);
-                    if (author !== null)
-                        author = '[b][user]' + author[1] + '[/user][/b] ';
-                    else {
-                        author = document.querySelector('#' + postid[0] + ' a[href^="/user.php?"]');
-                        if (author !== null) {
-                            author = author.href.match(/id=(\d+)/i);
-                            author = (author !== null ? '[b][user]' + author[1] + '[/user][/b] ' : '');
-                        }
-                        else
-                            author = '';
-                    }
-        
-                    creation = document.querySelector('div#' + postid[0] + ' > div > div > p.posted_info > span');
-                    if (creation === null)
-                        creation = document.querySelector('div#' + postid[0] + ' > div > span > span.usercomment_posttime');
-                    if (creation !== null)
-                        creation = ' on ' + formattedUTCString(creation.title.replace(/-/g, '/'));
-                    else
-                        creation = '';
-        
-                    res = author + '[url=' + window.location.pathname + window.location.search + '#' + postid[0] + ']wrote' + creation + '[/url]:\n[quote]' + res + '[/quote]\n\n';
-                }
-        
-                document.getElementById('quickpost').value += res;
-        
-                sel = document.getElementById('quickpost');
-                if (sel !== null)
-                    sel.scrollIntoView();
-            }
-        
-            document.addEventListener('keydown', function (e) {
-                if ((e.ctrlKey) && (e.keyCode === 'V'.charCodeAt(0)))
-                    QUOTEALL();
-            });
-        })();
-        /* === End ab_hyper_quote.user.js === */
-    }
-
-
-    // Forums title inverter by Potatoe
-    // Inverts the forums titles.
-    if (GM_getValue('delicioustitleflip') === 'true') {
-        /* === Inserted from ab_title_inverter.user.js === */
-        // ==UserScript==
-        // @name AnimeBytes forums title inverter
-        // @author potatoe
-        // @version 0.1
-        // @description Inverts the forums titles.
-        // @icon https://animebytes.tv/favicon.ico
-        // @include https://animebytes.tv/forums.php?*
-        // @match https://animebytes.tv/forums.php?*
-        // @grant none
-        // ==/UserScript==
-        
-        // Forums title inverter by Potatoe
-        // Inverts the forums titles.
-        (function ABTitleInverter() {
-            if (document.title.indexOf(' > ') !== -1) {
-            document.title = document.title.split(" :: ")[0].split(" > ").reverse().join(" < ") + " :: AnimeBytes";
-            }
-        })();
-        /* === End ab_title_inverter.user.js === */
-    }
-
-
-    // Hide treats by Alpha
-    // Hide treats on profile.
-    if (GM_getValue('delicioustreats') === 'true') {
-        /* === Inserted from ab_hide_treats.user.js === */
-        // ==UserScript==
-        // @name        AB - Hide treats
-        // @author      Alpha
-        // @description Hide treats on profile.
-        // @include     https://animebytes.tv/*
-        // @version     0.1
-        // @icon        http://animebytes.tv/favicon.ico
-        // ==/UserScript==
-        
-        // Hide treats by Alpha
-        // Hide treats on profile.
-        (function ABHideTreats(){
-        var treatsnode = document.evaluate('//*[@id="user_leftcol"]/div[@class="box" and div[@class="head" and .="Treats"]]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        if (treatsnode) treatsnode.style.display = "none";
-        })();
-        /* === End ab_hide_treats.user.js === */
-    }
-
-
-    // Keyboard shortcuts by Alpha, mod by Megure
-    // Enables keyboard shortcuts for forum (new post and edit) and PM
-    if (GM_getValue('deliciouskeyboard') === 'true') {
-        /* === Inserted from ab_keyboard_shortcuts.user.js === */
-        // ==UserScript==
-        // @name        AnimeBytes - Forum Keyboard Shortcuts
-        // @author      Alpha, modified by Megure
-        // @description Enables keyboard shortcuts for forum (new post and edit) and PM
-        // @include     https://animebytes.tv/*
-        // @version     0.1.1
-        // @icon        http://animebytes.tv/favicon.ico
-        // ==/UserScript==
-        
-        
-        // Keyboard shortcuts by Alpha, mod by Megure
-        // Enables keyboard shortcuts for forum (new post and edit) and PM
-        (function ABKeyboardShortcuts() {
-            if (document.querySelector('textarea') === null)
-                return;
-        
-            function custom_insert_text(open, close) {
-                var elem = document.activeElement;
-                if (elem.selectionStart || elem.selectionStart == '0') {
-                    var startPos = elem.selectionStart;
-                    var endPos = elem.selectionEnd;
-                    elem.value = elem.value.substring(0, startPos) + open + elem.value.substring(startPos, endPos) + close + elem.value.substring(endPos, elem.value.length);
-                    elem.selectionStart = elem.selectionEnd = endPos + open.length + close.length;
-                    elem.focus();
-                    if (close.length == 0)
-                        elem.setSelectionRange(startPos + open.length, startPos + open.length);
-                    else
-                        elem.setSelectionRange(startPos + open.length, endPos + open.length);
-                } else if (document.selection && document.selection.createRange) {
-                    elem.focus();
-                    sel = document.selection.createRange();
-                    sel.text = open + sel.text + close;
-                    if (close.length != 0) {
-                        sel.move("character", -close.length);
-                        sel.select();
-                    }
-                    elem.focus();
-                } else {
-                    elem.value += open;
-                    elem.focus();
-                    elem.value += close;
-                }
-            }
-        
-            var ctrlorcmd = (navigator.appVersion.indexOf('Mac') != -1) ? '⌘' : 'Ctrl';
-            var insertedQueries = [];
-        
-            function insert(e, key, ctrl, alt, shift, open, close, query) {
-                /* Function to handle detecting key combinations and inserting the
-                shortcut text onto the relevent buttons. */
-                if (false) {
-                    //console.log(String.fromCharCode((96 <= key && key <= 105)? key-48 : key));
-                    console.log(String.fromCharCode(e.charCode));
-                    console.log(e.ctrlKey);
-                    console.log(e.metaKey);
-                    console.log(e.altKey);
-                    console.log(e.shiftKey);
-                }
-                // Javascript has some discrepancies with symbols and their keycodes.
-                var keyCode;
-                switch (key) {
-                case '.':
-                    keyCode = 190;
-                    break;
-                case '/':
-                    keyCode = 191;
-                    break;
-                default:
-                    keyCode = key.charCodeAt(0);
-                }
-        
-                // Checks if correct modifiers are pressed
-                if (document.activeElement.tagName.toLowerCase() === 'textarea' &&
-                (ctrl === (e.ctrlKey || e.metaKey)) &&
-                (alt === e.altKey) &&
-                (shift === e.shiftKey) &&
-                (e.keyCode === keyCode)) {
-                    e.preventDefault();
-                    custom_insert_text(open, close);
-                    return false;
-                }
-        
-                if (query !== undefined) {
-                    if (insertedQueries.indexOf(query) === -1) {
-                        insertedQueries.push(query);
-                        var imgs = document.querySelectorAll(query);
-                        for (var i = 0; i < imgs.length; i++) {
-                            var img = imgs[i];
-                            img.title += ' (';
-                            if (ctrl) img.title += ctrlorcmd + '+';
-                            if (alt) img.title += 'Alt+';
-                            if (shift) img.title += 'Shift+';
-                            img.title += key + ')';
-                        }
-                    }
-                }
-            }
-        
-            function keydownHandler(e) {
-                // Used as a keydown event handler.
-                // Defines all keyboard shortcuts.
-                /**
-                    * All keyboard shortcuts based on MS Word
-                    **/
-                // Bold
-                insert(e, 'B', true, false, false, '[b]', '[/b]', '#bbcode img[title="Bold"]');
-                // Italics
-                insert(e, 'I', true, false, false, '[i]', '[/i]', '#bbcode img[title="Italics"]');
-                // Underline
-                insert(e, 'U', true, false, false, '[u]', '[/u]', '#bbcode img[title="Underline"]');
-                // Align right
-                insert(e, 'R', true, false, false, '[align=right]', '[/align]');
-                // Align left
-                insert(e, 'L', true, false, false, '[align=left]', '[/align]');
-                // Align center
-                insert(e, 'E', true, false, false, '[align=center]', '[/align]');
-                // Spoiler
-                insert(e, 'S', true, false, false, '[spoiler]', '[/spoiler]', '#bbcode img[title="Spoilers"]');
-                // Hide
-                insert(e, 'H', true, false, false, '[hide]', '[/hide]', '#bbcode img[title="Hide"]');
-                // YouTube
-                insert(e, 'Y', true, true, false, '[youtube]', '[/youtube]', '#bbcode img[alt="YouTube"]');
-                // Image
-                insert(e, 'G', true, false, false, '[img]', '[/img]', '#bbcode img[title="Image"]');
-                // Bullet point and numbered list
-                insert(e, '.', true, false, false, '[*] ', '', '#bbcode img[title="Unordered list"]');
-                insert(e, '/', true, false, false, '[#] ', '', '#bbcode img[title="Ordered list"]');
-                // URL
-                insert(e, 'K', true, false, false, '[url=]', '[/url]', '#bbcode img[title="URL"]');
-            }
-        
-            var textAreas = document.querySelectorAll('textarea');
-            // inserts shortcuts into title text on load, rather than
-            // doing it when first key is pressed.
-            keydownHandler({});
-            for (var i = 0; i < textAreas.length; i++) {
-                textAreas[i].addEventListener('keydown', keydownHandler, false);
-            }
-        
-            function mutationHandler(mutations, observer) {
-                _debug && console.log(mutations);
-                if (mutations[0].addedNodes.length) {
-                    var textAreas = document.querySelectorAll('textarea');
-                    for (var i = 0; i < textAreas.length; i++) {
-                        textAreas[i].addEventListener('keydown', keydownHandler, false);
-                    }
-                }
-            }
-        
-            // Watch for new textareas (e.g. forum edit post)
-            var mutationObserver = new MutationObserver(mutationHandler);
-            mutationObserver.observe(document.querySelector('body'), { childList: true, subtree: true });
-        })();
-        /* === End ab_keyboard_shortcuts.user.js === */
-    }
-
-
-    // Title Notifications by Megure
-    // Will prepend the number of notifications to the title
-    if (GM_getValue('delicioustitlenotifications') === 'true') {
-        /* === Inserted from ab_title_notifications.user.js === */
-        // ==UserScript==
-        // @name        AnimeBytes - Title Notifications
-        // @author      Megure
-        // @description Will prepend the number of notifications to the title
-        // @include     https://animebytes.tv/*
-        // @version     0.1
-        // @icon        http://animebytes.tv/favicon.ico
-        // ==/UserScript==
-        
-        // Title Notifications by Megure
-        // Will prepend the number of notifications to the title
-        (function ABTitleNotifications() {
-        var new_count = 0, _i, cnt, notifications = document.querySelectorAll('#alerts .new_count'), _len = notifications.length;
-        for (_i = 0; _i < _len; _i++) {
-            cnt = parseInt(notifications[_i].textContent, 10);
-            if (!isNaN(cnt))
-                new_count += cnt;
-        }
-        if (new_count > 0)
-            document.title = '(' + new_count + ') ' + document.title;
-        })();
-        /* === End ab_title_notifications.user.js === */
-    }
-
-
-    // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
-    // Shows current freeleech pool status in navbar with a pie-chart
-    // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
-    if (GM_getValue('deliciousfreeleechpool', 'true') === 'true') {
-        /* === Inserted from ab_fl_status.user.js === */
-        // ==UserScript==
-        // @name        AB - Freeleech Pool Status
-        // @author      Megure (inspired by Lemma, Alpha, NSC)
-        // @description Shows current freeleech pool status in navbar with a pie-chart
-        // @include     https://animebytes.tv/*
-        // @version     0.1.1.1
-        // @icon        http://animebytes.tv/favicon.ico
-        // @grant       GM_getValue
-        // @grant       GM_setValue
-        // ==/UserScript==
-        
-        // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
-        // Shows current freeleech pool status in navbar with a pie-chart
-        // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
-        (function ABFLStatus() {
-            /* === _delicious_common.js already inserted. === */
-        
-            function niceNumber(num) {
-                var res = '';
-                while (num >= 1000) {
-                    res = ',' + ('00' + (num % 1000)).slice(-3) + res;
-                    num = Math.floor(num / 1000);
-                }
-                return num + res;
-            }
-            var locked = false;
-            function getFLInfo() {
-                function parseFLInfo(elem) {
-                    var boxes = elem.querySelectorAll('#content .box.pad');
-                    //console.log(boxes);
-                    if (boxes.length < 3) return;
-        
-                    // The first box holds the current amount, the max amount and the user's individual all-time contribution
-                    var match = boxes[0].textContent.match(/have ¥([0-9,]+) \/ ¥([0-9,]+)/i),
-                        max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
-                        current = parseInt(GM_getValue('FLPoolCurrent', '0'), 10);
-                    if (match == null) {
-                        // Updated 2018-02-23 according to oregano's suggestion
-                        match = boxes[0].textContent.match(/You must wait for freeleech to be over before donating/i);
-                        if (match != null) current = max;
-                    }
-                    else {
-                        current = parseInt(match[1].replace(/,/g, ''), 10);
-                        max = parseInt(match[2].replace(/,/g, ''), 10);
-                    }
-                    if (match != null) {
-                        GM_setValue('FLPoolCurrent', current);
-                        GM_setValue('FLPoolMax', max);
-                    }
-                    // Check first box for user's individual all-time contribution
-                    match = boxes[0].textContent.match(/you've donated ¥([0-9,]+)/i);
-                    if (match != null)
-                        GM_setValue('FLPoolContribution', parseInt(match[1].replace(/,/g, ''), 10));
-        
-                    // The third box holds the top 10 donators for the current box
-                    var box = boxes[2],
-                        firstP = box.querySelector('p'),
-                        tr = box.querySelector('table').querySelectorAll('tbody > tr');
-        
-                    var titles = [], hrefs = [], amounts = [], colors = [], sum = 0;
-                    for (var i = 0; i < tr.length; i++) {
-                        var el = tr[i],
-                            td = el.querySelectorAll('td');
-        
-                        titles[i] = td[0].textContent;
-                        hrefs[i] = td[0].querySelector('a').href;
-                        amounts[i] = parseInt(td[1].textContent.replace(/[,¥]/g, ''), 10);
-                        colors[i] = 'red';
-                        sum += amounts[i];
-                    }
-        
-                    // Updated 2018-02-23. Properly draw full pie when FL active.
-                    if (current === max && sum === 0) {
-                        titles[0] = "Freeleech!";
-                        hrefs[0] = 'https://animebytes.tv/konbini/pool';
-                        amounts[0] = current;
-                        colors[0] = 'red';
-                        sum = current;
-                    }
-                    else {
-                        // Also add others and missing to the arrays
-                        // 2018-02-23 But only if FL isn't active.
-                        next_index = titles.length;
-                        titles[next_index] = 'Other';
-                        hrefs[next_index] = 'https://animebytes.tv/konbini/pool';
-                        amounts[next_index] = current - sum;
-                        colors[next_index] = 'lightgrey';
-        
-                        titles[next_index + 1] = 'Missing';
-                        hrefs[next_index + 1] = 'https://animebytes.tv/konbini/pool';
-                        amounts[next_index + 1] = max - current;
-                        colors[next_index + 1] = 'black';
-                    }
-        
-                    GM_setValue('FLPoolLastUpdate', Date.now());
-                    GM_setValue('FLPoolTitles', JSON.stringify(titles));
-                    GM_setValue('FLPoolHrefs', JSON.stringify(hrefs));
-                    GM_setValue('FLPoolAmounts', JSON.stringify(amounts));
-                    GM_setValue('FLPoolColors', JSON.stringify(colors));
-                }
-        
-                // Either parse document or retrieve freeleech pool site 60*60*1000 ms after last retrieval
-                if (/konbini\/pool$/i.test(document.URL))
-                    parseFLInfo(document);
-                else if (Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', '0'), 10) > 3600000 && locked === false) {
-                    locked = true;
-                    // Fix suggested by https://animebytes.tv/user/profile/oregano
-                    // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
-                    try {
-                        var xhr = XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
-                    } catch (exc) {
-                        var xhr = new XMLHttpRequest();
-                    }
-                    parser = new DOMParser();
-                    xhr.open('GET', "https://animebytes.tv/konbini/pool", true);
-                    xhr.send();
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState === 4) {
-                            parseFLInfo(parser.parseFromString(xhr.responseText, 'text/html'));
-                            updatePieChart();
-                            locked = false;
-                        }
-                    };
-                }
-            }
-        
-            function getPieChart() {
-                function circlePart(diff, title, href, color) {
-                    if (diff == 0) return '';
-                    var x = Math.sin(phi), y = Math.cos(phi);
-                    phi -= 2 * Math.PI * diff / max;
-                    var v = Math.sin(phi), w = Math.cos(phi);
-                    var z = 0;
-                    if (2 * diff > max)
-                        z = 1; // use long arc
-                    var perc = (100 * diff / max).toFixed(1) + '%\n' + niceNumber(diff) + ' ¥';
-        
-                    // 2018-02-23 Hardcoded since rounding errors were making the pie a thin strip when it was a single
-                    // slice at 100%.
-                    if (diff === max) {
-                        /*v = -6.283185273215512e-8;
-                        w = -0.999999999999998;
-                        z = 1;
-                        x = 1.2246467991473532e-16;
-                        y = -1;*/
-                        v = -0.000001;
-                        w = -1;
-                        z = 1;
-                        x = 0;
-                        y = -1;
-        
-                    }
-                    return '<a xlink:href="' + href + '" xlink:title="' + title + '\n' + perc + '"><path title="' + title + '\n' + perc +
-                        '" stroke-width="0.01" stroke="grey" fill="' + color + '" d="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z">\n' +
-        
-                        '<animate begin="mouseover" attributeName="d" to="M0,0 L' + 1.1 * v + ',' + 1.1 * w + ' A1.1,1.1 0 ' + z + ',0 ' + 1.1 * x + ',' + 1.1 * y + 'z" dur="0.3s" fill="freeze" />\n' +
-                        '<animate begin="mouseout"  attributeName="d" to="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z" dur="0.3s" fill="freeze" />\n' +
-                        '</path></a>\n\n';
-                }
-        
-                var str = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-1.11 -1.11 2.22 2.22" height="200px" width="100%">' +
-                    '<title>Most Donated To This Box Pie-Chart</title>';
-                try {
-                    var phi = Math.PI, max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
-                        titles = JSON.parse(GM_getValue('FLPoolTitles', '[]')),
-                        hrefs = JSON.parse(GM_getValue('FLPoolHrefs', '[]')),
-                        amounts = JSON.parse(GM_getValue('FLPoolAmounts', '[]')),
-                        colors = JSON.parse(GM_getValue('FLPoolColors', '[]'));
-                    for (var i = 0; i < titles.length; i++) {
-                        str += circlePart(amounts[i], titles[i], hrefs[i], colors[i]);
-                    }
-                } catch (e) { }
-                return str + '</svg>';
-            }
-        
-            function updatePieChart() {
-                var pieChart = getPieChart();
-                p.innerHTML = pieChart;
-                p3.innerHTML = pieChart;
-                if (GM_getValue('delicousnavbarpiechart', 'false') === 'true') {
-                    li.innerHTML = pieChart;
-                }
-                p2.innerHTML = 'There is currently ' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' / ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' yen in the donation box.<br/>';
-                p2.innerHTML += '(That means we are ' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' yen away from getting sitewide freeleech!)<br/>';
-                p2.innerHTML += 'In total, you\'ve donated ' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' yen to the freeleech pool.<br/>';
-                p2.innerHTML += 'Last updated ' + Math.round((Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', Date.now()), 10)) / 60000) + ' minutes ago.';
-                a.textContent = 'FL: ' + (100 * parseInt(GM_getValue('FLPoolCurrent', '0'), 10) / parseInt(GM_getValue('FLPoolMax', '50000000'), 10)).toFixed(1) + '%';
-                nav.replaceChild(a, nav.firstChild);
-            }
-        
-            var pos = GM_getValue('deliciousflpoolposition', 'after #userinfo_minor');
-        
-            if (pos !== 'none' || /user\.php\?id=/i.test(document.URL) || /konbini\/pool/i.test(document.URL)) {
-                var p = document.createElement('p'),
-                    p2 = document.createElement('center'),
-                    p3 = document.createElement('p'),
-                    nav = document.createElement('li'),
-                    a = document.createElement('a'),
-                    ul = document.createElement('ul'),
-                    li = document.createElement('li');
-                a.href = '/konbini/pool';
-                nav.appendChild(a);
-                if (GM_getValue('delicousnavbarpiechart', 'false') === 'true') {
-        
-                    function dropPie2(event) {
-                        // because who doesn't love dropping their pies
-                        if ((typeof $j).toString() !== 'undefined') {
-                            // below copied from https://animebytes.tv/static/functions/global-2acd7ec19a.js
-                            $j(event.target).parent().find("ul.subnav").is(":hidden") ?
-                                ($j("ul.subnav").hide(),
-                                    $j("li.navmenu").removeClass("selected"),
-                                    $j(this).parent().addClass("selected").find("ul.subnav").show())
-                                : $j(event.target).parent().removeClass("selected").find("ul.subnav").hide();
-                        }
-        
-                        // prevents global click handler from immediately closing the menu
-                        event.stopPropagation();
-                        return false;
-                    }
-        
-                    var outerSpan = document.createElement('span');
-                    outerSpan.className += "dropit hover clickmenu";
-                    outerSpan.onclick = (dropPie2);
-                    outerSpan.innerHTML += '<span class="stext">▼</span>';
-        
-                    // nav is the li.navmenu
-                    nav.appendChild(outerSpan);
-        
-                    // this ul contains the pie (somehow)
-                    ul.appendChild(li);
-                    ul.className = 'subnav nobullet';
-                    ul.style.display = 'none';
-                    nav.appendChild(ul);
-                    nav.className = 'navmenu';
-                    nav.id = "fl_menu";
-                }
-                if (pos !== 'none') {
-                    pos = pos.split(' ');
-                    var parent = document.querySelector(pos[1]);
-                    if (parent !== null) {
-                        getFLInfo();
-                        if (pos[0] === 'after')
-                            parent.appendChild(nav);
-                        if (pos[0] === 'before')
-                            parent.insertBefore(nav, parent.firstChild);
-                    }
-                }
-        
-                updatePieChart();
-        
-                if (/user\.php\?id=/i.test(document.URL) && GM_getValue('deliciousyenperx', 'true') === 'true') {
-                    // Only do so on the users' profile pages if Yen per X is activated and Yen per day is present in userstats
-                    var userstats = document.querySelector('#user_rightcol > .box');
-                    if (userstats != null) {
-                        var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
-                        if (tw.nextNode() != null) {
-                            getFLInfo();
-                            var cNode = document.querySelector('.userstatsleft');
-                            var hr = document.createElement('hr');
-                            hr.style.clear = 'both';
-                            cNode.insertBefore(hr, cNode.lastElementChild);
-                            cNode.insertBefore(p2, cNode.lastElementChild);
-                            cNode.insertBefore(p3, cNode.lastElementChild);
-                        }
-                    }
-                }
-        
-                if (/konbini\/pool/i.test(document.URL)) {
-                    var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Most Donated to This Box\s*$/i.test(node.data); } });
-                    if (tw.nextNode() !== null) {
-                        tw.currentNode.parentNode.insertBefore(p, tw.currentNode.nextSibling);
-                    }
-                }
-            }
-        })();
-        /* === End ab_fl_status.user.js === */
-    }
-
-
-    // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
-    if (/user\.php\?id=/i.test(document.URL)) {
-        /* === Inserted from ab_yen_stats.user.js === */
-        // ==UserScript==
-        // @name        AB - Yen per X and ratio milestones
-        // @author      Megure, Lemma, NSC, et al.
-        // @description Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
-        // @include     https://animebytes.tv/user.php*
-        // @version     0.1
-        // @icon        http://animebytes.tv/favicon.ico
-        // ==/UserScript==
-        
-        // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
-        (function ABYenStats() {
-            /* === _delicious_common.js already inserted. === */
-        
-            function compoundInterest(years) {
-                return (Math.pow(2, years) - 1) / Math.log(2);
-            }
-            function formatInteger(num) {
-                var res = '';
-                while (num >= 1000) {
-                    res = ',' + ('00' + (num % 1000)).slice(-3) + res;
-                    num = Math.floor(num / 1000);
-                }
-                return num + res;
-            }
-            function bytecount(num, unit) {
-                // For whatever reason, this was always called with .toUpperCase()
-                // by the original author, but newer KiB style prefixes have
-                // a lowercase. Keeping both for compatibility.
-                switch (unit) {
-                    case 'B':
-                        return num * Math.pow(1024, 0);
-                    case 'KiB':
-                    case 'KIB':
-                        return num * Math.pow(1024, 1);
-                    case 'MiB':
-                    case 'MIB':
-                        return num * Math.pow(1024, 2);
-                    case 'GiB':
-                    case 'GIB':
-                        return num * Math.pow(1024, 3);
-                    case 'TiB':
-                    case 'TIB':
-                        return num * Math.pow(1024, 4);
-                    case 'PiB':
-                    case 'PIB':
-                        return num * Math.pow(1024, 5);
-                    case 'EiB':
-                    case 'EIB':
-                        return num * Math.pow(1024, 6);
-                }
-            }
-            function humancount(num) {
-                if (num == 0) return '0 B';
-                var i = Math.floor(Math.log(Math.abs(num)) / Math.log(1024));
-                num = (num / Math.pow(1024, i)).toFixed(2);
-                switch (i) {
-                    case 0:
-                        return num + ' B';
-                    case 1:
-                        return num + ' KiB';
-                    case 2:
-                        return num + ' MiB';
-                    case 3:
-                        return num + ' GiB';
-                    case 4:
-                        return num + ' TiB';
-                    case 5:
-                        return num + ' PiB';
-                    case 6:
-                        return num + ' EiB';
-                    default:
-                        return num + ' × 1024^' + i + ' B';
-                }
-            }
-            function addDefinitionAfter(after, definition, value, cclass) {
-                dt = document.createElement('dt');
-                dt.appendChild(document.createTextNode(definition));
-                dd = document.createElement('dd');
-                if (cclass !== undefined) dd.className += cclass;
-                dd.appendChild(document.createTextNode(value));
-                after.parentNode.insertBefore(dd, after.nextElementSibling.nextSibling);
-                after.parentNode.insertBefore(dt, after.nextElementSibling.nextSibling);
-                return dt;
-            }
-            function addDefinitionBefore(before, definition, value, cclass) {
-                dt = document.createElement('dt');
-                dt.appendChild(document.createTextNode(definition));
-                dd = document.createElement('dd');
-                if (cclass !== undefined) dd.className += cclass;
-                dd.appendChild(document.createTextNode(value));
-                before.parentNode.insertBefore(dt, before);
-                before.parentNode.insertBefore(dd, before);
-                return dt;
-            }
-            function addRawStats() {
-                var tw, regExp = /([0-9,.]+)\s*([A-Z]+)\s*\(([^)]*)\)/i;
-                // Find text with raw stats
-                tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var rawUpMatch = tw.currentNode.data.match(regExp);
-                tw = document.createTreeWalker(tw.currentNode.parentNode.parentNode, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Downloaded:/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var rawDownMatch = tw.currentNode.data.match(regExp);
-                tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Ratio/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var ratioNode = tw.currentNode.parentNode;
-                tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Uploaded/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var ulNode = tw.currentNode.parentNode;
-                tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Downloaded/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var dlNode = tw.currentNode.parentNode;
-        
-                var ul = ulNode.nextElementSibling.textContent.match(regExp);
-                var dl = dlNode.nextElementSibling.textContent.match(regExp);
-                _debug && console.log(ul);
-                _debug && console.log(dl);
-                var uploaded = bytecount(parseFloat(ul[1].replace(/,/g, '')), ul[2].toUpperCase());
-                var downloaded = bytecount(parseFloat(dl[1].replace(/,/g, '')), dl[2].toUpperCase());
-                var rawuploaded = bytecount(parseFloat(rawUpMatch[1].replace(/,/g, '')), rawUpMatch[2].toUpperCase());
-                var rawdownloaded = bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase());
-                var rawRatio = Infinity;
-                if (bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase()) > 0)
-                    rawRatio = (bytecount(parseFloat(rawUpMatch[1].replace(/,/g, '')), rawUpMatch[2].toUpperCase()) / bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase())).toFixed(2);
-        
-                // Color ratio
-                var color = 'r99';
-                if (rawRatio < 1)
-                    color = 'r' + ('0' + Math.ceil(10 * rawRatio)).slice(-2);
-                else if (rawRatio < 5)
-                    color = 'r20';
-                else if (rawRatio < 99)
-                    color = 'r50';
-        
-                // Add to user stats after ratio
-                var hr = document.createElement('hr');
-                hr.style.clear = 'both';
-                ratioNode.parentNode.insertBefore(hr, ratioNode.nextElementSibling.nextSibling);
-                var rawRatioNode = addDefinitionAfter(ratioNode, 'Raw Ratio:', rawRatio, color);
-                addDefinitionAfter(ratioNode, 'Raw Downloaded:', rawDownMatch[0]);
-                addDefinitionAfter(ratioNode, 'Raw Uploaded:', rawUpMatch[0]);
-                ratioNode.nextElementSibling.title = 'Ratio\t  Buffer';
-                rawRatioNode.nextElementSibling.title = 'Raw ratio\t Raw Buffer';
-        
-                function printBuffer(u, d, r) {
-                    if (u / r - d >= 0)
-                        return '\n' + r.toFixed(1) + '\t' + (humancount(u / r - d)).slice(-10) + '    \tcan be downloaded'
-                    else
-                        return '\n' + r.toFixed(1) + '\t' + (humancount(d * r - u)).slice(-10) + '    \tmust be uploaded'
-                }
-                for (var i = 0; i < 10; i++) {
-                    var myRatio = [0.2, 0.5, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 5.0, 10.0][i];
-                    ratioNode.nextElementSibling.title += printBuffer(uploaded, downloaded, myRatio);
-                    rawRatioNode.nextElementSibling.title += printBuffer(rawuploaded, rawdownloaded, myRatio);
-                }
-            }
-            function addYenPerStats() {
-                var dpy = 365.256363; // days per year
-                var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
-                if (tw.nextNode() == null) return;
-                var ypdNode = tw.currentNode.parentNode;
-                var ypy = parseInt(ypdNode.nextElementSibling.textContent, 10) * dpy; // Yen per year
-                addDefinitionAfter(ypdNode, 'Yen per year:', formatInteger(Math.round(ypy * compoundInterest(1))));
-                addDefinitionAfter(ypdNode, 'Yen per month:', formatInteger(Math.round(ypy * compoundInterest(1 / 12))));
-                addDefinitionAfter(ypdNode, 'Yen per week:', formatInteger(Math.round(ypy * compoundInterest(7 / dpy))));
-                // 1 Yen = 1 MB = 1024^2 B * yen per year * interest for 1 s
-                var hr = document.createElement('hr');
-                hr.style.clear = 'both';
-                ypdNode.parentNode.insertBefore(hr, ypdNode);
-                addDefinitionBefore(ypdNode, 'Yen as upload:', humancount(Math.pow(1024, 2) * ypy * compoundInterest(1 / dpy / 24 / 60 / 60)) + '/s');
-                addDefinitionBefore(ypdNode, 'Yen per hour:', (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
-            }
-            if (GM_getValue('deliciousratio', 'true') === 'true')
-                addRawStats();
-            if (GM_getValue('deliciousyenperx', 'true') === 'true')
-                addYenPerStats();
-        })();
-        /* === End ab_yen_stats.user.js === */
-    }
-
-    // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
-    /* === Inserted from ab_dynamic_stylesheets.user.js === */
-    // ==UserScript==
-    // @name        AB - Dynamic stylesheets
-    // @author      Megure
-    // @description Changes stylesheets base on time of day.
-    // @include     https://animebytes.tv/*
-    // @version     0.1
-    // @icon        http://animebytes.tv/favicon.ico
-    // @grant       GM_getValue
-    // @grant       GM_setValue
-    // ==/UserScript==
-    
-    // Dynamic stylesheets by Megure, requires jQuery because I'm lazy
-    (function DynamicStylesheets() {
-    
-        /* === _delicious_common.js already inserted. === */
-    
-        function updateSettings() {
-            var rules = document.querySelectorAll('li.deliciousdynamicstylesheetsrule');
-            var result = [];
-            for (var i = 0; i < rules.length; i++) {
-                var rule = rules[i];
-                var hour = rule.children[0].value;
-                var stylesheet = rule.children[1].value;
-                if (hour !== '' && stylesheet !== '')
-                    result.push([parseInt(hour, 10), stylesheet]);
-            }
-            result.sort(function (a, b) { return a[0] - b[0]; });
-    
-            GM_setValue('deliciousdynamicstylesheetsrules', JSON.stringify(result));
-        }
-    
-        function addRule(hour, stylesheet) {
-            var newLi = document.createElement('li');
-            newLi.className = 'deliciousdynamicstylesheetsrule';
-    
-            var hour_input = document.createElement('input');
-            hour_input.type = 'number';
-            hour_input.min = '0';
-            hour_input.max = '23';
-            hour_input.step = '1';
-            hour_input.placeholder = '0-23';
-            hour_input.style.width = '10%';
-            hour_input.addEventListener('keyup', updateSettings);
-            if (typeof hour === 'number')
-                hour_input.value = hour;
-    
-            var stylesheet_input = document.createElement('input');
-            stylesheet_input.type = 'text';
-            stylesheet_input.placeholder = 'Either a name of an existing stylesheet like Milkyway (case-sensitive), or an external URL like https://aldy.nope.bz/toblerone.css';
-            stylesheet_input.style.width = '75%';
-            stylesheet_input.addEventListener('keyup', updateSettings);
-            if (typeof stylesheet === 'string')
-                stylesheet_input.value = stylesheet;
-    
-            var delete_button = document.createElement('button');
-            delete_button.textContent = 'Delete rule';
-            delete_button.addEventListener('click', function (e) {
-                e.preventDefault();
-                newLi.parentNode.removeChild(newLi);
-                updateSettings();
-            });
-    
-            newLi.appendChild(hour_input);
-            newLi.appendChild(stylesheet_input);
-            newLi.appendChild(delete_button);
-    
-            var rules = document.querySelectorAll('li.deliciousdynamicstylesheetsrule');
-            if (rules.length > 0) {
-                var lastRule = rules[rules.length - 1];
-                lastRule.parentNode.insertBefore(newLi, lastRule.nextSibling);
-            }
-            else {
-                var settings = document.getElementById('deliciousdynamicstylesheets');
-                settings.parentNode.parentNode.parentNode.insertBefore(newLi, settings.parentNode.parentNode.nextSibling);
-            }
-        }
-    
-        function setStylesheet(stylesheet) {
-            var settings_xhr = new XMLHttpRequest(), settings_dom_parser = new DOMParser();
-            settings_xhr.open('GET', "https://animebytes.tv/user.php?action=edit", true);
-            settings_xhr.send();
-            settings_xhr.onreadystatechange = function () {
-                if (settings_xhr.readyState === 4) {
-                    var settings_document = settings_dom_parser.parseFromString(settings_xhr.responseText, 'text/html');
-                    var form = settings_document.getElementById('userform');
-    
-                    if (form !== null) {
-                        var styleurl = form.querySelector('input#styleurl');
-                        var stylesheet_select = form.querySelector('select#stylesheet');
-                        if (styleurl === null || stylesheet_select === null) {
-                            console.log("Could not find style url or stylesheet input on settings page.");
-                            return;
-                        }
-                        var stylesheet_options = settings_document.evaluate('//option[text()="' + stylesheet + '"]', settings_document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                        if (stylesheet_options.snapshotItem(0) !== null) {
-                            if (stylesheet_select.value === stylesheet_options.snapshotItem(0).value && styleurl.value === '') {
-                                // Stylesheet settings are already properly set, nothing to do
-                                return;
-                            }
-                            else {
-                                stylesheet_select.setAttribute('onchange', '');
-                                stylesheet_select.value = stylesheet_options.snapshotItem(0).value;
-                                styleurl.value = '';
-                            }
-                        }
-                        else {
-                            if (styleurl === stylesheet) {
-                                // Stylesheet settings are already properly set, nothing to do
-                                return;
-                            }
-                            else {
-                                styleurl.value = stylesheet;
-                            }
-                        }
-    
-                        $.ajax({
-                            url: "https://animebytes.tv/user.php?action=edit",
-                            type: "post",
-                            data: $(form).serialize()
-                        });
-                    }
-                }
-            }
-        }
-    
-        // Add to user script settings
-        if (/\/user\.php\?.*action=edit/i.test(document.URL)) {
-            var settings = document.getElementById('deliciousdynamicstylesheets');
-            var add_button = document.createElement('button');
-            add_button.textContent = 'Add rule';
-            add_button.addEventListener('click', function (e) {
-                e.preventDefault();
-                addRule();
-            });
-            settings.parentNode.appendChild(add_button);
-    
-            // Add existing rules
-            var rules = JSON.parse(GM_getValue('deliciousdynamicstylesheetsrules', '[]'));
-            for (var i = 0; i < rules.length; i++) {
-                var rule = rules[i];
-                addRule(rule[0], rule[1]);
-            }
-        }
-    
-        // Do we have to set the stylesheet?
-        if (GM_getValue('deliciousdynamicstylesheets', 'false') === 'true') {
-            var current_hour = (new Date()).getHours();
-            var rules = JSON.parse(GM_getValue('deliciousdynamicstylesheetsrules', '[]'));
-            if (rules.length > 0) {
-                var result = rules[rules.length - 1][1];
-                for (var i = 0; i < rules.length; i++) {
-                    var rule = rules[i];
-                    if (rule[0] <= current_hour)
-                        result = rule[1];
-                }
-                if (GM_getValue('currentdeliciousdynamicstylesheet', '') !== result) {
-                    setStylesheet(result);
-                    GM_setValue('currentdeliciousdynamicstylesheet', result);
-                }
-            }
-        }
-    }).call(this);
-    /* === End ab_dynamic_stylesheets.user.js === */
-
-
-    // Enhanced Torrent View by Megure
-    // Shows how much yen you would receive if you seeded torrents;
-    // shows required seeding time; allows sorting and filtering of torrent tables;
-    // dynamic loading of transfer history tables
-    /* === Inserted from ab_enhanced_torrent_view.user.js === */
+    /* Begin src/ab_enhanced_torrent_view.user.js */
     // ==UserScript==
     // @name        Enhanced Torrent View
     // @namespace   Megure@AnimeBytes.tv
     // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     // @include     http*://animebytes.tv*
-    // @version     1.01
+    // @version     1.02
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
     // Enhanced Torrent View by Megure
     // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     (function EnhancedTorrentView() {
-        /* === _delicious_common.js already inserted. === */
+        var settingsKeys = ['ABTorrentsShowYen', 'ABTorrentsReqTime',
+            'ABSortTorrents', 'ABTorrentsFilter', 'ABHistDynLoad'];
+        for (let i = 0; i < settingsKeys.length; i++) {
+            delicious.settings.init(settingsKeys[i], true);
+        }
+        delicious.settings.init('ABTorrentsYenTimeFrame', '24');
+    
+        if (delicious.settings.ensureSettingsInserted()) {
+            var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
+            var s = section.querySelector('.settings_section_body');
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABTorrentsShowYen',
+                'Show yen generation',
+                'Show yen generation for torrents, with detailed information when hovered.'
+            ));
+            s.appendChild(delicious.settings.createDropDown(
+                'ABTorrentsYenTimeFrame',
+                'Yen time frame',
+                'Shows yen generated in this amount of time.',
+                [['Hour', '1'],
+                    ['Day', '24'],
+                    ['Week', '168']],
+                {default: '24'}
+            ));
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABTorrentsReqTime',
+                'Show required seeding time',
+                'Shows minimal required seeding time for torrents in their description and when size is hovered.'
+            ));
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABTorrentsFilter',
+                'Filter torrents',
+                'Shows a box above torrent tables, where you can filter the torrents from that table.'
+            ));
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABSortTorrents',
+                'Sort torrents',
+                'Allows torrent tables to be sorted.'
+            ));
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABHistDynLoad',
+                'Dynamic history tables',
+                'Dynamically load more pages into the transfer history page.'
+            ));
+            delicious.settings.insertSection(section);
+        }
+    
+        var _debug = false;
     
         var days_per_year = 365.256363;
         var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
@@ -2013,7 +82,7 @@
         var sort_rows = GM_getValue('ABSortTorrents', 'true') === 'true';
         var filter_torrents = GM_getValue('ABTorrentsFilter', 'true') === 'true';
         var dynamic_load = GM_getValue('ABHistDynLoad', 'true') === 'true';
-        var time_frame = parseInt(GM_getValue('ABTorrentsYenTimeFrame', '24'), 10);
+        var time_frame = parseInt(delicious.settings.get('ABTorrentsYenTimeFrame', '24'), 10);
         var time_frame_string = time_frame + ' hours';
         if (time_frame === 1) {
             time_frame_string = 'hour';
@@ -2876,488 +945,2146 @@
             }
         }
     }).call(this);
-    /* === End ab_enhanced_torrent_view.user.js === */
+    /* End src/ab_enhanced_torrent_view.user.js */
 
 
-    // Forum search enhancement by Megure
-    // Load posts into search results; highlight search terms; filter authors; slide through posts
-    /* === Inserted from ab_forum_search_enhancement.user.js === */
+    /* Begin src/ab_fl_status.user.js */
+    // ==UserScript==
+    // @name        AB - Freeleech Pool Status
+    // @author      Megure (inspired by Lemma, Alpha, NSC)
+    // @description Shows current freeleech pool status in navbar with a pie-chart
+    // @include     https://animebytes.tv/*
+    // @version     0.1.1.2
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_getValue
+    // @grant       GM_setValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
+    // Shows current freeleech pool status in navbar with a pie-chart
+    // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
+    (function ABFLStatus() {
+        delicious.settings._migrateStringSetting('deliciousflpoolposition');
+    
+        delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
+        delicious.settings.init('deliciousfreeleechpool', true);
+        delicious.settings.init('deliciousnavbarpiechart', true);
+        var pieLocations = delicious.settings.init('deliciousflpiepositions', {
+            'navbar': delicious.settings.get('deliciousnavbarpiechart'),
+            'profile': delicious.settings.get('deliciousnavbarpiechart')
+        });
+    
+        if (delicious.settings.ensureSettingsInserted()) {
+            var section = delicious.settings.createCollapsibleSection('Delicious Freeleech Pool');
+            var s = section.querySelector('.settings_section_body');
+            s.appendChild(delicious.settings.createCheckbox(
+                'deliciousfreeleechpool',
+                'Enable/Disable',
+                'Shows current freeleech pool progress in the navbar and on user pages'
+                + ' (updated once an hour or when freeleech pool site is visited).'));
+            s.appendChild(delicious.settings.createDropDown(
+                'deliciousflpoolposition',
+                'Navbar Position',
+                'Select position of freeleech pool progress in the navbar or disable it.',
+                [['Before user info', 'before #userinfo_minor'],
+                    ['After user info', 'after #userinfo_minor'],
+                    ['Before menu', 'before .main-menu.nobullet'],
+                    ['After menu', 'after .main-menu.nobullet'],
+                    ['Don\'t display', 'none']],
+                {default: 'after #userinfo_minor'}
+            ));
+            s.appendChild(delicious.settings.createFieldSetSetting(
+                'deliciousflpiepositions',
+                'FL Pie Chart Locations',
+                [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
+            ));
+            delicious.settings.insertSection(section);
+        }
+    
+        if (!delicious.settings.get('deliciousfreeleechpool'))
+            return;
+    
+        function niceNumber(num) {
+            var res = '';
+            while (num >= 1000) {
+                res = ',' + ('00' + (num % 1000)).slice(-3) + res;
+                num = Math.floor(num / 1000);
+            }
+            return num + res;
+        }
+        var locked = false;
+        function getFLInfo() {
+            function parseFLInfo(elem) {
+                var boxes = elem.querySelectorAll('#content .box.pad');
+                //console.log(boxes);
+                if (boxes.length < 3) return;
+    
+                // The first box holds the current amount, the max amount and the user's individual all-time contribution
+                var match = boxes[0].textContent.match(/have ¥([0-9,]+) \/ ¥([0-9,]+)/i),
+                    max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
+                    current = parseInt(GM_getValue('FLPoolCurrent', '0'), 10);
+                if (match == null) {
+                    // Updated 2018-02-23 according to oregano's suggestion
+                    match = boxes[0].textContent.match(/You must wait for freeleech to be over before donating/i);
+                    if (match != null) current = max;
+                }
+                else {
+                    current = parseInt(match[1].replace(/,/g, ''), 10);
+                    max = parseInt(match[2].replace(/,/g, ''), 10);
+                }
+                if (match != null) {
+                    GM_setValue('FLPoolCurrent', current);
+                    GM_setValue('FLPoolMax', max);
+                }
+                // Check first box for user's individual all-time contribution
+                match = boxes[0].textContent.match(/you've donated ¥([0-9,]+)/i);
+                if (match != null)
+                    GM_setValue('FLPoolContribution', parseInt(match[1].replace(/,/g, ''), 10));
+    
+                // The third box holds the top 10 donators for the current box
+                var box = boxes[2],
+                    firstP = box.querySelector('p'),
+                    tr = box.querySelector('table').querySelectorAll('tbody > tr');
+    
+                var titles = [], hrefs = [], amounts = [], colors = [], sum = 0;
+                for (var i = 0; i < tr.length; i++) {
+                    var el = tr[i],
+                        td = el.querySelectorAll('td');
+    
+                    titles[i] = td[0].textContent;
+                    hrefs[i] = td[0].querySelector('a').href;
+                    amounts[i] = parseInt(td[1].textContent.replace(/[,¥]/g, ''), 10);
+                    colors[i] = 'red';
+                    sum += amounts[i];
+                }
+    
+                // Updated 2018-02-23. Properly draw full pie when FL active.
+                if (current === max && sum === 0) {
+                    titles[0] = "Freeleech!";
+                    hrefs[0] = 'https://animebytes.tv/konbini/pool';
+                    amounts[0] = current;
+                    colors[0] = 'red';
+                    sum = current;
+                }
+                else {
+                    // Also add others and missing to the arrays
+                    // 2018-02-23 But only if FL isn't active.
+                    next_index = titles.length;
+                    titles[next_index] = 'Other';
+                    hrefs[next_index] = 'https://animebytes.tv/konbini/pool';
+                    amounts[next_index] = current - sum;
+                    colors[next_index] = 'lightgrey';
+    
+                    titles[next_index + 1] = 'Missing';
+                    hrefs[next_index + 1] = 'https://animebytes.tv/konbini/pool';
+                    amounts[next_index + 1] = max - current;
+                    colors[next_index + 1] = 'black';
+                }
+    
+                GM_setValue('FLPoolLastUpdate', Date.now());
+                GM_setValue('FLPoolTitles', JSON.stringify(titles));
+                GM_setValue('FLPoolHrefs', JSON.stringify(hrefs));
+                GM_setValue('FLPoolAmounts', JSON.stringify(amounts));
+                GM_setValue('FLPoolColors', JSON.stringify(colors));
+            }
+    
+            // Either parse document or retrieve freeleech pool site 60*60*1000 ms after last retrieval
+            if (/konbini\/pool$/i.test(document.URL))
+                parseFLInfo(document);
+            else if (Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', '0'), 10) > 3600000 && locked === false) {
+                locked = true;
+                // Fix suggested by https://animebytes.tv/user/profile/oregano
+                // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
+                try {
+                    var xhr = XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
+                } catch (exc) {
+                    var xhr = new XMLHttpRequest();
+                }
+                parser = new DOMParser();
+                xhr.open('GET', "https://animebytes.tv/konbini/pool", true);
+                xhr.send();
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        parseFLInfo(parser.parseFromString(xhr.responseText, 'text/html'));
+                        updatePieChart();
+                        locked = false;
+                    }
+                };
+            }
+        }
+    
+        function getPieChart() {
+            function circlePart(diff, title, href, color) {
+                if (diff == 0) return '';
+                var x = Math.sin(phi), y = Math.cos(phi);
+                phi -= 2 * Math.PI * diff / max;
+                var v = Math.sin(phi), w = Math.cos(phi);
+                var z = 0;
+                if (2 * diff > max)
+                    z = 1; // use long arc
+                var perc = (100 * diff / max).toFixed(1) + '%\n' + niceNumber(diff) + ' ¥';
+    
+                // 2018-02-23 Hardcoded since rounding errors were making the pie a thin strip when it was a single
+                // slice at 100%.
+                if (diff === max) {
+                    /*v = -6.283185273215512e-8;
+                    w = -0.999999999999998;
+                    z = 1;
+                    x = 1.2246467991473532e-16;
+                    y = -1;*/
+                    v = -0.000001;
+                    w = -1;
+                    z = 1;
+                    x = 0;
+                    y = -1;
+    
+                }
+                return '<a xlink:href="' + href + '" xlink:title="' + title + '\n' + perc + '"><path title="' + title + '\n' + perc +
+                    '" stroke-width="0.01" stroke="grey" fill="' + color + '" d="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z">\n' +
+    
+                    '<animate begin="mouseover" attributeName="d" to="M0,0 L' + 1.1 * v + ',' + 1.1 * w + ' A1.1,1.1 0 ' + z + ',0 ' + 1.1 * x + ',' + 1.1 * y + 'z" dur="0.3s" fill="freeze" />\n' +
+                    '<animate begin="mouseout"  attributeName="d" to="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z" dur="0.3s" fill="freeze" />\n' +
+                    '</path></a>\n\n';
+            }
+    
+            var str = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-1.11 -1.11 2.22 2.22" height="200px" width="100%">' +
+                '<title>Most Donated To This Box Pie-Chart</title>';
+            try {
+                var phi = Math.PI, max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
+                    titles = JSON.parse(GM_getValue('FLPoolTitles', '[]')),
+                    hrefs = JSON.parse(GM_getValue('FLPoolHrefs', '[]')),
+                    amounts = JSON.parse(GM_getValue('FLPoolAmounts', '[]')),
+                    colors = JSON.parse(GM_getValue('FLPoolColors', '[]'));
+                for (var i = 0; i < titles.length; i++) {
+                    str += circlePart(amounts[i], titles[i], hrefs[i], colors[i]);
+                }
+            } catch (e) { }
+            return str + '</svg>';
+        }
+    
+        function updatePieChart() {
+            var pieChart = getPieChart();
+            p.innerHTML = pieChart;
+            p3.innerHTML = pieChart;
+            if (pieLocations['navbar']) {
+                li.innerHTML = pieChart;
+            }
+            p2.innerHTML = 'We currently have ¥' + niceNumber(parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + '&thinsp;/&thinsp;¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10)) + ' in our donation box.<br/>';
+            p2.innerHTML += '(That means we\'re ¥' + niceNumber(parseInt(GM_getValue('FLPoolMax', '50000000'), 10) - parseInt(GM_getValue('FLPoolCurrent', '0'), 10)) + ' away from sitewide freeleech!)<br/>';
+            p2.innerHTML += 'In total, you\'ve donated ¥' + niceNumber(parseInt(GM_getValue('FLPoolContribution', '0'), 10)) + ' to the freeleech pool.<br/>';
+            p2.innerHTML += 'Last updated ' + Math.round((Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', Date.now()), 10)) / 60000) + ' minutes ago.';
+            a.textContent = 'FL: ' + (100 * parseInt(GM_getValue('FLPoolCurrent', '0'), 10) / parseInt(GM_getValue('FLPoolMax', '50000000'), 10)).toFixed(1) + '%';
+            nav.replaceChild(a, nav.firstChild);
+        }
+    
+        var pos = delicious.settings.get('deliciousflpoolposition');
+    
+        if (pos !== 'none' || /user\.php\?id=/i.test(document.URL) || /konbini\/pool/i.test(document.URL)) {
+            var p = document.createElement('p'),
+                p2 = document.createElement('center'),
+                p3 = document.createElement('p'),
+                nav = document.createElement('li'),
+                a = document.createElement('a'),
+                ul = document.createElement('ul'),
+                li = document.createElement('li');
+            a.href = '/konbini/pool';
+            nav.appendChild(a);
+            if (pieLocations['navbar']) {
+                var outerSpan = document.createElement('span');
+                outerSpan.className += "dropit hover clickmenu";
+                outerSpan.addEventListener('click', delicious.utilities.toggleSubnav);
+                outerSpan.innerHTML += '<span class="stext">▼</span>';
+    
+                // nav is the li.navmenu
+                nav.appendChild(outerSpan);
+    
+                // this ul contains the pie (somehow)
+                ul.appendChild(li);
+                ul.className = 'subnav nobullet';
+                ul.style.display = 'none';
+                nav.appendChild(ul);
+                nav.className = 'navmenu';
+                nav.id = "fl_menu";
+            }
+            if (pos !== 'none') {
+                pos = pos.split(' ');
+                var parent = document.querySelector(pos[1]);
+                if (parent !== null) {
+                    getFLInfo();
+                    if (pos[0] === 'after')
+                        parent.appendChild(nav);
+                    if (pos[0] === 'before')
+                        parent.insertBefore(nav, parent.firstChild);
+                }
+            }
+    
+            updatePieChart();
+    
+            if (pieLocations['profile'] && /user\.php\?id=/i.test(document.URL)) {
+                var userstats = document.querySelector('#user_rightcol > .box');
+                if (userstats != null) {
+                    var tw = document.createTreeWalker(userstats, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
+                    if (tw.nextNode() != null) {
+                        getFLInfo();
+                        var cNode = document.querySelector('.userstatsleft');
+                        var hr = document.createElement('hr');
+                        hr.style.clear = 'both';
+                        cNode.insertBefore(hr, cNode.lastElementChild);
+                        cNode.insertBefore(p2, cNode.lastElementChild);
+                        cNode.insertBefore(p3, cNode.lastElementChild);
+                    }
+                }
+            }
+    
+            if (/konbini\/pool/i.test(document.URL)) {
+                var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Most Donated to This Box\s*$/i.test(node.data); } });
+                if (tw.nextNode() !== null) {
+                    tw.currentNode.parentNode.insertBefore(p, tw.currentNode.nextSibling);
+                }
+            }
+        }
+    })();
+    /* End src/ab_fl_status.user.js */
+
+
+    /* Begin src/ab_forum_search_enhancement.user.js */
     // ==UserScript==
     // @name        AnimeBytes - Forum Search - Enhancement
     // @namespace   Megure@AnimeBytes.tv
     // @description Load posts into search results; highlight search terms; filter authors; slide through posts
     // @include     http*://animebytes.tv/forums.php*
     // @exclude     *action=viewthread*
-    // @version     0.72.1
+    // @version     0.72.2
     // @grant       GM_getValue
+    // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
     // ==/UserScript==
     
-    if ((/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL)) && !/action=viewthread/i.test(document.URL)) {
-        (function ForumSearchEnhancement() {
-            /* === _delicious_common.js already inserted. === */
+    //import '../delicious-library/src/ab_delicious_library'
     
-            var a, allResults, background_color, button, cb, filterPost, forumIds, forumid, getFirstTagParent, hideSubSelection, i, index, input, len, linkbox1, loadPost, loadText, loadThreadPage, loadingText, myCell, myLINK, newCheckbox, newLinkBox, patt, processThreadPage, quickLink, quickLinkSubs, result, sR, searchForums, searchForumsCB, searchForumsNew, showFastSearchLinks, showPost, strong, tP, textReplace, text_color, toggleText, toggleVisibility, user_filter, user_td, user_tr, workInForumSearch, workInRestOfForum;
+    (function ForumSearchEnhancement() {
+        delicious.settings.init('ABForumSearchWorkInFS', true);
+        delicious.settings.init('ABForumSearchWorkInRest', true);
     
-            background_color = GM_getValue('ABForumSearchHighlightBG', '#FFC000');
+        var textSettings = ['ABForumSearchHighlightBG', 'ABForumSearchHighlightFG',
+            'ABForumLoadText', 'ABForumLoadingText', 'ABForumToggleText'];
+        for (var j = 0; j < textSettings.length; j++) {
+            delicious.settings._migrateStringSetting(textSettings[j]);
+        }
     
-            text_color = GM_getValue('ABForumSearchHighlightFG', '#000000');
+        if (delicious.settings.get('ABForumSearchHighlightBG') === 'none')
+            delicious.settings.set('ABForumSearchHighlightBG', null);
+        if (delicious.settings.get('ABForumSearchHighlightFG') === 'none')
+            delicious.settings.set('ABForumSearchHighlightFG', null);
     
-            toggleText = GM_getValue('ABForumToggleText', '(Toggle)');
+        if (delicious.settings.ensureSettingsInserted()) {
+            var section = delicious.settings.createCollapsibleSection('Forum Search Enhancements');
+            var s = section.querySelector('.settings_section_body');
+            s.appendChild(delicious.settings.createCheckbox(
+                'ABForumSearchWorkInFS',
+                'Load posts into search results',
+                'Allows you to load posts and threads into search results, slide through posts and filter for authors.'
+            ));
     
-            loadText = GM_getValue('ABForumLoadText', '(Load)');
+            s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightBG',
+                'Color for search terms', 'Background color for search terms within posts and headers.',
+                {default: '#FFC000'}));
+            s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightFG',
+                'Color for search terms', 'Text color for search terms within posts and headers.',
+                {default: '#000000'}));
     
-            loadingText = GM_getValue('ABForumLoadingText', '(Loading)');
+            s.appendChild(delicious.settings.createCheckbox('ABForumEnhWorkInRest',
+                'Load posts into forum view', 'Allows you to load posts and threads into the general forum view.',
+                {default: false}));
+            s.appendChild(delicious.settings.createTextSetting('ABForumLoadText',
+                'Text for links to be loaded', 'The text to be shown for forum links that have not been loaded yet.',
+                {default: '(Load) ', width: '8em'}));
+            s.appendChild(delicious.settings.createTextSetting('ABForumLoadingText', 'Text for loading links',
+                'The text to be shown for forum links that are currently being loaded.',
+                {default: '(Loading) ', width: '8em'}));
+            s.appendChild(delicious.settings.createTextSetting('ABForumToggleText', 'Text for loaded links',
+                'The text to be shown for forum links that have been loaded and can now be toggled.',
+                {default: '(Toggle) ', width: '8em'}));
     
-            hideSubSelection = GM_getValue('ABForumSearchHideSubfor', 'true') === 'true';
+            delicious.settings.insertSection(section);
+        }
     
-            workInForumSearch = GM_getValue('ABForumSearchWorkInFS', 'true') === 'true' && document.URL.indexOf('action=search') >= 0;
+        if (!( (/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL))
+            && !/action=viewthread/i.test(document.URL) ))
+            return;
     
-            workInRestOfForum = GM_getValue('ABForumEnhWorkInRest', 'false') === 'true' && (document.URL.indexOf('action=viewforum') >= 0 || document.URL.indexOf('?') === -1);
     
-            showFastSearchLinks = GM_getValue('ABForumEnhFastSearch', 'true') === 'true' && document.URL.indexOf('action=viewforum') >= 0;
+        var a, allResults, background_color, button, cb, filterPost, forumIds, forumid, getFirstTagParent, hideSubSelection, i, j, input, len, linkbox1, loadPost, loadText, loadThreadPage, loadingText, myCell, myLINK, newCheckbox, newLinkBox, patt, processThreadPage, quickLink, quickLinkSubs, result, sR, searchForums, searchForumsCB, searchForumsNew, showFastSearchLinks, showPost, strong, tP, textReplace, text_color, toggleText, toggleVisibility, user_filter, user_td, user_tr, workInForumSearch, workInRestOfForum;
     
-            user_filter = [];
+        background_color = delicious.settings.get('ABForumSearchHighlightBG', '#FFC000');
     
-            sR = [];
+        text_color = delicious.settings.get('ABForumSearchHighlightFG', '#000000');
     
-            tP = [];
+        toggleText = delicious.settings.get('ABForumToggleText', '(Toggle) ');
     
-            cb = [];
+        loadText = delicious.settings.get('ABForumLoadText', '(Load) ');
     
-            getFirstTagParent = function (elem, tag) {
-                while (elem !== null && elem.tagName !== 'BODY' && elem.tagName !== tag) {
-                    elem = elem.parentNode;
-                }
-                if (elem === null || elem.tagName !== tag) {
-                    return null;
-                } else {
-                    return elem;
-                }
-            };
+        loadingText = delicious.settings.get('ABForumLoadingText', '(Loading) ');
     
-            textReplace = function (elem) {
-                var node, regExp, walk;
-                if (patt !== '' && (background_color !== 'none' || text_color !== 'none')) {
-                    walk = document.createTreeWalker(elem, NodeFilter.SHOW_TEXT, null, false);
+        hideSubSelection = delicious.settings.get('ABForumSearchHideSubfor', true);
+    
+        workInForumSearch = delicious.settings.get('ABForumSearchWorkInFS', true) && document.URL.indexOf('action=search') >= 0;
+    
+        workInRestOfForum = delicious.settings.get('ABForumEnhWorkInRest', false) && (document.URL.indexOf('action=viewforum') >= 0 || document.URL.indexOf('?') === -1);
+    
+        showFastSearchLinks = delicious.settings.get('ABForumEnhFastSearch', true) && document.URL.indexOf('action=viewforum') >= 0;
+    
+        user_filter = [];
+    
+        sR = [];
+    
+        tP = [];
+    
+        cb = [];
+    
+        getFirstTagParent = function (elem, tag) {
+            while (elem !== null && elem.tagName !== 'BODY' && elem.tagName !== tag) {
+                elem = elem.parentNode;
+            }
+            if (elem === null || elem.tagName !== tag) {
+                return null;
+            } else {
+                return elem;
+            }
+        };
+    
+        textReplace = function (elem) {
+            var node, regExp, walk;
+            if (patt !== '' && (background_color !== 'none' || text_color !== 'none')) {
+                walk = document.createTreeWalker(elem, NodeFilter.SHOW_TEXT, null, false);
+                node = walk.nextNode();
+                regExp = new RegExp('(' + patt + ')', 'i');
+                while (node != null) {
+                    node.textContent.replace(regExp, function (term) {
+                        var args, newSpan, newTextNode, offset;
+                        args = [].slice.call(arguments);
+                        offset = args[args.length - 2];
+                        newTextNode = node.splitText(offset);
+                        newTextNode.textContent = newTextNode.textContent.substr(term.length);
+                        newSpan = document.createElement('span');
+                        if (background_color !== 'none') {
+                            newSpan.style.backgroundColor = background_color;
+                        }
+                        if (text_color !== 'none') {
+                            newSpan.style.color = text_color;
+                        }
+                        newSpan.appendChild(document.createTextNode(term));
+                        node.parentNode.insertBefore(newSpan, newTextNode);
+                        return node = walk.nextNode();
+                    });
                     node = walk.nextNode();
-                    regExp = new RegExp('(' + patt + ')', 'i');
-                    while (node != null) {
-                        node.textContent.replace(regExp, function (term) {
-                            var args, newSpan, newTextNode, offset;
-                            args = [].slice.call(arguments);
-                            offset = args[args.length - 2];
-                            newTextNode = node.splitText(offset);
-                            newTextNode.textContent = newTextNode.textContent.substr(term.length);
-                            newSpan = document.createElement('span');
-                            if (background_color !== 'none') {
-                                newSpan.style.backgroundColor = background_color;
-                            }
-                            if (text_color !== 'none') {
-                                newSpan.style.color = text_color;
-                            }
-                            newSpan.appendChild(document.createTextNode(term));
-                            node.parentNode.insertBefore(newSpan, newTextNode);
-                            return node = walk.nextNode();
-                        });
-                        node = walk.nextNode();
+                }
+            }
+        };
+    
+        processThreadPage = function (id, threadid, page, parent, link) {
+            return function () {
+                var _i, cell, i, j, len, len1, linkbox, myColsp, nextPost, pagenums, post, prevPost, ref, ref1, td, threadPage, tr, user_id;
+                threadPage = "threadid=" + threadid + "&page=" + page;
+                link.textContent = toggleText;
+                sR[id] = [];
+                sR[id].parent = parent;
+                sR[id].index = 0;
+                sR[id].page = page;
+                sR[id].threadid = threadid;
+                ref = tP[threadPage];
+                for (_i = i = 0, len = ref.length; i < len; _i = ++i) {
+                    post = ref[_i];
+                    if (post.id === id) {
+                        sR[id].index = _i;
                     }
                 }
+                user_id = tP[threadPage][sR[id].index].className.split('_');
+                user_id = user_id[user_id.length - 1];
+                // It looks lke sR is the search results, and tP is a thread page.
+                // This line gets the username from the author's profile link.
+                sR[id].user = tP[threadPage][sR[id].index].querySelector('.num_author > a[href^="/user"]').textContent;
+                linkbox = document.createElement('div');
+                pagenums = document.createElement('div');
+                linkbox.className = 'linkbox';
+                pagenums.className = 'pagenums';
+                prevPost = document.createElement('a');
+                nextPost = document.createElement('a');
+                prevPost.href = '#';
+                nextPost.href = '#';
+                prevPost.className = 'page-link';
+                nextPost.className = 'page-link';
+                prevPost.textContent = '← Prev';
+                nextPost.textContent = 'Next →';
+                pagenums.appendChild(prevPost);
+                pagenums.appendChild(nextPost);
+                linkbox.appendChild(pagenums);
+                prevPost.addEventListener('click', showPost(id, true), true);
+                nextPost.addEventListener('click', showPost(id, false), true);
+                tr = document.createElement('tr');
+                td = document.createElement('td');
+                myColsp = 0;
+                ref1 = parent.cells;
+                for (j = 0, len1 = ref1.length; j < len1; j++) {
+                    cell = ref1[j];
+                    myColsp += cell.colSpan;
+                }
+                td.colSpan = myColsp;
+                td.appendChild(linkbox);
+                td.appendChild(tP[threadPage][sR[id].index]);
+                tr.appendChild(td);
+                sR[id].td = td;
+                sR[id].parent.parentNode.insertBefore(tr, sR[id].parent.nextSibling);
             };
+        };
     
-            processThreadPage = function (id, threadid, page, parent, link) {
-                return function () {
-                    var _i, cell, i, j, len, len1, linkbox, myColsp, nextPost, pagenums, post, prevPost, ref, ref1, td, threadPage, tr, user_id;
-                    threadPage = "threadid=" + threadid + "&page=" + page;
-                    link.textContent = toggleText;
-                    sR[id] = [];
-                    sR[id].parent = parent;
-                    sR[id].index = 0;
-                    sR[id].page = page;
-                    sR[id].threadid = threadid;
+        loadThreadPage = function (threadid, page) {
+            var threadPage, xhr;
+            threadPage = "threadid=" + threadid + "&page=" + page;
+            tP[threadPage] = 'Loading';
+            cb[threadPage] = [];
+            xhr = new XMLHttpRequest();
+            xhr.open('GET', "https://animebytes.tv/forums.php?action=viewthread&" + threadPage, true);
+            xhr.send();
+            xhr.onreadystatechange = function () {
+                var callback, i, j, len, len1, parser, post, ref, ref1;
+                if (xhr.readyState === 4) {
+                    parser = new DOMParser();
+                    tP[threadPage] = (parser.parseFromString(xhr.responseText, 'text/html')).querySelectorAll('div[id^="post"]');
                     ref = tP[threadPage];
-                    for (_i = i = 0, len = ref.length; i < len; _i = ++i) {
-                        post = ref[_i];
-                        if (post.id === id) {
-                            sR[id].index = _i;
-                        }
+                    for (i = 0, len = ref.length; i < len; i++) {
+                        post = ref[i];
+                        textReplace(post);
                     }
-                    user_id = tP[threadPage][sR[id].index].className.split('_');
-                    user_id = user_id[user_id.length - 1];
-                    sR[id].user = tP[threadPage][sR[id].index].querySelector('a[href="/user.php?id=' + user_id + '"]').textContent;
-                    linkbox = document.createElement('div');
-                    pagenums = document.createElement('div');
-                    linkbox.className = 'linkbox';
-                    pagenums.className = 'pagenums';
-                    prevPost = document.createElement('a');
-                    nextPost = document.createElement('a');
-                    prevPost.href = '#';
-                    nextPost.href = '#';
-                    prevPost.className = 'page-link';
-                    nextPost.className = 'page-link';
-                    prevPost.textContent = '← Prev';
-                    nextPost.textContent = 'Next →';
-                    pagenums.appendChild(prevPost);
-                    pagenums.appendChild(nextPost);
-                    linkbox.appendChild(pagenums);
-                    prevPost.addEventListener('click', showPost(id, true), true);
-                    nextPost.addEventListener('click', showPost(id, false), true);
-                    tr = document.createElement('tr');
-                    td = document.createElement('td');
-                    myColsp = 0;
-                    ref1 = parent.cells;
+                    ref1 = cb[threadPage];
                     for (j = 0, len1 = ref1.length; j < len1; j++) {
-                        cell = ref1[j];
-                        myColsp += cell.colSpan;
+                        callback = ref1[j];
+                        callback();
                     }
-                    td.colSpan = myColsp;
-                    td.appendChild(linkbox);
-                    td.appendChild(tP[threadPage][sR[id].index]);
-                    tr.appendChild(td);
-                    sR[id].td = td;
-                    sR[id].parent.parentNode.insertBefore(tr, sR[id].parent.nextSibling);
-                };
+                    return delete cb[threadPage];
+                }
             };
+        };
     
-            loadThreadPage = function (threadid, page) {
-                var threadPage, xhr;
-                threadPage = "threadid=" + threadid + "&page=" + page;
-                tP[threadPage] = 'Loading';
-                cb[threadPage] = [];
-                xhr = new XMLHttpRequest();
-                xhr.open('GET', "https://animebytes.tv/forums.php?action=viewthread&" + threadPage, true);
-                xhr.send();
-                xhr.onreadystatechange = function () {
-                    var callback, i, j, len, len1, parser, post, ref, ref1;
-                    if (xhr.readyState === 4) {
-                        parser = new DOMParser();
-                        tP[threadPage] = (parser.parseFromString(xhr.responseText, 'text/html')).querySelectorAll('div[id^="post"]');
-                        ref = tP[threadPage];
-                        for (i = 0, len = ref.length; i < len; i++) {
-                            post = ref[i];
-                            textReplace(post);
-                        }
-                        ref1 = cb[threadPage];
-                        for (j = 0, len1 = ref1.length; j < len1; j++) {
-                            callback = ref1[j];
-                            callback();
-                        }
-                        return delete cb[threadPage];
-                    }
-                };
-            };
-    
-            loadPost = function (link, index, filtered) {
-                return function (event) {
-                    var cell, id, match, newLink, node, page, threadPage, threadid;
-                    if (event != null) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                    }
-                    newLink = link.previousSibling;
-                    cell = link.parentNode;
-                    node = getFirstTagParent(link, 'TR');
-                    threadid = link.href.match(/threadid=(\d+)/i);
-                    threadid = threadid != null ? threadid[1] : '0';
-                    match = link.href.match(/([^#]*)(?:#post(\d+))?/i);
-                    if (match != null) {
-                        id = match[2] != null ? 'post' + match[2] : id = index + link.href;
+        loadPost = function (link, index, filtered) {
+            return function (event) {
+                var cell, id, match, newLink, node, page, threadPage, threadid;
+                if (event != null) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                newLink = link.previousSibling;
+                cell = link.parentNode;
+                node = getFirstTagParent(link, 'TR');
+                threadid = link.href.match(/threadid=(\d+)/i);
+                threadid = threadid != null ? threadid[1] : '0';
+                match = link.href.match(/([^#]*)(?:#post(\d+))?/i);
+                if (match != null) {
+                    id = match[2] != null ? 'post' + match[2] : id = index + link.href;
+                } else {
+                    return;
+                }
+                if (id in sR) {
+                    if (filtered === true) {
+                        filterPost(id)();
                     } else {
-                        return;
+                        toggleVisibility(id);
                     }
-                    if (id in sR) {
-                        if (filtered === true) {
-                            filterPost(id)();
-                        } else {
-                            toggleVisibility(id);
-                        }
-                    } else {
-                        page = link.href.match(/page=(\d+)/i);
-                        page = page != null ? parseInt(page[1], 10) : 1;
-                        link.previousSibling.textContent = loadingText;
-                        threadPage = "threadid=" + threadid + "&page=" + page;
-                        if (threadPage in tP) {
-                            if (tP[threadPage] === 'Loading') {
-                                cb[threadPage].push(processThreadPage(id, threadid, page, node, newLink));
-                                if (filtered === true) {
-                                    cb[threadPage].push(filterPost(id));
-                                }
-                            } else {
-                                processThreadPage(id, threadid, page, node, newLink)();
-                                if (filtered === true) {
-                                    filterPost(id)();
-                                }
-                            }
-                        } else {
-                            loadThreadPage(threadid, page);
+                } else {
+                    page = link.href.match(/page=(\d+)/i);
+                    page = page != null ? parseInt(page[1], 10) : 1;
+                    link.previousSibling.textContent = loadingText;
+                    threadPage = "threadid=" + threadid + "&page=" + page;
+                    if (threadPage in tP) {
+                        if (tP[threadPage] === 'Loading') {
                             cb[threadPage].push(processThreadPage(id, threadid, page, node, newLink));
                             if (filtered === true) {
                                 cb[threadPage].push(filterPost(id));
                             }
-                        }
-                    }
-                };
-            };
-    
-            toggleVisibility = function (id) {
-                var elem;
-                elem = sR[id];
-                if (elem.td.parentNode.style.visibility === 'collapse') {
-                    showPost(id, null)();
-                    return elem.td.parentNode.style.visibility = 'visible';
-                } else {
-                    return elem.td.parentNode.style.visibility = 'collapse';
-                }
-            };
-    
-            showPost = function (id, prev) {
-                return function (event) {
-                    var elem, nextTP, prevTP, threadPage;
-                    elem = sR[id];
-                    threadPage = "threadid=" + elem.threadid + "&page=" + elem.page;
-                    nextTP = "threadid=" + elem.threadid + "&page=" + (elem.page + 1);
-                    prevTP = "threadid=" + elem.threadid + "&page=" + (elem.page - 1);
-                    if (event != null) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                    }
-                    if (prev === true) {
-                        if (elem.index === 0 && elem.page > 1) {
-                            if (prevTP in tP) {
-                                if (tP[prevTP] === 'Loading') {
-                                    cb[prevTP].push(showPost(id, prev));
-                                } else {
-                                    elem.page = elem.page - 1;
-                                    elem.index = tP[prevTP].length - 1;
-                                    elem.td.replaceChild(tP[prevTP][elem.index], elem.td.lastChild);
-                                }
-                            } else {
-                                loadThreadPage(elem.threadid, elem.page - 1);
-                                cb[prevTP].push(showPost(id, prev));
-                            }
                         } else {
-                            elem.index = Math.max(elem.index - 1, 0);
-                            if (elem.td.children.length === 2) {
-                                elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
-                            } else {
-                                elem.td.appendChild(tP[threadPage][elem.index]);
-                            }
-                        }
-                    } else if (prev === false) {
-                        if (elem.index === 24) {
-                            if (nextTP in tP) {
-                                if (tP[nextTP] === 'Loading') {
-                                    cb[prevTP].push(showPost(id, prev));
-                                } else {
-                                    if (tP[nextTP].length > 0) {
-                                        elem.page = elem.page + 1;
-                                        elem.index = 0;
-                                        elem.td.replaceChild(tP[nextTP][0], elem.td.lastChild);
-                                    }
-                                }
-                            } else {
-                                loadThreadPage(elem.threadid, elem.page + 1);
-                                cb[nextTP].push(showPost(id, prev));
-                            }
-                        } else {
-                            elem.index = Math.min(elem.index + 1, tP[threadPage].length - 1);
-                            if (elem.td.children.length === 2) {
-                                elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
-                            } else {
-                                elem.td.appendChild(tP[threadPage][elem.index]);
+                            processThreadPage(id, threadid, page, node, newLink)();
+                            if (filtered === true) {
+                                filterPost(id)();
                             }
                         }
                     } else {
+                        loadThreadPage(threadid, page);
+                        cb[threadPage].push(processThreadPage(id, threadid, page, node, newLink));
+                        if (filtered === true) {
+                            cb[threadPage].push(filterPost(id));
+                        }
+                    }
+                }
+            };
+        };
+    
+        toggleVisibility = function (id) {
+            var elem;
+            elem = sR[id];
+            if (elem.td.parentNode.style.visibility === 'collapse') {
+                showPost(id, null)();
+                return elem.td.parentNode.style.visibility = 'visible';
+            } else {
+                return elem.td.parentNode.style.visibility = 'collapse';
+            }
+        };
+    
+        showPost = function (id, prev) {
+            return function (event) {
+                var elem, nextTP, prevTP, threadPage;
+                elem = sR[id];
+                threadPage = "threadid=" + elem.threadid + "&page=" + elem.page;
+                nextTP = "threadid=" + elem.threadid + "&page=" + (elem.page + 1);
+                prevTP = "threadid=" + elem.threadid + "&page=" + (elem.page - 1);
+                if (event != null) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                if (prev === true) {
+                    if (elem.index === 0 && elem.page > 1) {
+                        if (prevTP in tP) {
+                            if (tP[prevTP] === 'Loading') {
+                                cb[prevTP].push(showPost(id, prev));
+                            } else {
+                                elem.page = elem.page - 1;
+                                elem.index = tP[prevTP].length - 1;
+                                elem.td.replaceChild(tP[prevTP][elem.index], elem.td.lastChild);
+                            }
+                        } else {
+                            loadThreadPage(elem.threadid, elem.page - 1);
+                            cb[prevTP].push(showPost(id, prev));
+                        }
+                    } else {
+                        elem.index = Math.max(elem.index - 1, 0);
                         if (elem.td.children.length === 2) {
                             elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
                         } else {
                             elem.td.appendChild(tP[threadPage][elem.index]);
                         }
                     }
-                };
-            };
-    
-            filterPost = function (id) {
-                return function () {
-                    var elem, i, len, toFilter, user_name;
-                    elem = sR[id];
-                    toFilter = true;
-                    for (i = 0, len = user_filter.length; i < len; i++) {
-                        user_name = user_filter[i];
-                        if (elem.user.toUpperCase() === user_name.toUpperCase()) {
-                            toFilter = false;
-                            break;
+                } else if (prev === false) {
+                    if (elem.index === 24) {
+                        if (nextTP in tP) {
+                            if (tP[nextTP] === 'Loading') {
+                                cb[prevTP].push(showPost(id, prev));
+                            } else {
+                                if (tP[nextTP].length > 0) {
+                                    elem.page = elem.page + 1;
+                                    elem.index = 0;
+                                    elem.td.replaceChild(tP[nextTP][0], elem.td.lastChild);
+                                }
+                            }
+                        } else {
+                            loadThreadPage(elem.threadid, elem.page + 1);
+                            cb[nextTP].push(showPost(id, prev));
+                        }
+                    } else {
+                        elem.index = Math.min(elem.index + 1, tP[threadPage].length - 1);
+                        if (elem.td.children.length === 2) {
+                            elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
+                        } else {
+                            elem.td.appendChild(tP[threadPage][elem.index]);
                         }
                     }
-                    if (toFilter) {
-                        elem.td.parentNode.style.visibility = 'collapse';
-                        elem.parent.style.visibility = 'collapse';
-                    }
-                };
-            };
-    
-            if (workInRestOfForum || workInForumSearch) {
-                patt = document.querySelector('form[action=""] input[name="search"]');
-                if (patt != null) {
-                    patt = patt.value.trim().replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&').replace(/\s+/g, '|');
                 } else {
-                    patt = '';
+                    if (elem.td.children.length === 2) {
+                        elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
+                    } else {
+                        elem.td.appendChild(tP[threadPage][elem.index]);
+                    }
                 }
-                allResults = document.querySelectorAll('a[href^="/forums.php?action=viewthread"]');
-                for (index = i = 0, len = allResults.length; i < len; index = ++i) {
-                    result = allResults[index];
-                    textReplace(result);
-                    a = document.createElement('a');
-                    a.href = '#';
-                    a.textContent = loadText;
-                    a.addEventListener('click', loadPost(result, index, false), true);
-                    myCell = result.parentNode;
-                    myCell.insertBefore(a, result);
-                }
-            }
+            };
+        };
     
-            if (workInForumSearch) {
-                user_tr = document.createElement('tr');
-                user_td = [];
-                user_td.push(document.createElement('td'));
-                user_td.push(document.createElement('td'));
-                user_td[0].className = 'label';
-                strong = document.createElement('strong');
-                strong.textContent = 'Filter author(s):';
-                user_td[0].appendChild(strong);
-                input = document.createElement('input');
-                input.placeholder = 'Comma- or space-separated list of authors';
-                input.size = '64';
-                button = document.createElement('button');
-                button.textContent = 'Filter';
-                button.type = 'button';
-                user_td[1].appendChild(input);
-                user_td[1].appendChild(button);
-                user_tr.appendChild(user_td[0]);
-                user_tr.appendChild(user_td[1]);
-                searchForums = document.querySelector('select[name="forums[]"]').parentNode.parentNode;
-                searchForums.parentNode.insertBefore(user_tr, searchForums);
-                button.addEventListener('click', function (event) {
-                    var j, len1, results, userName;
-                    if (input.value.replace(/[,\s]/g, '') !== '') {
-                        user_filter = (function () {
-                            var j, len1, ref, results;
-                            ref = input.value.trim().replace(/[,\s]+/g, ',').split(',');
-                            results = [];
-                            for (j = 0, len1 = ref.length; j < len1; j++) {
-                                userName = ref[j];
-                                results.push(userName.trim());
-                            }
-                            return results;
-                        })();
-                        button.disabled = 'disabled';
+        filterPost = function (id) {
+            return function () {
+                var elem, i, len, toFilter, user_name;
+                elem = sR[id];
+                toFilter = true;
+                for (i = 0, len = user_filter.length; i < len; i++) {
+                    user_name = user_filter[i];
+                    if (elem.user.toUpperCase() === user_name.toUpperCase()) {
+                        toFilter = false;
+                        break;
+                    }
+                }
+                if (toFilter) {
+                    elem.td.parentNode.style.visibility = 'collapse';
+                    elem.parent.style.visibility = 'collapse';
+                }
+            };
+        };
+    
+        if (workInRestOfForum || workInForumSearch) {
+            patt = document.querySelector('form[action=""] input[name="search"]');
+            if (patt != null) {
+                patt = patt.value.trim().replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&').replace(/\s+/g, '|');
+            } else {
+                patt = '';
+            }
+            allResults = document.querySelectorAll('a[href^="/forums.php?action=viewthread"]');
+            for (j = i = 0, len = allResults.length; i < len; j = ++i) {
+                result = allResults[j];
+                textReplace(result);
+                a = document.createElement('a');
+                a.href = '#';
+                a.textContent = loadText;
+                a.addEventListener('click', loadPost(result, j, false), true);
+                myCell = result.parentNode;
+                myCell.insertBefore(a, result);
+            }
+        }
+    
+        if (workInForumSearch) {
+            user_tr = document.createElement('tr');
+            user_td = [];
+            user_td.push(document.createElement('td'));
+            user_td.push(document.createElement('td'));
+            user_td[0].className = 'label';
+            strong = document.createElement('strong');
+            strong.textContent = 'Filter author(s):';
+            user_td[0].appendChild(strong);
+            input = document.createElement('input');
+            input.placeholder = 'Comma- or space-separated list of authors';
+            input.size = '64';
+            button = document.createElement('button');
+            button.textContent = 'Filter';
+            button.type = 'button';
+            user_td[1].appendChild(input);
+            user_td[1].appendChild(button);
+            user_tr.appendChild(user_td[0]);
+            user_tr.appendChild(user_td[1]);
+            searchForums = document.querySelector('select[name="forums[]"]').parentNode.parentNode;
+            searchForums.parentNode.insertBefore(user_tr, searchForums);
+            button.addEventListener('click', function (event) {
+                var j, len1, results, userName;
+                if (input.value.replace(/[,\s]/g, '') !== '') {
+                    user_filter = (function () {
+                        var j, len1, ref, results;
+                        ref = input.value.trim().replace(/[,\s]+/g, ',').split(',');
                         results = [];
-                        for (index = j = 0, len1 = allResults.length; j < len1; index = ++j) {
-                            result = allResults[index];
-                            results.push(loadPost(result, index, true)());
+                        for (j = 0, len1 = ref.length; j < len1; j++) {
+                            userName = ref[j];
+                            results.push(userName.trim());
                         }
                         return results;
+                    })();
+                    button.disabled = 'disabled';
+                    results = [];
+                    for (j = j = 0, len1 = allResults.length; j < len1; j = ++j) {
+                        result = allResults[j];
+                        results.push(loadPost(result, j, true)());
                     }
-                }, true);
+                    return results;
+                }
+            }, true);
+        }
+    }).call(this);
+    /* End src/ab_forum_search_enhancement.user.js */
+
+
+    /* Begin src/ab_hide_treats.user.js */
+    // ==UserScript==
+    // @name        AB - Hide treats
+    // @author      Alpha
+    // @description Hide treats on profile.
+    // @include     https://animebytes.tv/*
+    // @version     0.1.1
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    // Hide treats by Alpha
+    // Hide treats on profile.
+    (function ABHideTreats(){
+        var _enabled = delicious.settings.basicScriptCheckbox(
+            'delicioustreats',
+            'Disgusting Treats',
+            'Hide those hideous treats on profile pages!'
+        );
+        if (!_enabled)
+            return;
+    
+        var treatsnode = document.evaluate('//*[@id="user_leftcol"]/div[@class="box" and div[@class="head" and .="Treats"]]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        if (treatsnode) treatsnode.style.display = "none";
+    })();
+    /* End src/ab_hide_treats.user.js */
+
+
+    /* Begin src/ab_hyper_quote.user.js */
+    // ==UserScript==
+    // @name        AB - HYPER QUOTE!
+    // @author      Megure, TheFallingMan
+    // @description Select text and press CTRL+V to quote
+    // @include     https://animebytes.tv/*
+    // @version     0.2.4
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    //import '../delicious-library/src/ab_delicious_library';
+    
+    /* global delicious */
+    
+    (function ABHyperQuote() {
+        var _enabled = delicious.settings.basicScriptCheckbox(
+            'delicioushyperquote',
+            'Delicious Hyper Quote',
+            'Select text and press Ctrl+V to instantly quote it.'
+        );
+        if (!_enabled)
+            return;
+    
+        if (document.getElementById('quickpost') === null)
+            return;
+        /** Debug flag. */
+        var _debug = false;
+    
+        function formattedUTCString(date, timezone) {
+            var creation = new Date(date);
+            if (isNaN(creation.getTime()))
+                return date;
+            else {
+                creation = creation.toUTCString().split(' ');
+                return creation[1] + ' ' + creation[2] + ' ' + creation[3] + ', ' + creation[4].substring(0, 5) + (timezone !== false ? ' ' + creation[5] : '');
             }
-        }).call(this);
-    }
-    /* === End ab_forum_search_enhancement.user.js === */
-
-    // Add settings
-    if (/\/user\.php\?.*action=edit/i.test(document.URL)) {
-        (function () {
-            function addBooleanSetting(key, name, description, onValue, offValue, myDefault) {
-
-                var __temp = document.createElement('li');
-                __temp.className = '';
-                __temp.innerHTML = "<span class='ue_left strong'>" + name + "</span><span class='ue_right'><input id='Setting_" + key + "' name='Setting_" + key + "' type='checkbox'" + (GM_getValue(key, myDefault).toString() === onValue.toString() ? " checked='checked'" : "") + "> <label for='Setting_" + key + "'>" + description + "</label></span>";
-                __temp.addEventListener('change', function (ev) { var ch = ev.target.checked; (ch === true ? GM_setValue(key, onValue) : GM_setValue(key, offValue)); });
-                document.getElementById('pose_list').appendChild(__temp);
-
-            }
-
-            function addSelectSetting(key, name, description, myDefault, values) {
-
-                var __temp = document.createElement('li');
-                __temp.className = '';
-                __temp.innerHTML = "<span class='ue_left strong'>" + name + "</span><span class='ue_right'><select id='Setting_" + key + "' name='Setting_" + key + "'>" +
-                    ((function () {
-                        var res = "";
-                        for (var i = 0; i < values.length; i++) {
-                            var elem = values[i];
-                            res += "<option " + (GM_getValue(key, myDefault).toString() === elem[0].toString() ? "selected='selected'" : "") + " value='" + elem[0] + "'>" + elem[1] + "</option>";
+        }
+    
+        /**
+         * Quotes the entire selection.
+         *
+         * Handles combining adjacent selection ranges, then calls
+         * QUOTEMANY.
+         * */
+        function QUOTEALL() {
+            var sel = window.getSelection();
+            if (sel.rangeCount === 0) return;
+            // If there's only one range, happy days.
+            if (sel.rangeCount === 1) {
+                _debug && console.log('Quoting one range:');
+                _debug && console.log(sel.getRangeAt(0));
+                QUOTEMANY(sel.getRangeAt(0));
+            } else {
+                _debug && console.log('Dealing with multiple ranges.');
+                // Ohhh boy.... firefox, why...?
+                var allRanges = [];
+                // Start range of the current continguous selection range.
+                // The aim of this code is to join contiguous ranges into one range
+                // so they can be parsed properly, without being split into multiple
+                // quotes.
+                var startRange = sel.getRangeAt(0);
+                // Previous range we encountered.
+                var previousRange = startRange;
+                // Current range. Set in loop.
+                var thisRange = null;
+                // rangeCount+1 to make it loop one time after list is exhausted, to append
+                // last range to list.
+                // Start at 2nd range, because we have already set startRange
+                // and previousRange above. Also, first range has no previous
+                // range to compare to.
+                for (var i = 1; i < sel.rangeCount+1; i++) {
+                    if (i < sel.rangeCount)
+                        thisRange = sel.getRangeAt(i);
+                    else
+                        thisRange = null;
+                    // If this range starts at the beginning and picks up
+                    // exactly where the previous range left off.
+                    // After trial/error, this code should work.
+                    // endOffset+1 is to get the childNode _after_ the previous
+                    // range ends, since ranges don't overlap (hopefully)
+                    if (thisRange !== null && thisRange.startOffset === 0 &&
+                        previousRange.endContainer.childNodes[previousRange.endOffset+1] === thisRange.startContainer) {
+                        // Store this range as the previous and continue looping.
+                        previousRange = thisRange;
+                    } else {
+                        // Else, the current range does not continue from
+                        // the previous one.
+                        if (startRange !== previousRange) {
+                            // Create and append a new, more sensible, range.
+                            var newRange = document.createRange();
+                            newRange.setStart(startRange.startContainer, startRange.startOffset);
+                            newRange.setEnd(previousRange.endContainer, previousRange.endOffset);
+                            allRanges.push(newRange);
+                        } else {
+                            // No adjacent ranges to startRange.
+                            // They're both the same, append either.
+                            allRanges.push(previousRange);
                         }
-                        return res;
-                    }).call(this)) + "</select> <label for='Setting_" + key + "'>" + description + "</label></span>";
-                __temp.addEventListener('change', function (e) { GM_setValue(key, e.target.value); });
-                document.getElementById('pose_list').appendChild(__temp);
-
-            }
-
-            function addColorSetting(key, name, description, myDefault, deactivatable, deactiveDefault) {
-
-                var __temp = document.createElement('li');
-                __temp.className = '';
-                __temp.innerHTML = "<span class='ue_left strong'>" + name + "</span><span class='ue_right'>" +
-                    (deactivatable.toString() === 'true' ? "<input id='ColorCheckBox_" + key + "' type='checkbox' " +
-                        (GM_getValue(key, myDefault).toString() !== deactiveDefault.toString() ? "checked='checked'" : "") +
-                        ">" : "") +
-                    " <input id='Setting_" + key + "' name='Setting_" + key + "' type='color' value='" + (GM_getValue(key, myDefault).toString() === deactiveDefault.toString() ? (myDefault.toString() === deactiveDefault.toString() ? '#000000' : myDefault) : GM_getValue(key, myDefault)) + "'>" +
-                    " <button type='button'>Reset</button> <label for='Setting_" + key + "'>" + description + "</label></span>";
-                __temp.addEventListener('change', function (e) {
-                    var a = e.target;
-                    if (a.type === "checkbox") { a.checked === false ? GM_setValue(key, deactiveDefault) : GM_setValue(key, document.getElementById('Setting_' + key).value) }
-                    else if (a.type === "color") { GM_setValue(key, a.value); document.getElementById('ColorCheckBox_' + key).checked = true; }
-                });
-                __temp.addEventListener('click', function (e) {
-                    var a = e.target;
-                    if (a.type === "button") {
-                        GM_deleteValue(key);
-                        if (myDefault.toString() === deactiveDefault.toString()) {
-                            document.getElementById('ColorCheckBox_' + key).checked = false;
-                            document.getElementById('Setting_' + key).value = '#000000';
-                        }
-                        else {
-                            document.getElementById('ColorCheckBox_' + key).checked = true;
-                            document.getElementById('Setting_' + key).value = myDefault;
-                        }
+                        // Set these for the next iteration.
+                        startRange = thisRange;
+                        previousRange = thisRange;
                     }
-                });
-                document.getElementById('pose_list').appendChild(__temp);
-
+                }
+                for (var j = 0; j < allRanges.length; j++) {
+                    QUOTEMANY(allRanges[j]);
+                }
             }
-
-            function addTextSetting(key, name, description, myDefault, maxLength) {
-
-                var __temp = document.createElement('li');
-                __temp.className = '';
-                __temp.innerHTML = "<span class='ue_left strong'>" + name + "</span><span class='ue_right'><input id='Setting_" + key + "' name='Setting_" + key + "' type='text' maxlength='" + maxLength + "' value='" + GM_getValue(key, myDefault) + "'> <label for='Setting_" + key + "'>" + description + "</label></span>";
-                __temp.addEventListener('keyup', function (e) {
-                    var a = e.target;
-                    if (a.type === "text") { GM_setValue(key, a.value); }
-                });
-                document.getElementById('pose_list').appendChild(__temp);
-
+        }
+    
+        /**
+         * Quotes many posts.
+         *
+         * Clones each post and deletes text outside of the selection
+         * range.
+         *
+         * @param {Range} range Selection range to quote.
+         */
+        function QUOTEMANY(range) {
+            /**
+             * Removes all siblings of 'node' which occur before or after it,
+             * depending on the value of 'prev'.
+             *
+             * @param {Node} node
+             * @param {boolean} prev
+             */
+            function removeChildren(node, prev) {
+                if (node === null || node.parentNode === null) return;
+                if (prev === true)
+                    while (node.parentNode.firstChild !== node)
+                        node.parentNode.removeChild(node.parentNode.firstChild);
+                else
+                    while (node.parentNode.lastChild !== node)
+                        node.parentNode.removeChild(node.parentNode.lastChild);
+                removeChildren(node.parentNode, prev);
             }
+            /**
+             * Essentailly indexOf for any array-like object.
+             *
+             * @param {Array} arr
+             * @param {object} elem
+             */
+            function inArray(arr, elem) {
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i] === elem)
+                        return i;
+                }
+                _debug && console.log(elem);
+                return -1;
+            }
+    
+            // TODO: refactor bbcodeChildren to use these functions.
+    
+            /**
+             *
+             * @param {HTMLElement} quoteNode
+             */
+            function isSmartQuote(quoteNode) {
+                try {
+                    var colon = quoteNode.previousSibling;
+                    var link = colon.previousSibling;
+                    var span = link.firstElementChild;
+                    var strong = link.previousElementSibling;
+                    return (colon.nodeValue === ':\n'
+                        && span.tagName.toUpperCase() === 'SPAN'
+                        && span.title
+                        && link.tagName.toUpperCase() === 'A'
+                        && link.textContent.slice(0, 6) === 'wrote '
+                        && strong.tagName.toUpperCase() === 'STRONG'
+                        && strong.firstElementChild.href.indexOf('/user.php?id=') !== -1);
+                } catch (e) {
+                    return false;
+                }
+            }
+    
+            function isUsernameQuote(quoteNode) {
+                try {
+                    var wrote = quoteNode.previousSibling;
+                    var strong = wrote.previousSibling;
+                    return (wrote.nodeValue === ' wrote:\n'
+                        && strong.nodeType === Node.ELEMENT_NODE
+                        && strong.tagName.toUpperCase() === 'STRONG'
+                        && strong.childNodes.length === 1
+                        && strong.firstChild.nodeType === Node.TEXT_NODE
+                    );
+                } catch (e) {
+                    return false;
+                }
+            }
+    
+            /**
+             * Returns a new documentFragment containing 'num' many nodes
+             * which are previous siblings of 'node', cloned.
+             * Assumes said siblings exist.
+             *
+             * @param {number} num
+             * @param {Node} node
+             */
+            function savePreviousNodes(num, node) {
+                var docFrag = document.createDocumentFragment();
+                var index = inArray(node.parentNode.childNodes, node);
+                for (var q = 0; q < num; q++) {
+                    docFrag.appendChild(
+                        node.parentNode.childNodes[index-num+q].cloneNode(true));
+                }
+                return docFrag;
+            }
+    
+            /**
+             * Array of [number, docFrag] pairs where number is a
+             * data-hyper-quote value referencing a unique node
+             * and the corresponding document fragment
+             * contains the nodes to insert before it.
+             *
+             * @type {[number, DocumentFragment][]}
+             */
+            var savedPreviousNodes = [];
+            /**
+             * Checks if 'node' has previous siblings which should be kept
+             * (e.g. usernames of quotes or buttons of spoilers).
+             *
+             * @param {Node} node
+             */
+            function preserveIfNeeded(node) {
+                var numToSave = 0;
+                if (isSmartQuote(node))
+                    numToSave = 4;
+                else if (isUsernameQuote(node))
+                    numToSave = 2;
+    
+                if (numToSave) {
+                    var num;
+                    if (savedPreviousNodes.length) num = savedPreviousNodes.slice(-1)[0] + 1;
+                    else num = 1;
+                    var pair = [num, savePreviousNodes(numToSave, node)];
+                    node.dataset['hyperQuote'] = num;
+                    savedPreviousNodes.push(pair);
+                    return pair;
+                }
+                return null;
+            }
+    
+            /**
+             * Traverses upwards from 'node' to the topmost element in the document.
+             *
+             * If preserve is true, will check for previous nodes to preserve.
+             *
+             * @param {Node} bottomNode
+             * @param {boolean} preserve
+             * @returns {[Node, number[]]} Tuple of topmost parent element and array of indexes.
+             */
+            function traverseUpwards(bottomNode, preserve) {
+                var path = [];
+                while (bottomNode.parentNode !== null) {
+                    path.push(inArray(bottomNode.parentNode.childNodes, bottomNode));
+                    if (preserve)
+                        preserveIfNeeded(bottomNode);
+                    bottomNode = bottomNode.parentNode;
+                }
+                return [bottomNode, path];
+            }
+    
+            /**
+             * Reverse of traverseUpwards,
+             * descending to the element in the original position using a known
+             * array of indexes.
+             *
+             * @param {Node} topNode
+             * @param {number[]} path
+             */
+            function traverseDownwards(topNode, path) {
+                for (var i = path.length - 1; i >= 0; i--) {
+                    if (path[i] === -1) return;
+                    topNode = topNode.childNodes[path[i]];
+                }
+                return topNode;
+            }
+    
+            if (range.collapsed === true) return;
+    
+            // Goes from the startContainer to root document node, storing its
+            // path in 'start'.
+            var html1 = range.startContainer;
+            var t = traverseUpwards(html1, true);
+            html1 = t[0];
+            var start = t[1];
+    
+            // Similarly for the endContainer.
+            var html2 = range.endContainer;
+            var u = traverseUpwards(html2, false);
+            html2 = u[0];
+            var end = u[1];
+    
+            // These should be equal as they originate from the same <html> tag.
+            if (html1 !== html2 || html1 === null) return;
+            // Take a copy which we can edit as we need.
+            var htmlCopy = html1.cloneNode(true);
+    
+            // Descends the copied HTML tree to get to the startContainer
+            // and endContainer, using the indexes stored previously.
+            var startNode = traverseDownwards(htmlCopy, start);
+            var endNode = traverseDownwards(htmlCopy, end);
+    
+            // Slices the start and end containers so they contain only
+            // the selected text.
+            if (endNode.nodeType === 3)
+                endNode.data = endNode.data.substr(0, range.endOffset);
+            else if (endNode.nodeType === 1)
+                for (var i = endNode.childNodes.length; i > range.endOffset; i--)
+                    endNode.removeChild(endNode.lastChild);
+            if (range.startOffset > 0) {
+                if (startNode.nodeType === 3)
+                    startNode.data = startNode.data.substr(range.startOffset);
+                else if (startNode.nodeType === 1)
+                    for (var j = 0; j < range.startOffset; j++)
+                        startNode.removeChild(startNode.firstChild);
+            }
+    
+            // Removes all elements before startNode and after endNode.
+            removeChildren(startNode, true);
+            removeChildren(endNode, false);
+    
+            // Finds the bottommost element which is a parent of both
+            // startNode and endNode. This is done to find the deepest quote
+            // which was quoted.
+            // Implemented by searching recursing downwards while the parent node
+            // only has one child or one whild + whitespace.
+            var commonRoot = htmlCopy;
+            var rootQuote = null;
+            var secondChild = null; // Set in 'while' conditional.
+            while ( // I'm really sorry about this code ;-;
+                (commonRoot.childNodes.length === 1) // If only one child, the result is obvious.
+                || (
+                    commonRoot.childNodes.length === 2 // If 2 children.
+                    && (secondChild = commonRoot.childNodes[1])
+                    && ( // If second child is a text node, we require it be whitespace.
+                        (secondChild.nodeType === Node.TEXT_NODE && !secondChild.nodeValue.trim())
+                        || // If it is an element, we require it to be <br>.
+                        (secondChild.tagName && secondChild.tagName.toUpperCase() === 'BR')
+                    )
+                )
+            ) {
+                // If these conditions hold, the child is a common parent of both
+                // startNode and endNode, as other elements were deleted earlier.
+                commonRoot = commonRoot.firstChild;
+                // Moreover, if it's a quote, we store it so we only quote within
+                // the deepest common quote.
+                if (commonRoot.classList && commonRoot.classList.contains('blockquote')) {
+                    rootQuote = commonRoot;
+                }
+            }
+    
+            // Restores extra nodes before a quote such as username and link.
+            // Must be done after the common root checking otherwise it will
+            // mess up the process.
+            for (var k = 0; k < savedPreviousNodes.length; k++) {
+                // Use selectors on the copied HTML tree to find the corresponding
+                // nodes.
+                var selector = '[data-hyper-quote="'+savedPreviousNodes[k][0]+'"]';
+                var copyNode = htmlCopy.querySelector(selector);
+                copyNode.parentNode.insertBefore(savedPreviousNodes[k][1], copyNode);
+    
+                // Delete original document's data-hyper-quote attribute.
+                // We don't care about htmlCopy's attributes as it gets reset
+                // every time.
+                delete document.querySelector(selector).dataset['hyperQuote'];
+            }
+            savedPreviousNodes = [];
+    
+            // If there is a [quote] common to start and end. In other worse,
+            // the selection is contained entirely within one quote.
+            if (rootQuote) {
+                // Then, we only quote within the deepest quote, as that makes
+                // the most sense.
+                var sel = document.getElementById('quickpost');
+                sel.value += bbcodeChildrenTrim(rootQuote.parentNode);
+                sel.scrollIntoView();
+                return;
+            }
+    
+            // Otherwise, quote as usual.
+            var posts = htmlCopy.querySelectorAll('div[id^="post"],div[id^="msg"]');
+            for (var l = 0; l < posts.length; l++) {
+                QUOTEONE(posts[l]);
+            }
+        }
+    
+        /**
+         * Returns BBCode of one whole div.post.
+         *
+         * @param {HTMLDivElement} postDiv
+         */
+        function bbcodeChildrenTrim(postDiv) {
+            return bbcodeChildren(postDiv).trim();
+        }
+    
+        /**
+         * Returns BBCode of parentNode's children.
+         *
+         * BBCode which relies on adjacent siblings (e.g. quotes) must be placed
+         * here, as other functions consider one HTML element only.
+         *
+         * Returns children's BBCode only; assumes the parent BBCode has
+         * been generated elsewhere.
+         *
+         * @param {Node} parentNode
+         */
+        function bbcodeChildren(parentNode) {
+            _debug && console.log('parentNode: ');
+            _debug && console.log(parentNode);
+            if (!(parentNode.childNodes && parentNode.childNodes.length))
+                return '';
+            var bbcodeString = '';
+            for (var i = 0; i < parentNode.childNodes.length; i++) {
+                var thisNode = parentNode.childNodes[i];
+                if (thisNode.nodeType === Node.TEXT_NODE) {
+                    // Handles text nodes.
+                    var text = thisNode.nodeValue;
+                    // If this isn't the first child and previous is a <br>,
+                    // collapse leading space.
+                    if (i > 0 && parentNode.childNodes[i-1].nodeType === Node.ELEMENT_NODE
+                        && parentNode.childNodes[i-1].tagName.toUpperCase() === 'BR')
+                        text = text.replace(/^\s+/, '');
+                    // If this isn't the last child and next is a <br>,
+                    // collapse trailing space.
+                    if (i+1 < parentNode.childNodes.length
+                        && parentNode.childNodes[i+1].nodeType === Node.ELEMENT_NODE
+                        && parentNode.childNodes[i+1].tagName.toUpperCase() === 'BR')
+                        text = text.replace(/\s+$/, '');
+                    bbcodeString += text;
+                    continue;
+                }
+    
+                /**
+                 * Whether this element represents the start of a
+                 * post number (e.g. `[quote=#1559283]`) quote.
+                 */
+                var isSmartQuote = false;
+                try {
+                    // We fully expect this to throw exceptions if the element
+                    // is not a quote block, as the surrounding structure
+                    // will not be there.
+                    //debugger;
+                    isSmartQuote = (
+                        (i+4 < parentNode.childNodes.length)
+                        // thisNode is a <strong></strong> node containing the
+                        // user link.
+                        && thisNode.nodeType === Node.ELEMENT_NODE
+                        && thisNode.tagName.toUpperCase() === 'STRONG'
+                        && thisNode.firstElementChild.href.indexOf('user.php?id=') !== -1
+                        // i+1 is a " " text node.
+                        && !parentNode.childNodes[i+1].nodeValue.trim()
+                        // i+2 is the <a> node linking to the post.
+                        && parentNode.childNodes[i+2].textContent.indexOf('wrote') !== -1
+                        && parentNode.childNodes[i+2].firstElementChild.tagName.toUpperCase() === 'SPAN'
+                        && parentNode.childNodes[i+2].firstElementChild.title
+                        // i+3 is the :
+                        && parentNode.childNodes[i+3].nodeValue.indexOf(':') !== -1
+                        // i+4 is the quote.
+                        && parentNode.childNodes[i+4].classList.contains('blockquote')
+                    );
+                } catch (exception) { _debug && console.log(exception); }
+                _debug && console.log('isSmartQuote: ' + isSmartQuote);
+                if (isSmartQuote) {
+                    bbcodeString += bbcodeSmartQuote(thisNode,
+                        parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
+                    i += 4; // Skip the next 4 nodes.
+                    continue;
+                }
+    
+                /**
+                 * Whether this element represents the start of a
+                 * `[quote=username]` quote.
+                 * */
+                var isBasicQuote = false;
+                try {
+                    // Strictly speaking, we don't have to handle this here;
+                    // handling it with the generic code
+                    // (i.e. [b]username[/b] wrote ...)
+                    // results in identical rendered output.
+                    isBasicQuote = (
+                        // Similar logic as above.
+                        (i+2 < parentNode.childNodes.length)
+                        && thisNode.nodeType === Node.ELEMENT_NODE
+                        && thisNode.tagName.toUpperCase() === 'STRONG'
+                        && thisNode.childNodes.length === 1
+                        && thisNode.firstChild.nodeType === Node.TEXT_NODE
+                        && parentNode.childNodes[i+1].nodeValue.trim() === 'wrote:'
+                        && parentNode.childNodes[i+2].classList.contains('blockquote')
+                    );
+                } catch (exception) { _debug && console.log(exception); }
+                if (isBasicQuote) {
+                    bbcodeString += bbcodeQuote(thisNode.firstChild.nodeValue, parentNode.childNodes[i+2]);
+                    i += 2;
+                    continue;
+                }
+    
+                var isMediainfo = false;
+                try {
+                    isMediainfo = (
+                        // Spoiler button
+                        thisNode.classList.contains('hideContainer')
+                        && (
+                            (// Either followed by a .mediainfo table
+                                (i+1 < parentNode.childNodes.length)
+                                && parentNode.childNodes[i+1].tagName.toUpperCase() === 'TABLE'
+                                && parentNode.childNodes[i+1].classList.contains('mediainfo'))
+                            || ( // OR, which was originally followed by a mediainfo table.
+                                (i+1 === parentNode.childNodes.length)
+                                && thisNode.firstElementChild.value.length > 4
+                                && thisNode.firstElementChild.value.indexOf('.') !== -1
+                                && document.querySelector(
+                                    '.hideContainer > .spoilerButton[value="'
+                                    + thisNode.firstElementChild.value+'"]'
+                                ).parentNode.nextElementSibling.classList.contains('mediainfo'))
+                        )
+                    );
+                } catch (exception) { _debug && console.log(exception); }
+                if (isMediainfo) {
+                    bbcodeString += bbcodeMediainfo(thisNode,
+                        parentNode.childNodes[i+1]);
+                    i += 1;
+                    continue;
+                }
+    
+                // Otherwise, we handle it as a normal node.
+                bbcodeString += bbcodeOneElement(thisNode);
+            }
+            return bbcodeString;
+        }
+    
+        /**
+         * Returns a quote BBCode, with quoteName as the = parameter, containing
+         * the contents of quoteNode.
+         *
+         * @param {string} quoteName
+         * @param {HTMLQuoteElement} quoteNode
+         */
+        function bbcodeQuote(quoteName, quoteNode) {
+            var contents = bbcodeChildrenTrim(quoteNode);
+            return (
+                '[quote'+(quoteName?'='+quoteName:'')+']\n'
+                +contents
+                +'\n[/quote]\n');
+        }
+    
+        /**
+         * Returns an appropriate [quote] tag using a post number.
+         *
+         * @param {HTMLElement} strongNode Node containing username link.
+         * @param {HTMLAnchorElement} wroteLink Post link element.
+         * @param {HTMLQuoteElement} quoteNode Blockquote element.
+         */
+        function bbcodeSmartQuote(strongNode, wroteLink, quoteNode) {
+            var quoteType = '';
+            var href = wroteLink.href;
+            if (href.indexOf('/forums.php') !== -1) quoteType = '#';
+            else if (href.indexOf('/user.php') !== -1) quoteType = '*';
+            else if (href.indexOf('/torrents.php') !== -1) quoteType = '-1';
+            else if (href.indexOf('/torrents2.php') !== -1) quoteType = '-2';
+            if (quoteType !== '') {
+                var id = /#(?:msg|post)?(\d+)$/.exec(href); // post number
+                // We have to be careful with newlines otherwise too much whitespace
+                // will be added.
+                if (id)
+                    return bbcodeQuote(quoteType + id[1], quoteNode);
+            }
+            // We shouldn't ever reach this.
+            return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
+                +bbcodeChildren(quoteNode)+'[/quote]');
+        }
+    
+        /**
+         * Returns BBCode of one <strong> node.
+         *
+         * @param {HTMLElement} strongNode
+         */
+        function bbcodeStrong(strongNode) {
+            // Special case of "Added on ..." text.
+            if (strongNode.childNodes.length === 1
+            && strongNode.firstChild.nodeType === Node.TEXT_NODE
+            && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
+                var dateString = strongNode.firstChild.nodeValue.slice(9);
+                var end = '';
+                if (dateString.slice(-1) === ':') {
+                    dateString = dateString.slice(0, -1);
+                    end = ':';
+                }
+                return '[b]Added on '+formattedUTCString(dateString)+end+'[/b]';
+            } else {
+                return '[b]'+bbcodeChildren(strongNode)+'[/b]';
+            }
+        }
+    
+        /**
+         * Returns BBCode of a div element.
+         *
+         * Possible cases:
+         *
+         *  - [align=...] tag.
+         *  - [code] tag.
+         *  - [spoiler] or [hide] tag.
+         *
+         * @param {HTMLDivElement} divNode
+         */
+        function bbcodeDiv(divNode) {
+            if (divNode.style.textAlign) {
+                var align = divNode.style.textAlign;
+                return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]';
+            }
+            if (divNode.classList.contains('codeBox')) {
+                return '[code]'+divNode.firstElementChild.firstChild.nodeValue+'[/code]';
+            }
+            if (divNode.classList.contains('spoilerContainer')) {
+                return bbcodeSpoiler(divNode);
+            }
+            // This fallback shouldn't ever occur.
+            return bbcodeChildren(divNode);
+        }
+    
+        /**
+         * Returns BBCode of a spoiler element, considering for
+         * custom button text.
+         *
+         * @param {HTMLDivElement} spoilerDiv
+         */
+        function bbcodeSpoiler(spoilerDiv) {
+            var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
+            // [hide] or [spoiler]
+            var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
+    
+            // If we have less than 2 children, then this is an abnormal spoiler.
+            if (spoilerDiv.children.length < 2) {
+                // If the only child of this div isn't the spoiler's contents,
+                // it must be the button and we return.
+                if (!spoilerDiv.firstElementChild.classList.contains('spoiler')) {
+                    return '';
+                }
+                // Otherwise, only the inside of a spoiler is selected.
+                // In this case, we have no button to work with. Compromise.
+                return '['+bbcodeTag+']'+bbcodeChildren(spoilerDiv.firstElementChild)+'[/'+bbcodeTag+']';
+            }
+            var label = spoilerDiv.firstElementChild.value.replace(/^(Hide|Show)/, '');
+            if (isSpoiler) // ' spoiler' is appended automatically to spoiler buttons
+                label = label.replace(/ spoiler$/, '');
+            if (label) {
+                label = label.slice(1); // slice space.
+            }
+            return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
+                bbcodeChildrenTrim(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
+        }
+    
+    
+        /**
+         * Returns BBCode for a [mediainfo] tag.
+         *
+         * @param {HTMLDivElement} buttonDiv Div containing the button and spoiler.
+         * @param {HTMLTableElement} mediainfoTable
+         */
+        function bbcodeMediainfo(buttonDiv, mediainfoTable) { // eslint-disable-line no-unused-vars
+            if (buttonDiv.children.length < 2) return '';
+            return '[mediainfo]' + bbcodeChildren(buttonDiv.children[1]) + '[/mediainfo]';
+        }
+    
+    
+        /**
+         * Returns BBCode of a <ol> or <ul> tag.
+         *
+         * @param {HTMLUListElement} listNode
+         * @param {String} bbcodeTag Tag to insert before each line.
+         */
+        function bbcodeList(listNode, bbcodeTag) {
+            var str = '';
+            for (var c = 0; c < listNode.childElementCount; c++) {
+                // Only consider element children, which we assume are
+                // <li> or <ol>/<ul>.
+                str += bbcodeTag + bbcodeChildren(listNode.children[c]);
+                // For whitespace.
+                if (str.slice(-1) !== '\n') str += '\n';
+            }
+            return str;
+        }
+    
+        /**
+         * Returns BBCode of an image element, possibly a smiley.
+         *
+         * @param {HTMLImageElement} imgNode
+         */
+        function bbcodeImage(imgNode) {
+            if (imgNode.classList.contains('bbcode_smiley')) {
+                return imgNode.alt;
+            }
+            // Note: AB proxies images, so quoted images will not
+            // necessarily use the same URL as the original did.
+            // Original URL is b64 encoded within the CDN URL.
+            return '[img]'+imgNode.src+'[/img]';
+        }
+    
+        /**
+         * Returns a string containing the hex representation of a number,
+         * padded to 2 hex digits.
+         *
+         * @param {Number} num
+         */
+        function numToHex(num) {
+            var h = num.toString(16);
+            while (h.length < 2)
+                h = '0' + h;
+            return h;
+        }
+    
+        /** Regex matching colour in rgb(x, y, z) format. */
+        var rgbRegex = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/i;
+        /**
+         * Returns BBCode of a HTML <span> element.
+         *
+         * Possible cases:
+         *
+         *  - Smiley
+         *  - Color
+         *  - Size
+         *  - Secret
+         *
+         * @param {HTMLSpanElement} spanNode
+         */
+        function bbcodeSpan(spanNode) {
+            if (spanNode.className.indexOf('smiley-') !== -1) {
+                return bbcodeSmiley(spanNode);
+            }
+            var colour = spanNode.style.color;
+            if (colour) {
+                var rgbMatch = rgbRegex.exec(colour);
+                // Check for rgb() format colours.
+                if (rgbMatch)
+                    colour = ('#' + numToHex(parseInt(rgbMatch[1]))
+                    +numToHex(parseInt(rgbMatch[2]))
+                    +numToHex(parseInt(rgbMatch[3])));
+                return '[color='+colour+']' + bbcodeChildren(spanNode) + '[/color]';
+            }
+            if (spanNode.className.slice(0, 4) === 'size') {
+                var size = spanNode.className.replace('size', '');
+                return '[size='+size+']'+bbcodeChildren(spanNode)+'[/size]';
+            }
+            if (spanNode.className === 'last-edited') {
+                return '';
+            }
+            if (spanNode.classList.contains('secret')) {
+                return '[secret]' + bbcodeChildren(spanNode) + '[/secret]';
+            }
+            if (spanNode.title)
+                return formattedUTCString(spanNode.title);
+            return bbcodeChildren(spanNode);
+        }
+    
+        /**
+         * Given a HTML span element representing a smiley, finds and returns
+         * the smiley's BBCode.
+         *
+         * @param {HTMLSpanElement} smileySpan
+         */
+        function bbcodeSmiley(smileySpan) {
+            var smiley = smileySpan.title;
+            var smileyNode = document.querySelector('span[alt="' + smiley + '"]');
+            if (smileyNode === null)
+                smileyNode = document.querySelector('span[style*="/' + smiley + '.png"]');
+            if (smileyNode === null)
+                smileyNode = document.querySelector('span[style*="/' + smiley.replace(/-/g, '_') + '.png"]');
+            if (smileyNode === null)
+                smileyNode = document.querySelector('span[style*="/' +
+                    smiley.replace(/-/g, '_').toLowerCase() + '.png"]');
+            if (smileyNode === null)
+                smileyNode = document.querySelector('span[style*="/' + smiley.replace(/face/g, '~_~') + '.png"]');
+            if (smileyNode !== null && smileyNode.parentNode !== null) {
+                smileyNode = smileyNode.getAttribute('onclick').match(/'(.+?)'/i);
+                if (smileyNode !== null)
+                    return smileyNode[1];
+            }
+            return ':' + smiley + ':';
+        }
+    
+    
+        var userRegex = /^\/user\.php\?id=(\d+)$/;
+        var torrentRegex = /^torrents2?\.php\?id=\d+&torrentid=(\d+)$/;
+    
+        /**
+         *
+         * @param {HTMLAnchorElement} linkElement
+         */
+        function bbcodeLink(linkElement) {
+            // <img> tags are often wrapped around a <a> pointing to the same image.
+            if (linkElement.classList.contains('scaledImg')) {
+                return bbcodeImage(linkElement.firstElementChild);
+            }
+            /** href with relative links resolved. */
+            var href = linkElement.href;
+            /** Actual href as typed into HTML */
+            var realHref = linkElement.getAttribute('href');
+    
+            var userMatch = userRegex.exec(realHref);
+            if (userMatch)
+                return '[user='+href+']'+bbcodeChildren(linkElement)+'[/user]';
+            var torrentMatch = torrentRegex.exec(realHref);
+            if (torrentMatch) {
+                // If the link's text contains &nbsp; we assume it is a torrent
+                // link.
+                if (linkElement.textContent.indexOf('\xa0\xa0[') !== -1)
+                    return '[torrent]'+href+'[/torrent]';
+                else
+                    return '[torrent='+href+']'+bbcodeChildren(linkElement)+'[/torrent]';
+            }
+            // Actually, torrent and user links could be written using [url=]
+            // and the rendered output would be the same.
+            return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
+        }
+    
+        var youtubeRegex = /\/embed\/([^?]+)\?/i;
+        var soundcloudRegex = /\/player\/\?url=([^&]+)&/i;
+    
+        /**
+         * Returns BBCode for embedded media.
+         *
+         * @param {HTMLIFrameElement} iframeNode
+         */
+        function bbcodeIframe(iframeNode) {
+            var src = iframeNode.src;
+            if (src.indexOf('youtube.com/embed') !== -1) {
+                return '[youtube]https://youtube.com/watch?v='+youtubeRegex.exec(src)[1]+'[/youtube]';
+            }
+            if (src.indexOf('soundcloud.com/player') !== -1) {
+                // The original soundcloud URL is encoded and forms a part of the
+                // embed URL.
+                return '[soundcloud]'+decodeURIComponent(soundcloudRegex.exec(src)[1])+'[/soundcloud]';
+            }
+            return 'Embedded media: ' + src;
+        }
+    
+        /**
+         * Returns BBCode for one element.
+         *
+         * Handles simple cases and routes more complex cases
+         * to the appropriate function.
+         *
+         * @param {HTMLElement} node
+         */
+        function bbcodeOneElement(node) {
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                // Text nodes should be handled in bbcodeChildren.
+                if (node.nodeType === Node.TEXT_NODE)
+                    return node.nodeValue;
+                if (node.nodeType === Node.COMMENT_NODE && node.nodeValue === 'n')
+                    return '[n]';
+                return '';
+            }
+            switch (node.tagName.toUpperCase()) {
+            case 'DIV': return bbcodeDiv(node);
+            case 'SPAN': return bbcodeSpan(node);
+            case 'BR': return '\n';
+            case 'STRONG': return bbcodeStrong(node);
+            case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
+            case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
+            case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
+            case 'OL': return bbcodeList(node, '[#] ');
+            case 'UL': return bbcodeList(node, '[*] ');
+            case 'A': return bbcodeLink(node);
+            case 'IMG': return bbcodeImage(node);
+            case 'IFRAME': return bbcodeIframe(node);
+            case 'BLOCKQUOTE': return bbcodeQuote('', node);
+            case 'HR': return '[hr]';
+            case 'TABLE': return bbcodeChildren(node); // crude representation of a table
+            case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
+            case 'TBODY': return bbcodeChildren(node);
+            case 'TH': return bbcodeChildren(node) + '\n';
+            case 'TR': return bbcodeChildren(node) + '\n';
+            case 'TD': return bbcodeChildren(node) + '\t';
+            default:
+                return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
+            }
+        }
+    
+        /**
+         * Quotes one post, with post number.
+         *
+         * @param {Node} post
+         */
+        function QUOTEONE(post) {
+            //_debug && console.log(post.querySelector('div.post,div.body').innerHTML);
+            //var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
+            var res = bbcodeChildrenTrim(post.querySelector('div.post, div.body'));
+            var author, creation, postid, type = '';
+            if (res === '') return;
+    
+            postid = post.id.match(/(?:msg|post)(\d+)/i);
+            if (postid === null)
+                return;
+    
+            if (window.location.pathname === '/forums.php') type = '#';
+            if (window.location.pathname === '/user.php') type = '*';
+            if (window.location.pathname === '/torrents.php') type = '-1';
+            if (window.location.pathname === '/torrents2.php') type = '-2';
+            if (type !== '')
+                res = '[quote=' + type + postid[1] + ']' + res + '[/quote]\n';
+            else {
+                author = post.className.match(/user_(\d+)/i);
+                if (author !== null)
+                    author = '[b][user]' + author[1] + '[/user][/b] ';
+                else {
+                    author = document.querySelector('#' + postid[0] + ' a[href^="/user.php?"]');
+                    if (author !== null) {
+                        author = author.href.match(/id=(\d+)/i);
+                        author = (author !== null ? '[b][user]' + author[1] + '[/user][/b] ' : '');
+                    }
+                    else
+                        author = '';
+                }
+    
+                creation = document.querySelector('div#' + postid[0] + ' > div > div > p.posted_info > span');
+                if (creation === null)
+                    creation = document.querySelector('div#' + postid[0] + ' > div > span > span.usercomment_posttime');
+                if (creation !== null)
+                    creation = ' on ' + formattedUTCString(creation.title.replace(/-/g, '/'));
+                else
+                    creation = '';
+    
+                res = author + '[url=' + window.location.pathname + window.location.search + '#' + postid[0] + ']wrote' + creation + '[/url]:\n[quote]' + res + '[/quote]\n\n';
+            }
+    
+            document.getElementById('quickpost').value += res;
+    
+            var sel = document.getElementById('quickpost');
+            if (sel !== null)
+                sel.scrollIntoView();
+        }
+    
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey) && (e.keyCode === 'V'.charCodeAt(0)))
+                QUOTEALL();
+        });
+    })();
+    /* End src/ab_hyper_quote.user.js */
 
 
-            document.getElementById('pose_list').appendChild(document.createElement('hr'));
-            addBooleanSetting('ABTorrentsShowYen', 'Show Yen generation', 'Show Yen generation for torrents, with detailed information when hovered.', 'true', 'false', 'true');
-            addSelectSetting('ABTorrentsYenTimeFrame', 'Yen generation time frame', 'The amount of generated Yen per selected time frame.', '1', [["1", "Hour"], ["24", "Day"], ["168", "Week"]]);
-            addBooleanSetting('ABTorrentsReqTime', 'Show required seeding time', 'Shows minimal required seeding time for torrents in their description and when size is hovered.', 'true', 'false', 'true');
-            addBooleanSetting('ABTorrentsFilter', 'Filter torrents', 'Shows a box above torrent tables, where you can filter the torrents from that table.', 'true', 'false', 'true');
-            addBooleanSetting('ABSortTorrents', 'Sort torrents', 'Allows torrent tables to be sorted.', 'true', 'false', 'true');
-            addBooleanSetting('ABHistDynLoad', 'Dynamic history tables', 'Dynamically load more pages into transfer history tables.', 'true', 'false', 'true');
-            document.getElementById('pose_list').appendChild(document.createElement('hr'));
-            addBooleanSetting('ABForumSearchWorkInFS', 'Load posts into search results', 'Allows you to load posts and threads into search results, slide through posts and filter for authors.', 'true', 'false', 'true');
-            addColorSetting('ABForumSearchHighlightBG', 'Color for search terms', 'Background color for search terms within posts and headers.', '#FFC000', 'true', 'none');
-            addColorSetting('ABForumSearchHighlightFG', 'Color for search terms', 'Text color for search terms within posts and headers.', '#000000', 'true', 'none');
-            addBooleanSetting('ABForumEnhWorkInRest', 'Load posts into forum view', 'Allows you to load posts and threads into the general forum view.', 'true', 'false', 'false');
-            addTextSetting('ABForumLoadText', 'Text for links to be loaded', 'The text to be shown for forum links that have not been loaded yet.', '(Load)', '10');
-            addTextSetting('ABForumLoadingText', 'Text for loading links', 'The text to be shown for forum links that are currently being loaded.', '(Loading)', '10');
-            addTextSetting('ABForumToggleText', 'Text for loaded links', 'The text to be shown for forum links that have been loaded and can now be toggled.', '(Toggle)', '10');
+    /* Begin src/ab_keyboard_shortcuts.user.js */
+    // ==UserScript==
+    // @name        AnimeBytes - Forum Keyboard Shortcuts
+    // @author      Alpha, modified by Megure
+    // @description Enables keyboard shortcuts for forum (new post and edit) and PM
+    // @include     https://animebytes.tv/*
+    // @version     0.1.2
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    
+    // Keyboard shortcuts by Alpha, mod by Megure
+    // Enables keyboard shortcuts for forum (new post and edit) and PM
+    (function ABKeyboardShortcuts() {
+        var _debug = false;
+    
+        var _enabled = delicious.settings.basicScriptCheckbox(
+            'deliciouskeyboard',
+            'Delicious Keyboard Shortcuts',
+            'Keyboard shortcuts to make typing BBCode easier.'
+        );
+        if (!_enabled)
+            return;
+        if (document.querySelector('textarea') === null)
+            return;
+    
+        function custom_insert_text(open, close) {
+            var elem = document.activeElement;
+            if (elem.selectionStart || elem.selectionStart == '0') {
+                var startPos = elem.selectionStart;
+                var endPos = elem.selectionEnd;
+                elem.value = elem.value.substring(0, startPos) + open + elem.value.substring(startPos, endPos) + close + elem.value.substring(endPos, elem.value.length);
+                elem.selectionStart = elem.selectionEnd = endPos + open.length + close.length;
+                elem.focus();
+                if (close.length == 0)
+                    elem.setSelectionRange(startPos + open.length, startPos + open.length);
+                else
+                    elem.setSelectionRange(startPos + open.length, endPos + open.length);
+            } else if (document.selection && document.selection.createRange) {
+                elem.focus();
+                var sel = document.selection.createRange();
+                sel.text = open + sel.text + close;
+                if (close.length != 0) {
+                    sel.move("character", -close.length);
+                    sel.select();
+                }
+                elem.focus();
+            } else {
+                elem.value += open;
+                elem.focus();
+                elem.value += close;
+            }
+        }
+    
+        var ctrlorcmd = (navigator.appVersion.indexOf('Mac') != -1) ? '⌘' : 'Ctrl';
+        var insertedQueries = [];
+    
+        function insert(e, key, ctrl, alt, shift, open, close, query) {
+            /* Function to handle detecting key combinations and inserting the
+            shortcut text onto the relevent buttons. */
+            if (false) {
+                //console.log(String.fromCharCode((96 <= key && key <= 105)? key-48 : key));
+                console.log(String.fromCharCode(e.charCode));
+                console.log(e.ctrlKey);
+                console.log(e.metaKey);
+                console.log(e.altKey);
+                console.log(e.shiftKey);
+            }
+            // Javascript has some discrepancies with symbols and their keycodes.
+            var keyCode;
+            switch (key) {
+            case '.':
+                keyCode = 190;
+                break;
+            case '/':
+                keyCode = 191;
+                break;
+            default:
+                keyCode = key.charCodeAt(0);
+            }
+    
+            // Checks if correct modifiers are pressed
+            if (document.activeElement.tagName.toLowerCase() === 'textarea' &&
+            (ctrl === (e.ctrlKey || e.metaKey)) &&
+            (alt === e.altKey) &&
+            (shift === e.shiftKey) &&
+            (e.keyCode === keyCode)) {
+                e.preventDefault();
+                custom_insert_text(open, close);
+                return false;
+            }
+    
+            if (query !== undefined) {
+                if (insertedQueries.indexOf(query) === -1) {
+                    insertedQueries.push(query);
+                    var imgs = document.querySelectorAll(query);
+                    for (var i = 0; i < imgs.length; i++) {
+                        var img = imgs[i];
+                        img.title += ' (';
+                        if (ctrl) img.title += ctrlorcmd + '+';
+                        if (alt) img.title += 'Alt+';
+                        if (shift) img.title += 'Shift+';
+                        img.title += key + ')';
+                    }
+                }
+            }
+        }
+    
+        function keydownHandler(e) {
+            // Used as a keydown event handler.
+            // Defines all keyboard shortcuts.
+            /**
+                * All keyboard shortcuts based on MS Word
+                **/
+            // Bold
+            insert(e, 'B', true, false, false, '[b]', '[/b]', '#bbcode img[title="Bold"]');
+            // Italics
+            insert(e, 'I', true, false, false, '[i]', '[/i]', '#bbcode img[title="Italics"]');
+            // Underline
+            insert(e, 'U', true, false, false, '[u]', '[/u]', '#bbcode img[title="Underline"]');
+            // Align right
+            insert(e, 'R', true, false, false, '[align=right]', '[/align]');
+            // Align left
+            insert(e, 'L', true, false, false, '[align=left]', '[/align]');
+            // Align center
+            insert(e, 'E', true, false, false, '[align=center]', '[/align]');
+            // Spoiler
+            insert(e, 'S', true, false, false, '[spoiler]', '[/spoiler]', '#bbcode img[title="Spoilers"]');
+            // Hide
+            insert(e, 'H', true, false, false, '[hide]', '[/hide]', '#bbcode img[title="Hide"]');
+            // YouTube
+            insert(e, 'Y', true, true, false, '[youtube]', '[/youtube]', '#bbcode img[alt="YouTube"]');
+            // Image
+            insert(e, 'G', true, false, false, '[img]', '[/img]', '#bbcode img[title="Image"]');
+            // Bullet point and numbered list
+            insert(e, '.', true, false, false, '[*] ', '', '#bbcode img[title="Unordered list"]');
+            insert(e, '/', true, false, false, '[#] ', '', '#bbcode img[title="Ordered list"]');
+            // URL
+            insert(e, 'K', true, false, false, '[url=]', '[/url]', '#bbcode img[title="URL"]');
+        }
+    
+        var textAreas = document.querySelectorAll('textarea');
+        // inserts shortcuts into title text on load, rather than
+        // doing it when first key is pressed.
+        keydownHandler({});
+        for (var i = 0; i < textAreas.length; i++) {
+            textAreas[i].addEventListener('keydown', keydownHandler, false);
+        }
+    
+        function mutationHandler(mutations, observer) {
+            _debug && console.log(mutations);
+            if (mutations[0].addedNodes.length) {
+                var textAreas = document.querySelectorAll('textarea');
+                for (var i = 0; i < textAreas.length; i++) {
+                    textAreas[i].addEventListener('keydown', keydownHandler, false);
+                }
+            }
+        }
+    
+        // Watch for new textareas (e.g. forum edit post)
+        var mutationObserver = new MutationObserver(mutationHandler);
+        mutationObserver.observe(document.querySelector('body'), { childList: true, subtree: true });
+    })();
+    /* End src/ab_keyboard_shortcuts.user.js */
 
-        }).call(this);
-    }
+
+    /* Begin src/ab_title_inverter.user.js */
+    // ==UserScript==
+    // @name        AnimeBytes forums title inverter
+    // @author      potatoe
+    // @version     0.1.1
+    // @description Inverts the forums titles.
+    // @icon        https://animebytes.tv/favicon.ico
+    // @include     https://animebytes.tv/forums.php?*
+    // @match       https://animebytes.tv/forums.php?*
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    // Forums title inverter by Potatoe
+    // Inverts the forums titles.
+    (function ABTitleInverter() {
+        var _enabled = delicious.settings.basicScriptCheckbox(
+            'delicioustitleflip',
+            'Delicious Title Flip',
+            'Flips the tab title.'
+        );
+        if (!_enabled)
+            return;
+    
+        if (document.title.indexOf(' > ') !== -1) {
+            document.title = document.title.split(" :: ")[0].split(" > ").reverse().join(" < ") + " :: AnimeBytes";
+        }
+    })();
+    /* End src/ab_title_inverter.user.js */
+
+
+    /* Begin src/ab_title_notifications.user.js */
+    // ==UserScript==
+    // @name        AnimeBytes - Title Notifications
+    // @author      Megure
+    // @description Will prepend the number of notifications to the title
+    // @include     https://animebytes.tv/*
+    // @version     0.1.1
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    // Title Notifications by Megure
+    // Will prepend the number of notifications to the title
+    (function ABTitleNotifications() {
+        var _enabled = delicious.settings.basicScriptCheckbox(
+            'delicioustitlenotifications',
+            'Delicious Title Notifications',
+            'Display number of notifications in the tab title.'
+        );
+        if (!_enabled)
+            return;
+    
+        var new_count = 0, _i, cnt, notifications = document.querySelectorAll('#alerts .new_count'), _len = notifications.length;
+        for (_i = 0; _i < _len; _i++) {
+            cnt = parseInt(notifications[_i].textContent, 10);
+            if (!isNaN(cnt))
+                new_count += cnt;
+        }
+        if (new_count > 0)
+            document.title = '(' + new_count + ') ' + document.title;
+    })();
+    /* End src/ab_title_notifications.user.js */
+
+
+    /* Begin src/ab_yen_stats.user.js */
+    // ==UserScript==
+    // @name        AB - Yen per X and ratio milestones
+    // @author      Megure, Lemma, NSC, et al.
+    // @description Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
+    // @include     https://animebytes.tv/user.php*
+    // @version     0.1.1
+    // @icon        http://animebytes.tv/favicon.ico
+    // @grant       GM_setValue
+    // @grant       GM_getValue
+    // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
+    // ==/UserScript==
+    
+    // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
+    (function ABYenStats() {
+        delicious.settings.basicScriptCheckbox('deliciousyenperx', 'Delicious Yen Per X',
+            'Shows how much yen you receive per X and as upload equivalent.');
+        delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio',
+            'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
+    
+        var _debug = false;
+    
+        if (!/user\.php\?id=/i.test(document.URL))
+            return;
+    
+        function compoundInterest(years) {
+            return (Math.pow(2, years) - 1) / Math.log(2);
+        }
+        function formatInteger(num) {
+            var res = '';
+            while (num >= 1000) {
+                res = ',' + ('00' + (num % 1000)).slice(-3) + res;
+                num = Math.floor(num / 1000);
+            }
+            return num + res;
+        }
+        function bytecount(num, unit) {
+            // For whatever reason, this was always called with .toUpperCase()
+            // by the original author, but newer KiB style prefixes have
+            // a lowercase. Keeping both for compatibility.
+            switch (unit) {
+                case 'B':
+                    return num * Math.pow(1024, 0);
+                case 'KiB':
+                case 'KIB':
+                    return num * Math.pow(1024, 1);
+                case 'MiB':
+                case 'MIB':
+                    return num * Math.pow(1024, 2);
+                case 'GiB':
+                case 'GIB':
+                    return num * Math.pow(1024, 3);
+                case 'TiB':
+                case 'TIB':
+                    return num * Math.pow(1024, 4);
+                case 'PiB':
+                case 'PIB':
+                    return num * Math.pow(1024, 5);
+                case 'EiB':
+                case 'EIB':
+                    return num * Math.pow(1024, 6);
+            }
+        }
+        function humancount(num) {
+            if (num == 0) return '0 B';
+            var i = Math.floor(Math.log(Math.abs(num)) / Math.log(1024));
+            num = (num / Math.pow(1024, i)).toFixed(2);
+            switch (i) {
+                case 0:
+                    return num + ' B';
+                case 1:
+                    return num + ' KiB';
+                case 2:
+                    return num + ' MiB';
+                case 3:
+                    return num + ' GiB';
+                case 4:
+                    return num + ' TiB';
+                case 5:
+                    return num + ' PiB';
+                case 6:
+                    return num + ' EiB';
+                default:
+                    return num + ' × 1024^' + i + ' B';
+            }
+        }
+        function addDefinitionAfter(after, definition, value, cclass) {
+            dt = document.createElement('dt');
+            dt.appendChild(document.createTextNode(definition));
+            dd = document.createElement('dd');
+            if (cclass !== undefined) dd.className += cclass;
+            dd.appendChild(document.createTextNode(value));
+            after.parentNode.insertBefore(dd, after.nextElementSibling.nextSibling);
+            after.parentNode.insertBefore(dt, after.nextElementSibling.nextSibling);
+            return dt;
+        }
+        function addDefinitionBefore(before, definition, value, cclass) {
+            dt = document.createElement('dt');
+            dt.appendChild(document.createTextNode(definition));
+            dd = document.createElement('dd');
+            if (cclass !== undefined) dd.className += cclass;
+            dd.appendChild(document.createTextNode(value));
+            before.parentNode.insertBefore(dt, before);
+            before.parentNode.insertBefore(dd, before);
+            return dt;
+        }
+        function addRawStats() {
+            var tw, regExp = /([0-9,.]+)\s*([A-Z]+)\s*\(([^)]*)\)/i;
+            // Find text with raw stats
+            tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var rawUpMatch = tw.currentNode.data.match(regExp);
+            tw = document.createTreeWalker(tw.currentNode.parentNode.parentNode, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Downloaded:/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var rawDownMatch = tw.currentNode.data.match(regExp);
+            tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Ratio/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var ratioNode = tw.currentNode.parentNode;
+            tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Uploaded/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var ulNode = tw.currentNode.parentNode;
+            tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Downloaded/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var dlNode = tw.currentNode.parentNode;
+    
+            var ul = ulNode.nextElementSibling.textContent.match(regExp);
+            var dl = dlNode.nextElementSibling.textContent.match(regExp);
+            _debug && console.log(ul);
+            _debug && console.log(dl);
+            var uploaded = bytecount(parseFloat(ul[1].replace(/,/g, '')), ul[2].toUpperCase());
+            var downloaded = bytecount(parseFloat(dl[1].replace(/,/g, '')), dl[2].toUpperCase());
+            var rawuploaded = bytecount(parseFloat(rawUpMatch[1].replace(/,/g, '')), rawUpMatch[2].toUpperCase());
+            var rawdownloaded = bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase());
+            var rawRatio = Infinity;
+            if (bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase()) > 0)
+                rawRatio = (bytecount(parseFloat(rawUpMatch[1].replace(/,/g, '')), rawUpMatch[2].toUpperCase()) / bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase())).toFixed(2);
+    
+            // Color ratio
+            var color = 'r99';
+            if (rawRatio < 1)
+                color = 'r' + ('0' + Math.ceil(10 * rawRatio)).slice(-2);
+            else if (rawRatio < 5)
+                color = 'r20';
+            else if (rawRatio < 99)
+                color = 'r50';
+    
+            // Add to user stats after ratio
+            var hr = document.createElement('hr');
+            hr.style.clear = 'both';
+            ratioNode.parentNode.insertBefore(hr, ratioNode.nextElementSibling.nextSibling);
+            var rawRatioNode = addDefinitionAfter(ratioNode, 'Raw Ratio:', rawRatio, color);
+            addDefinitionAfter(ratioNode, 'Raw Downloaded:', rawDownMatch[0]);
+            addDefinitionAfter(ratioNode, 'Raw Uploaded:', rawUpMatch[0]);
+            ratioNode.nextElementSibling.title = 'Ratio\t  Buffer';
+            rawRatioNode.nextElementSibling.title = 'Raw ratio\t Raw Buffer';
+    
+            function printBuffer(u, d, r) {
+                if (u / r - d >= 0)
+                    return '\n' + r.toFixed(1) + '\t' + (humancount(u / r - d)).slice(-10) + '    \tcan be downloaded'
+                else
+                    return '\n' + r.toFixed(1) + '\t' + (humancount(d * r - u)).slice(-10) + '    \tmust be uploaded'
+            }
+            for (var i = 0; i < 10; i++) {
+                var myRatio = [0.2, 0.5, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 5.0, 10.0][i];
+                ratioNode.nextElementSibling.title += printBuffer(uploaded, downloaded, myRatio);
+                rawRatioNode.nextElementSibling.title += printBuffer(rawuploaded, rawdownloaded, myRatio);
+            }
+        }
+        function addYenPerStats() {
+            var dpy = 365.256363; // days per year
+            var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
+            if (tw.nextNode() == null) return;
+            var ypdNode = tw.currentNode.parentNode;
+            var ypy = parseInt(ypdNode.nextElementSibling.textContent, 10) * dpy; // Yen per year
+            addDefinitionAfter(ypdNode, 'Yen per year:', formatInteger(Math.round(ypy * compoundInterest(1))));
+            addDefinitionAfter(ypdNode, 'Yen per month:', formatInteger(Math.round(ypy * compoundInterest(1 / 12))));
+            addDefinitionAfter(ypdNode, 'Yen per week:', formatInteger(Math.round(ypy * compoundInterest(7 / dpy))));
+            // 1 Yen = 1 MB = 1024^2 B * yen per year * interest for 1 s
+            var hr = document.createElement('hr');
+            hr.style.clear = 'both';
+            ypdNode.parentNode.insertBefore(hr, ypdNode);
+            addDefinitionBefore(ypdNode, 'Yen as upload:', humancount(Math.pow(1024, 2) * ypy * compoundInterest(1 / dpy / 24 / 60 / 60)) + '/s');
+            addDefinitionBefore(ypdNode, 'Yen per hour:', (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
+        }
+        if (delicious.settings.get('deliciousratio'))
+            addRawStats();
+        if (delicious.settings.get('deliciousyenperx'))
+            addYenPerStats();
+    })();
+    /* End src/ab_yen_stats.user.js */
+
+
 })();

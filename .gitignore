@@ -1,3 +1,5 @@
 .ropeproject/
 node_modules/
 __pycache__/
+delicious-userscripts/dist/ab_delicious_scripts.dev.user.js
+delicious-userscripts/before_library.txt

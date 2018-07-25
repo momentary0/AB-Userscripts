@@ -9,23 +9,33 @@
 // @license      GPL-3.0
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @require      https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
 (function ABQuickLinks() {
+    delicious.settings.init('ABQuickLinksEnabled', true);
     var defaultLinks = [
         {text: 'Image Upload', href: '/imageupload.php'},
         {text: 'Profile Settings', href: '/user.php?action=edit'},
     ];
-    function setLinks(linksArray) {
-        GM_setValue('ABQuickLinks', JSON.stringify(linksArray));
-    }
-    function getLinks() {
-        var stored = GM_getValue('ABQuickLinks', 'null');
-        if (stored === 'null') {
-            setLinks(defaultLinks);
-            return defaultLinks;
-        }
-        return JSON.parse(stored);
+    delicious.settings.init('ABQuickLinks', defaultLinks);
+
+    if (delicious.settings.ensureSettingsInserted()) {
+        var section = delicious.settings.createCollapsibleSection('Quick Links');
+        var s = section.querySelector('.settings_section_body');
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABQuickLinksEnabled',
+            'Enable/Disable',
+            'Adds dropdown quick links to the main nav bar.'
+        ));
+        s.appendChild(delicious.settings.createRowSetting(
+            'ABQuickLinks',
+            'Links',
+            [['Label', 'text', 'text'], ['Link', 'href', 'text']],
+            null,
+            {newButtonText: '+ Add Link'}
+        ));
+        delicious.settings.insertSection(section);
     }
 
     var rootLI = document.createElement('li');
@@ -36,17 +46,7 @@
 
     rootLI.innerHTML = '<a style="cursor:pointer;">Quick Links\
     <span class="dropit hover clickmenu"><span class="stext">▼</span></span></a>';
-    rootLI.firstElementChild.addEventListener('click', function(ev) {
-        var subnav = ev.currentTarget.parentNode.children[1];
-        var willShow = (subnav.style.display==='none');
-        subnav.style.display = willShow?'block':'none';
-        if (willShow)
-            subnav.parentNode.classList.add('selected');
-        else
-            subnav.parentNode.classList.remove('selected');
-        ev.stopPropagation();
-        return false;
-    });
+    rootLI.firstElementChild.addEventListener('click', delicious.utilities.toggleSubnav);
 
     var subnavUL = document.createElement('ul');
     subnavUL.className = 'subnav nobullet';
@@ -55,14 +55,15 @@
     subnavUL.style.width = '100%';
     subnavUL.style.left = '-1px'; // Shift so border is symmetrical
 
-    var links = getLinks();
+    var links = delicious.settings.get('ABQuickLinks');
     for (var i = 0; i < links.length; i++) {
         var li = document.createElement('li');
         li.style.width = '100%';
         var a = document.createElement('a');
         a.style.width = '100%';
         a.style.boxSizing = 'border-box';
-        if (links[i]['href']) a.href = links[i]['href'];
+        if (links[i]['href'])
+            a.href = links[i]['href'];
         a.textContent = links[i]['text'] || '';
         li.appendChild(a);
         subnavUL.appendChild(li);
@@ -71,6 +72,4 @@
     rootLI.appendChild(subnavUL);
 
     document.querySelector('.main-menu').appendChild(rootLI);
-
-
 })();

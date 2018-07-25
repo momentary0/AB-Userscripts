@@ -1,10 +1,14 @@
 module.exports = {
     "env": {
         "browser": true,
-        "node": true
+        "node": true,
+        "greasemonkey": true,
     },
     "parserOptions": {
         "ecmaVersion": 6
+    },
+    "globals": {
+        "delicious": false
     },
     "extends": "eslint:recommended",
     "rules": {
