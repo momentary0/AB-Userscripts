@@ -35,7 +35,7 @@ if __name__ == '__main__':
             requires = []
             requires.extend(glob.glob('./src/*.user.js'))
             for x in requires:
-                prefix = 'https://github.com/momentary0/AB-Userscripts/raw/delicious-settings/delicious-userscripts'
+                prefix = 'https://github.com/momentary0/AB-Userscripts/raw/master/delicious-userscripts'
                 f.write('// @require '+prefix+x[1:].replace('\\', '/') + '\n')
             f.write('''// ==/UserScript==
 
