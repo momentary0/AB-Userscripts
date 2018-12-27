@@ -45,5 +45,5 @@
         iconLink.type = 'image/x-icon';
         iconLink.href = favicon;
         document.head.appendChild(iconLink);
-    })
+    });
 })();
