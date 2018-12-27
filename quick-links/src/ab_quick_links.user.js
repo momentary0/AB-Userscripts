@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AB Quick Links
 // @namespace    TheFallingMan
-// @version      0.1.0
+// @version      0.2.0
 // @description  Adds quick link dropdown to the main nav bar.
 // @author       TheFallingMan
 // @icon         https://animebytes.tv/favicon.ico
