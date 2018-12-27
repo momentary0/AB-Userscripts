@@ -784,9 +784,7 @@ var delicious = (function ABDeliciousLibrary(){ // eslint-disable-line no-unused
             select.dataset[this._settingKey] = key;
             select.id = this._idPrefix+key;
 
-            var currentValue = null;
-            if (options['default'] !== null)
-                currentValue = this.get(key, options['default']);
+            var currentValue = this.get(key, options['default']);
 
             for (var i = 0; i < valuesArray .length; i++) {
                 var newOption = newElement('option', {
