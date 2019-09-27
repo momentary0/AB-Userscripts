@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AnimeBytes delicious user scripts (updated)
 // @author      aldy, potatoe, alpha, Megure
-// @version     2.1.4
+// @version     2.1.5
 // @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
 // @match       https://*.animebytes.tv/*
 // @icon        http://animebytes.tv/favicon.ico
@@ -407,6 +407,17 @@
                 td2.addEventListener('click', toggle_yen());
                 row.appendChild(td2);
                 row.appendChild(td1);
+    
+                if (location.pathname.indexOf('/torrents2') != -1 
+                    && !document.getElementById('torrents2_fix')) {
+                    var style = document.createElement('style');
+                    style.id = 'torrents2_fix';
+                    style.appendChild(document.createTextNode(
+                        '.torrent_properties { width: 60%; }'
+                    ));
+                    document.body.appendChild(style);
+                }
+    
             }
             // Parse row data
             var row_data = [row, torrent_row];
