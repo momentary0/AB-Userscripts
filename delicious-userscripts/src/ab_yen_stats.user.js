@@ -108,10 +108,10 @@
         // Find text with raw stats
         tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
         if (tw.nextNode() == null) return;
-        var rawUpMatch = tw.currentNode.data.match(regExp);
+        var rawUpMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
         tw = document.createTreeWalker(tw.currentNode.parentNode.parentNode, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Downloaded:/i.test(node.data); } });
         if (tw.nextNode() == null) return;
-        var rawDownMatch = tw.currentNode.data.match(regExp);
+        var rawDownMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
         tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Ratio/i.test(node.data); } });
         if (tw.nextNode() == null) return;
         var ratioNode = tw.currentNode.parentNode;
