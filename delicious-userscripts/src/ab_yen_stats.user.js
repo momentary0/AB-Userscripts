@@ -170,7 +170,7 @@
         var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
         if (tw.nextNode() == null) return;
         var ypdNode = tw.currentNode.parentNode;
-        var ypy = parseInt(ypdNode.nextElementSibling.textContent, 10) * dpy; // Yen per year
+        var ypy = parseInt(ypdNode.nextElementSibling.textContent.replace(/[,¥]/g, ''), 10) * dpy; // Yen per year
         addDefinitionAfter(ypdNode, 'Yen per year:', formatInteger(Math.round(ypy * compoundInterest(1))));
         addDefinitionAfter(ypdNode, 'Yen per month:', formatInteger(Math.round(ypy * compoundInterest(1 / 12))));
         addDefinitionAfter(ypdNode, 'Yen per week:', formatInteger(Math.round(ypy * compoundInterest(7 / dpy))));
