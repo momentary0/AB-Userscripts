@@ -31,7 +31,7 @@
             res = ',' + ('00' + (num % 1000)).slice(-3) + res;
             num = Math.floor(num / 1000);
         }
-        return num + res;
+        return '¥' + num + res;
     }
     function bytecount(num, unit) {
         // For whatever reason, this was always called with .toUpperCase()
@@ -179,7 +179,7 @@
         hr.style.clear = 'both';
         ypdNode.parentNode.insertBefore(hr, ypdNode);
         addDefinitionBefore(ypdNode, 'Yen as upload:', humancount(Math.pow(1024, 2) * ypy * compoundInterest(1 / dpy / 24 / 60 / 60)) + '/s');
-        addDefinitionBefore(ypdNode, 'Yen per hour:', (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
+        addDefinitionBefore(ypdNode, 'Yen per hour:', '¥' + (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
     }
     if (delicious.settings.get('deliciousratio'))
         addRawStats();
