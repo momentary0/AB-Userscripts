@@ -104,7 +104,7 @@
         return dt;
     }
     function addRawStats() {
-        var tw, regExp = /([0-9,.]+)\s*([A-Z]+)\s*\(([^)]*)\)/i;
+        var tw, regExp = /([0-9,.]+)\s*([A-Z]+)/i;
         // Find text with raw stats
         tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
         if (tw.nextNode() == null) return;
