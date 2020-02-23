@@ -2912,7 +2912,7 @@
     // @author      Megure, Lemma, NSC, et al.
     // @description Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
     // @include     https://animebytes.tv/user.php*
-    // @version     0.1.1
+    // @version     0.1.2
     // @icon        http://animebytes.tv/favicon.ico
     // @grant       GM_setValue
     // @grant       GM_getValue
@@ -2940,7 +2940,7 @@
                 res = ',' + ('00' + (num % 1000)).slice(-3) + res;
                 num = Math.floor(num / 1000);
             }
-            return num + res;
+            return '¥' + num + res;
         }
         function bytecount(num, unit) {
             // For whatever reason, this was always called with .toUpperCase()
@@ -3013,14 +3013,14 @@
             return dt;
         }
         function addRawStats() {
-            var tw, regExp = /([0-9,.]+)\s*([A-Z]+)\s*\(([^)]*)\)/i;
+            var tw, regExp = /([0-9,.]+)\s*([A-Z]+)/i;
             // Find text with raw stats
             tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
             if (tw.nextNode() == null) return;
-            var rawUpMatch = tw.currentNode.data.match(regExp);
+            var rawUpMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
             tw = document.createTreeWalker(tw.currentNode.parentNode.parentNode, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Downloaded:/i.test(node.data); } });
             if (tw.nextNode() == null) return;
-            var rawDownMatch = tw.currentNode.data.match(regExp);
+            var rawDownMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
             tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Ratio/i.test(node.data); } });
             if (tw.nextNode() == null) return;
             var ratioNode = tw.currentNode.parentNode;
@@ -3079,7 +3079,7 @@
             var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
             if (tw.nextNode() == null) return;
             var ypdNode = tw.currentNode.parentNode;
-            var ypy = parseInt(ypdNode.nextElementSibling.textContent, 10) * dpy; // Yen per year
+            var ypy = parseInt(ypdNode.nextElementSibling.textContent.replace(/[,¥]/g, ''), 10) * dpy; // Yen per year
             addDefinitionAfter(ypdNode, 'Yen per year:', formatInteger(Math.round(ypy * compoundInterest(1))));
             addDefinitionAfter(ypdNode, 'Yen per month:', formatInteger(Math.round(ypy * compoundInterest(1 / 12))));
             addDefinitionAfter(ypdNode, 'Yen per week:', formatInteger(Math.round(ypy * compoundInterest(7 / dpy))));
@@ -3088,7 +3088,7 @@
             hr.style.clear = 'both';
             ypdNode.parentNode.insertBefore(hr, ypdNode);
             addDefinitionBefore(ypdNode, 'Yen as upload:', humancount(Math.pow(1024, 2) * ypy * compoundInterest(1 / dpy / 24 / 60 / 60)) + '/s');
-            addDefinitionBefore(ypdNode, 'Yen per hour:', (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
+            addDefinitionBefore(ypdNode, 'Yen per hour:', '¥' + (ypy * compoundInterest(1 / dpy / 24)).toFixed(1));
         }
         if (delicious.settings.get('deliciousratio'))
             addRawStats();
