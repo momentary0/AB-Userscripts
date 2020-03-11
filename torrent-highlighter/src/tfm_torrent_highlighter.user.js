@@ -426,10 +426,10 @@
                         this.appendSpan(node, 'freeleech', '');
                     } else {
                         switch (node.src.substr(node.src.lastIndexOf('/')+1)) {
-                        case 'hentaic.png':
+                        case 'hentaic.svg':
                             this.appendSpan(node, 'hentai', 'Censored');
                             break;
-                        case 'hentai.png':
+                        case 'hentai.svg':
                             this.appendSpan(node, 'hentai', 'Uncensored');
                             break;
                         }
