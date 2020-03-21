@@ -156,7 +156,7 @@
             return row;
         }
         function get_corresponding_torrent_row(row) {
-            var anchor = row.querySelector('a[title="Download"]');
+            var anchor = row.querySelector('a[href*="/download/"]');
             if (anchor !== null) {
                 //console.log(anchor.href);
                 var match = anchor.href.match(/torrent\/(\d+)\/download/i);
@@ -167,6 +167,7 @@
                     }
                 }
             }
+            debugger;
             return null;
         }
         // Converts a duration of hours into a string, like 3 days, 4 hours and 17 minutes
@@ -408,7 +409,7 @@
                 row.appendChild(td2);
                 row.appendChild(td1);
     
-                if (location.pathname.indexOf('/torrents2') != -1 
+                if (location.pathname.indexOf('/torrents2') != -1
                     && !document.getElementById('torrents2_fix')) {
                     var style = document.createElement('style');
                     style.id = 'torrents2_fix';
@@ -587,6 +588,7 @@
                             }
                         }
                     }
+                    console.log(table_data);
                 };
             }
             if (sort_rows && table_data.length > 1) {

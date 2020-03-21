@@ -3,7 +3,7 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.03
+// @version     1.04
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -142,18 +142,21 @@
         return row;
     }
     function get_corresponding_torrent_row(row) {
-        var anchor = row.querySelector('a[title="Download"]');
-        if (anchor !== null) {
-            //console.log(anchor.href);
-            var match = anchor.href.match(/torrent\/(\d+)\/download/i);
-            if (match !== null) {
-                var new_row = document.getElementById('torrent_' + match[1]);
-                if (new_row !== row) {
-                    return new_row;
-                }
-            }
+        var anchor = row.querySelector('a[href*="/download/"]');
+        if (anchor == null) {
+            console.error("Unable to find download link for torrent row: ", row);
+            return;
         }
-        return null;
+        var match = anchor.href.match(/torrent\/(\d+)\/download/i);
+        if (match === null) {
+            console.error("Unable to torrent ID within href: ", anchor);
+            return;
+        }
+        var new_row = document.getElementById('torrent_' + match[1]);
+        if (new_row !== row) {
+            return new_row;
+        }
+        console.error("Unable to find distinct torrent row for", row);
     }
     // Converts a duration of hours into a string, like 3 days, 4 hours and 17 minutes
     function duration_to_string(duration) {
@@ -394,7 +397,7 @@
             row.appendChild(td2);
             row.appendChild(td1);
 
-            if (location.pathname.indexOf('/torrents2') != -1 
+            if (location.pathname.indexOf('/torrents2') != -1
                 && !document.getElementById('torrents2_fix')) {
                 var style = document.createElement('style');
                 style.id = 'torrents2_fix';
@@ -573,6 +576,7 @@
                         }
                     }
                 }
+                console.log(table_data);
             };
         }
         if (sort_rows && table_data.length > 1) {
