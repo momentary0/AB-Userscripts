@@ -159,6 +159,7 @@
         console.error("Unable to find distinct torrent row for", row);
     }
     // Converts a duration of hours into a string, like 3 days, 4 hours and 17 minutes
+    // 'duration' is given in number of hours.
     function duration_to_string(duration) {
         var days = Math.floor(duration / 24);
         var hours = Math.floor(duration % 24);
@@ -370,6 +371,7 @@
         // Add required time to size_cell and blockquote in torrent_row
         if (size_index !== null && show_required_time) {
             var seeding_time = Math.max(0, size - 10) * 5 + 72;
+            seeding_time = Math.min(21*24, seeding_time); // seeding time is called at 21 days.
             size_cell.title = 'You need to seed this torrent for at least\n' + duration_to_string(seeding_time) + '\nor it will become a hit and run!';
             if (torrent_row !== null) {
                 var block_quote = torrent_row.querySelector('blockquote');

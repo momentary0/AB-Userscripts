@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AnimeBytes delicious user scripts (updated)
 // @author      aldy, potatoe, alpha, Megure
-// @version     2.1.6
+// @version     2.1.7
 // @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
 // @match       https://*.animebytes.tv/*
 // @icon        http://animebytes.tv/favicon.ico
@@ -17,7 +17,7 @@
     // @namespace   Megure@AnimeBytes.tv
     // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
     // @include     http*://animebytes.tv*
-    // @version     1.03
+    // @version     1.04
     // @grant       GM_getValue
     // @grant       GM_setValue
     // @icon        http://animebytes.tv/favicon.ico
@@ -157,20 +157,23 @@
         }
         function get_corresponding_torrent_row(row) {
             var anchor = row.querySelector('a[href*="/download/"]');
-            if (anchor !== null) {
-                //console.log(anchor.href);
-                var match = anchor.href.match(/torrent\/(\d+)\/download/i);
-                if (match !== null) {
-                    var new_row = document.getElementById('torrent_' + match[1]);
-                    if (new_row !== row) {
-                        return new_row;
-                    }
-                }
+            if (anchor == null) {
+                console.error("Unable to find download link for torrent row: ", row);
+                return;
             }
-            debugger;
-            return null;
+            var match = anchor.href.match(/torrent\/(\d+)\/download/i);
+            if (match === null) {
+                console.error("Unable to torrent ID within href: ", anchor);
+                return;
+            }
+            var new_row = document.getElementById('torrent_' + match[1]);
+            if (new_row !== row) {
+                return new_row;
+            }
+            console.error("Unable to find distinct torrent row for", row);
         }
         // Converts a duration of hours into a string, like 3 days, 4 hours and 17 minutes
+        // 'duration' is given in number of hours.
         function duration_to_string(duration) {
             var days = Math.floor(duration / 24);
             var hours = Math.floor(duration % 24);
@@ -382,6 +385,7 @@
             // Add required time to size_cell and blockquote in torrent_row
             if (size_index !== null && show_required_time) {
                 var seeding_time = Math.max(0, size - 10) * 5 + 72;
+                seeding_time = Math.min(21*24, seeding_time); // seeding time is called at 21 days.
                 size_cell.title = 'You need to seed this torrent for at least\n' + duration_to_string(seeding_time) + '\nor it will become a hit and run!';
                 if (torrent_row !== null) {
                     var block_quote = torrent_row.querySelector('blockquote');
