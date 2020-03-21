@@ -170,7 +170,9 @@
             if (new_row !== row) {
                 return new_row;
             }
-            console.error("Unable to find distinct torrent row for", row);
+            return null;
+            //console.error("Unable to find distinct torrent row for", row);
+            // couldn't find extra torrent info row. happens on search pages.
         }
         // Converts a duration of hours into a string, like 3 days, 4 hours and 17 minutes
         // 'duration' is given in number of hours.
@@ -878,6 +880,9 @@
                 var head = document.createElement('div');
                 var body = document.createElement('div');
                 box.className = 'box torrent_filter_box';
+                box.style.width = '100%'; // fix overlap of thumbnail image on search pages.
+                box.style.float = 'left';
+                box.style.marginBottom = '10px';
                 head.className = 'head colhead strong';
                 body.className = 'body pad';
                 body.style.display = 'none';
