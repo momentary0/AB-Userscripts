@@ -104,6 +104,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 // @license      GPL-3.0
 // ==/UserScript==
 
+
 (function TFMTorrentHighlighter() {
     var _MusicHandlers, _AnimeHandlers, _GameHandlers, _BookHandlers, _GlobalHandlers;
 
@@ -536,8 +537,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     var p = new TorrentPropertyParser();
     for (var t = 0; t < torrentPageTorrents.length; t++) {
         var link = torrentPageTorrents[t];
+        var text = link.firstChild.textContent.trimLeft();
+        var hasArrow = text[0] === '»';
+        var prefix = '';
+        if (hasArrow) {
+            text = text.replace('»', '').trimLeft();
+            prefix = '» ';
+        }
+        // console.log(text);
+        //const parsed = (parser.parse(text));
+
         link.classList.add('userscript-highlight');
         link.classList.add('torrent-page');
+
+        // link.firstChild.textContent = '';
+        // link.insertBefore(parsed, link.firstChild);
+
         p.linkElement = link;
         p.delim = link.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ';
         p.parse();

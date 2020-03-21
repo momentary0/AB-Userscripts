@@ -9,6 +9,7 @@
 // @license      GPL-3.0
 // ==/UserScript==
 
+
 (function TFMTorrentHighlighter() {
     function _debug() { return false; }
 
@@ -473,11 +474,26 @@
     let p = new TorrentPropertyParser();
     for (let t = 0; t < torrentPageTorrents.length; t++) {
         let link = torrentPageTorrents[t];
+        let text = link.firstChild.textContent.trimLeft();
+        let hasArrow = text[0] === '»';
+        let prefix = '';
+        if (hasArrow) {
+            text = text.replace('»','').trimLeft();
+            prefix = '» ';
+        }
+        // console.log(text);
+        //const parsed = (parser.parse(text));
+
         link.classList.add('userscript-highlight');
         link.classList.add('torrent-page');
+
+        // link.firstChild.textContent = '';
+        // link.insertBefore(parsed, link.firstChild);
+
         p.linkElement = link;
         p.delim = link.href.indexOf('torrents.php') !== -1?' | ':' / ';
         p.parse();
+
     }
 
     const searchResultTorrents = document.querySelectorAll(

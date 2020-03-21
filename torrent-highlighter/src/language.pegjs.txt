@@ -1,0 +1,111 @@
+// Simple Arithmetics Grammar
+// ==========================
+//
+// Accepts expressions like "2 * (3 + 4)" and computes their value.
+
+{
+    function escapeHtml(unsafe) {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+     }
+     const docFrag = (children) => {
+         const d = document.createDocumentFragment();
+      for (let c of children) {
+          if (c)
+            d.appendChild(c);
+      }
+      return d;
+      }
+      const sep = () => document.createTextNode(" | ");
+      const t = (x) => document.createTextNode(x);
+      const span = (text, keys) => {
+          if (typeof keys === 'string')
+              keys = {[keys]: text};
+
+          const s = document.createElement('span');
+          s.className = "userscript-highlight torrent-field";
+          for (const key in keys) {
+              if (keys.hasOwnProperty(key)) {
+                  s.setAttribute('data-'+key, keys[key]);
+              }
+          }
+          s.textContent = text;
+          return s;
+      };
+  }
+
+  Anime = src:Source Sep cont:(M2TS / Container) Sep enc:Encoding Sep res:Resolution Sep audio:Audio Sep dual:(Dual Sep)? subs:Subs end:Sep? EOF
+  {
+      const contText = cont[0] === 'M2TS' ? `M2TS (${cont[1]}) | ${cont[2]}` : cont;
+      let contKeys;
+      if (cont[0] === 'M2TS')
+          contKeys = {'container': 'M2TS', 'region': cont[1], 'aspect-ratio': cont[2]}
+      else
+          contKeys = {container: cont}
+      return docFrag([
+      span(src, {'source': src}),
+      sep(),
+      span(contText, contKeys),
+      sep(),
+      span(enc, 'codec'),
+      sep(),
+      span(res, 'resolution'),
+      sep(),
+      span(audio[0], 'audio-codec'),
+      t(' '),
+      span(audio[1], 'audio-channels'),
+      sep(),
+      ...(dual ? [span(dual[0], {'dual-audio': dual[0]}), sep()] : []),
+      span(subs[0], 'subbing'),
+      ...(subs[1] ? [t(' ('), span(subs[1], 'group'), t(')')] : []),
+      (end ? sep() : ''),
+      ]);
+  }
+  EOF = !. { return '$'}
+
+  Text = $( [a-zA-Z0-9-] / " "!"| ")+
+  Source = Text
+  Encoding = Text
+  Resolution = Text
+  Container = Text
+  Audio = a:$(([a-zA-Z-0-9 ] !Channels))+ " " c:Channels { return [a, c] }
+  Channels = $([0-9]+"."[0-9]+)
+  Dual = "Dual Audio"
+  Subs = s:("RAW" / "Softsubs" / "Hardsubs") g:(" " Group)? { return [s, (g || [])[1]]; }
+  Group = "(" g:$(( [^)]/(")"!(" | "/EOF)) )+) ")" { return g; }
+
+  M2TS = "M2TS (" x:[^)] ") | " w:$([0-9]+":"[0-9]+) { return ["M2TS", x, w]}
+
+
+  Sep = Whitespace"|"Whitespace { return '|'; }
+
+  /*
+  Expression
+    = head:Term tail:(_ ("+" / "-") _ Term)* {
+        return tail.reduce(function(result, element) {
+          if (element[1] === "+") { return result + element[3]; }
+          if (element[1] === "-") { return result - element[3]; }
+        }, head);
+      }
+
+  Term
+    = head:Factor tail:(_ ("*" / "/") _ Factor)* {
+        return tail.reduce(function(result, element) {
+          if (element[1] === "*") { return result * element[3]; }
+          if (element[1] === "/") { return result / element[3]; }
+        }, head);
+      }
+
+  Factor
+    = "(" _ expr:Expression _ ")" { return expr; }
+    / Integer
+
+  Integer "integer"
+    = _ [0-9]+ { return parseInt(text(), 10); }
+  */
+  Whitespace
+    = [ \t\n\r]*
