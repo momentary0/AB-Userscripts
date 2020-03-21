@@ -907,49 +907,15 @@
 
     // If yen should be shown and user creation is not yet saved, try to get and save it
     if (show_yen && (GM_getValue('creation', '0').toString() === '0' || GM_getValue('creation', '0') === 'null')) {
-
-
-        // no longer works because header profile link uses username.
-        //var user_id = document.querySelector('div#header div#userinfo li#username_menu a.username');
-
-        // checks if the current page's URL matches the profile page
-        // of the logged in user.
-        // var user_id_re = new RegExp('/user\\.php\\?id=' + CURRENT_USER["userId"]);
-        //console.log(CURRENT_USER["userId"]);
-        //console.log();
-        //if (document.URL.match(user_id_re) !== null) {
-
-        // ^ broken on some browsers if CURRENT_USER isn't passed.
-
-        // checks if the username link in navbar is the same as the current heading.
-        // if it is, we are on a profile page.
-        // hopefully no edge cases
-        // - TFM 2017-12-28
-        var user_link = document.querySelector('div#header div#userinfo li#username_menu a.username');
-        var user_heading = document.querySelector('div#content h2 a');
-        var user_profile_re = /\/user\.php\?id=/i;
-
-        if (document.URL.match(user_profile_re) !== null && user_link !== null && user_heading !== null && user_link.href === user_heading.href) {
-
-            var user_stats = document.querySelector('div#content div#user_rightcol div.userstatsleft dl.userprofile_list');
-            var children = user_stats.children;
-            //console.log(children);
-            for (var i = 0, length = children.length; i < length; i++) {
-
-                var child = children[i];
-                //console.log(child);
-                if (child.textContent.indexOf("Join") !== -1) {
-                    try {
-                        var join_date = child.nextElementSibling.firstElementChild.title;
-
-                        // deletes timezone because it was causing issues with Date.parse()
-                        // worst case is +/- 12 hours anyway
-                        var timezone_re = /( \d\d:\d\d) [A-Z]+$/;
-                        GM_setValue('creation', JSON.stringify(Date.parse(join_date.replace(timezone_re, '$1'))));
-                    }
-                    catch (error) { }
+        // check if we are on a profile page by looking for the "Edit my profile" link.
+        if (document.querySelector('.linkbox a[href$="/user.php?action=edit"]') != null) {
+            const TIMEZONE_RE = /( \d\d:\d\d) [A-Z]+$/;
+            document.querySelector('.userprofile_list').querySelectorAll('dt').forEach(dt => {
+                if (dt.textContent.trim().toLowerCase().indexOf('joined:') != -1) {
+                    const join_date = dt.nextElementSibling.querySelector('[title]').title.trim();
+                    GM_setValue('creation', JSON.stringify(Date.parse(join_date.replace(TIMEZONE_RE, '$1'))));
                 }
-            }
+            });
         }
     }
 }).call(this);
