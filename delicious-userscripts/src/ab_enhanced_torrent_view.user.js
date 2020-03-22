@@ -3,10 +3,12 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.04
+// @version     1.05
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
+// @require     https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.23/dayjs.min.js
+// @require     https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.23/plugin/customParseFormat.js
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
 
@@ -909,13 +911,28 @@
     if (show_yen && (GM_getValue('creation', '0').toString() === '0' || GM_getValue('creation', '0') === 'null')) {
         // check if we are on a profile page by looking for the "Edit my profile" link.
         if (document.querySelector('.linkbox a[href$="/user.php?action=edit"]') != null) {
+            // dayjs.extend(customParseFormat);
             const TIMEZONE_RE = /( \d\d:\d\d) [A-Z]+$/;
-            document.querySelector('.userprofile_list').querySelectorAll('dt').forEach(dt => {
-                if (dt.textContent.trim().toLowerCase().indexOf('joined:') != -1) {
-                    const join_date = dt.nextElementSibling.querySelector('[title]').title.trim();
-                    GM_setValue('creation', JSON.stringify(Date.parse(join_date.replace(TIMEZONE_RE, '$1'))));
-                }
+            const DATE_FORMAT = 'MMM DD YYYY, HH:mm';
+            // find "Joined:" text field
+            let dt = null;
+            document.querySelector('.userprofile_list').querySelectorAll('dt').forEach(x => {
+                if (!dt && x.textContent.trim().toLowerCase().indexOf('joined:') != -1)
+                    dt = x;
             });
+            // get the element after the joined text
+            const span = dt.nextElementSibling.querySelector('[title]');
+            // try both title and text depending on "absolute dates" setting
+            const join_date = [span.title, span.textContent].find(join_str => {
+                // get rid of timezone because we can't parse it
+                const no_tz = join_str.trim().replace(TIMEZONE_RE, '$1');
+                // eslint-disable-next-line no-undef
+                const date = dayjs(no_tz, DATE_FORMAT);
+                if (!date.isValid()) return false;
+                GM_setValue('creation', JSON.stringify(date.valueOf()));
+                return true;
+            });
+            console.log("Parsed user join date:", join_date);
         }
     }
 }).call(this);
