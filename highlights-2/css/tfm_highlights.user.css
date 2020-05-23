@@ -1,0 +1,223 @@
+/* ==UserStyle==
+@name AB Highlights 2 Stylesheet
+@author TheFallingMan
+@namespace TheFallingMan
+@description Requires AB Highlights 2 scripe.
+@version 0.1.1
+==/UserStyle== */
+
+@-moz-document domain("animebytes.tv") {
+.torrent-page > .torrent-field {
+    border-radius: 3px;
+    padding-left: 1px;
+    padding-right: 1px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    background-color: #ececec;
+    color: #000;
+    border: 1px solid #d9d9d9;
+    word-spacing: normal;
+}
+.torrent_table .group_torrent > td:first-child {
+    word-spacing: -0.6ex;
+}
+
+.torrent-page > [data-audio-codec] {
+    margin-right: -0.03ex;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.torrent-page > [data-group], .torrent-page > [data-region] {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.torrent-page > [data-source="Blu-ray"] {
+    background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-source="Web"],.torrent-page > [data-source="TV"]  {
+    background-color: #ffc08f;
+    border-color: #ffc08f;
+    color: black;
+}
+.torrent-page > [data-source="UHD Blu-ray"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+.torrent-page > [data-source="DVD"] {
+    background-color: #fea5a5;
+    border-color: #f8a8a8;
+    color: black;
+}
+
+.torrent-page > [data-container] {
+    background-color: #fea5a5;
+    border-color: #f8a8a8;
+    color: black;
+}
+.torrent-page > [data-container="MKV"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+
+.torrent-page > [data-codec="h264 10-bit"] {
+    background-color: #ffc08f;
+    border-color: #ffc08f;
+    color: black;
+}
+.torrent-page > [data-codec="h264"] {
+    background-color: #fea5a5;
+    border-color: #f8a8a8;
+    color: black;
+}
+.torrent-page > [data-codec="h265"] {
+    background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-codec="h265 10-bit"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+
+.torrent-page > [data-resolution] {
+    background-color: #fea5a5;
+    border-color: #f8a8a8;
+    color: black;
+}
+.torrent-page > [data-resolution="1080p"], .torrent-page > [data-resolution="4K"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+.torrent-page > [data-resolution="720p"] {
+    background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-resolution="480p"] {
+    background-color: #abe4b0;
+    border-color: #abe4b0;
+    color: black;
+}
+
+.torrent-page > [data-audio-codec="FLAC"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+.torrent-page > [data-audio-codec^="DTS"], .torrent-page > [data-audio-codec="AC3"],
+.torrent-page > [data-audio-codec="TrueHD"]{
+    background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-audio-codec="AAC"] {
+    background-color: #abe4b0;
+    border-color: #abe4b0;
+    color: black;
+}
+
+.torrent-page > [data-audio-channels] {
+    background-color: #abe4b0;
+    border-color: #abe4b0;
+    color: black;
+}
+.torrent-page > [data-audio-channels="5.1"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+.torrent-page > [data-audio-channels="2.0"]{
+    background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-audio-channels] {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0.8px;
+    border-left-style: solid;
+    margin-left: -0.03ex;
+    border-left-color: black;
+}
+
+.torrent-page > [data-dual-audio]{
+    background-color: #abe4b0;
+    border-color: #abe4b0;
+    color: black;
+}
+
+.torrent-page > [data-subbing="Softsubs"] {
+    background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+.torrent-page > [data-subbing="Hardsubs"] {
+    background-color: #ffc08f;
+    border-color: #ffc08f;
+    color: black;
+}
+.torrent-page > [data-subbing="RAW"]{
+    background-color: #fea5a5;
+    border-color: #f8a8a8;
+    color: black;
+}
+
+.torrent-page > [data-group]{
+    background-color: #6a6a6a;
+    border-color: #6a6a6a;
+    color: white;
+    white-space: nowrap;
+}
+.torrent-page > [data-group="HorribleSubs"]{
+    background-color: #ffc08f;
+    border-color: #ffc08f;
+    color: black;
+}
+
+.torrent-page > [data-freeleech] > img {
+	display:none;
+}
+.torrent-page > [data-freeleech]::after {
+    content: "FL!";
+}
+.torrent-page > [data-freeleech] {
+    background-color: #fbefab;
+    border-color: #fbefab;
+    color: black;
+}
+.torrent-page > [data-snatched] {
+    background-color: #1a2a90;
+    border-color: #1a2a90;
+    color: white;
+}
+.torrent-page[data-snatched] {
+    opacity: 0.2;
+}
+.torrent-page[data-snatched]:hover {
+    opacity: 1;
+}
+
+.torrent-page > [data-encoding="MP3"], .torrent-page > [data-source="CD"] {
+    background-color: #abe4b0;
+    border-color: #abe4b0;
+    color: black;
+}
+.torrent-page > [data-encoding="FLAC"], .torrent-page > [data-bitrate="V0 (VBR)"], .torrent-page > [data-bitrate="320"], .torrent-page > [data-bitrate="Lossless"] {
+	background-color: #a8ccf8;
+    border-color:#a8ccf8;
+    color: black;
+}
+.torrent-page > [data-bitrate="Lossless 24-bit"], .torrent-page > [data-log], .torrent-page > [data-cue] {
+background-color: #ecc2ec;
+    border-color: #ecc2ec;
+    color: black;
+}
+}
