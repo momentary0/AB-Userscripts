@@ -28,14 +28,21 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, className: strin
       for (const [k, v] of Object.entries(fields)) {
         el.dataset[k] = v;
       }
+      if (fields.misc !== undefined) {
+        console.warn('Highlighter: Generated data-misc field for torrent. ' +
+          'This might be due to a lexer/parser bug or unsupported data field.',
+          el.href);
+        throw 'data-misc';
+      }
       success++;
     } catch (e) {
-      console.error("Error while highlighting torrent: ", e);
+      if (e !== 'data-misc')
+        console.error("Highlighter: Error while highlighting torrent: ", e);
       console.log("Element: ", el);
-      console.log("Child nodes: ", Array.from(el.childNodes));
+      // console.log("Child nodes: ", Array.from(el.childNodes));
       console.log("Tokenised: ", tokens);
-      console.log("Converted: ", output);
-      console.log("Fields: ", fields);
+      // console.log("Converted: ", output);
+      console.log("Data fields: ", fields);
       console.log("------------------------------------");
     }
   }
