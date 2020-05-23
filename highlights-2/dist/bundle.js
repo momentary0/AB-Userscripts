@@ -357,10 +357,6 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
         return types_2.makeElementToken(input);
     }
     exports.tokeniseElement = tokeniseElement;
-    function testTokeniseInput(input) {
-        return input.map(tokeniseString).flat();
-    }
-    exports.testTokeniseInput = testTokeniseInput;
     function preTokenise(nodes) {
         const output = [];
         const ARROW = '»';
@@ -454,4 +450,4 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
     }
     exports.test = test;
 });
-//# sourceMappingURL=bundle.js.map
+//# sourceMappingURL=https://momentary0.github.io/AB-Userscripts/highlights-2/dist/bundle.js.map

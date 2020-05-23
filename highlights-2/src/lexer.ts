@@ -1,6 +1,5 @@
 import { Token, makeBasicToken, makeSeparatorToken, makeCompoundToken, makeElementToken, AnimeState, SNATCHED_TEXT, makeSpecialToken, ARROW } from './types';
 
-
 export function tokeniseString(input: string, delim: string): Token[] {
   if (input === ARROW) {
     return [makeSpecialToken('arrow')];
@@ -77,10 +76,6 @@ export function tokeniseString(input: string, delim: string): Token[] {
 
 export function tokeniseElement(input: HTMLElement): Token {
   return makeElementToken(input);
-}
-
-export function testTokeniseInput(input: string[]): Token[] {
-  return input.map(tokeniseString).flat();
 }
 
 export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement)[] {
