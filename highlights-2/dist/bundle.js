@@ -450,4 +450,4 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
     }
     exports.test = test;
 });
-//# sourceMappingURL=https://momentary0.github.io/AB-Userscripts/highlights-2/dist/bundle.js.map
+//# sourceMappingURL=https://raw.githubusercontent.com/momentary0/AB-Userscripts/master/highlights-2/dist/bundle.js.map
