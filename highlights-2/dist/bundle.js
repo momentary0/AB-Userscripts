@@ -363,26 +363,20 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
             switch (node.nodeType) {
                 case Node.TEXT_NODE:
                     let text = node.textContent;
-                    let text2 = null;
                     if (i === 0) {
                         if (text.startsWith(types_2.ARROW)) {
-                            text2 = text.slice(1).trimLeft();
-                            text = types_2.ARROW;
+                            output.push(types_2.ARROW);
+                            text = text.slice(1);
                         }
-                        else {
-                            text = text.trimLeft();
-                        }
+                        text = text.trimStart();
                     }
-                    else if (i === nodes.length - 1) {
-                        text = text.trimEnd();
+                    if (i === nodes.length - 1) {
                         if (text.endsWith(types_2.SNATCHED_TEXT.trimStart())) {
-                            text = text.replace(types_2.SNATCHED_TEXT.trimStart(), '').trimEnd();
-                            text2 = types_2.SNATCHED_TEXT;
+                            output.push(text.replace(types_2.SNATCHED_TEXT.trimStart(), '').trimEnd());
+                            text = types_2.SNATCHED_TEXT;
                         }
                     }
                     output.push(text);
-                    if (text2 !== null)
-                        output.push(text2);
                     break;
                 case Node.ELEMENT_NODE:
                     output.push(node);

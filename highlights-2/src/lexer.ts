@@ -85,26 +85,22 @@ export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement
     switch (node.nodeType) {
       case Node.TEXT_NODE:
         let text = node.textContent!;
-        let text2 = null;
 
         if (i === 0) {
           if (text.startsWith(ARROW)) {
-            text2 = text.slice(1).trimLeft();
-            text = ARROW;
-          } else {
-            text = text.trimLeft();
+            output.push(ARROW);
+            text = text.slice(1);
           }
-        } else if (i === nodes.length-1) {
-          text = text.trimEnd();
+          text = text.trimStart();
+        }
+        if (i === nodes.length-1) {
           if (text.endsWith(SNATCHED_TEXT.trimStart())) {
-            text = text.replace(SNATCHED_TEXT.trimStart(), '').trimEnd();
-            text2 = SNATCHED_TEXT;
+            output.push(text.replace(SNATCHED_TEXT.trimStart(), '').trimEnd());
+            text = SNATCHED_TEXT;
           }
         }
 
         output.push(text);
-        if (text2 !== null)
-          output.push(text2);
         break;
       case Node.ELEMENT_NODE:
         output.push(node as HTMLElement);
