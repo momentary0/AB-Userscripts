@@ -186,8 +186,7 @@ export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
 
   [AnimeState.SOURCE]: capture(AnimeState.CONTAINER, 'source'),
   [AnimeState.CONTAINER]: preCapture((t, s) => [toCompoundToken(t), s],
-    captureD((t) => t.type === 'COMPOUND' ? AnimeState.ASPECT_RATIO : AnimeState.VIDEO_CODEC,
-    'container', 'region')),
+    captureD((t) => t.type === 'COMPOUND' ? AnimeState.ASPECT_RATIO : AnimeState.VIDEO_CODEC, 'container', 'region')),
   [AnimeState.ASPECT_RATIO]: captureD((t, s) => s.source == 'DVD9' || s.source == 'DVD5'
     ? AnimeState.RESOLUTION : AnimeState.VIDEO_CODEC, 'aspectRatio'),
   [AnimeState.VIDEO_CODEC]: capture(AnimeState.RESOLUTION, 'codec'),

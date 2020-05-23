@@ -297,7 +297,6 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
         let i = 0;
         let j = 0;
         const output = [];
-        input = input.trimStart();
         while (i < input.length) {
             if (j++ > 10000) {
                 throw new Error("Iteration limit exceeded in tokeniseString");
@@ -365,11 +364,16 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                 case Node.TEXT_NODE:
                     let text = node.textContent;
                     let text2 = null;
-                    if (i === 0 && text.startsWith(types_2.ARROW)) {
-                        text2 = text.slice(1).trimLeft();
-                        text = types_2.ARROW;
+                    if (i === 0) {
+                        if (text.startsWith(types_2.ARROW)) {
+                            text2 = text.slice(1).trimLeft();
+                            text = types_2.ARROW;
+                        }
+                        else {
+                            text = text.trimLeft();
+                        }
                     }
-                    if (i === nodes.length - 1) {
+                    else if (i === nodes.length - 1) {
                         text = text.trimEnd();
                         if (text.endsWith(types_2.SNATCHED_TEXT.trimStart())) {
                             text = text.replace(types_2.SNATCHED_TEXT.trimStart(), '').trimEnd();

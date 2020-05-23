@@ -15,7 +15,6 @@ export function tokeniseString(input: string, delim: string): Token[] {
   let i = 0;
   let j = 0;
   const output: Token[] = [];
-  input = input.trimStart();
   while (i < input.length) {
     if (j++ > 10000) {
       throw new Error("Iteration limit exceeded in tokeniseString");
@@ -88,12 +87,14 @@ export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement
         let text = node.textContent!;
         let text2 = null;
 
-        if (i === 0 && text.startsWith(ARROW)) {
-          text2 = text.slice(1).trimLeft();
-          text = ARROW;
-        }
-
-        if (i === nodes.length-1) {
+        if (i === 0) {
+          if (text.startsWith(ARROW)) {
+            text2 = text.slice(1).trimLeft();
+            text = ARROW;
+          } else {
+            text = text.trimLeft();
+          }
+        } else if (i === nodes.length-1) {
           text = text.trimEnd();
           if (text.endsWith(SNATCHED_TEXT.trimStart())) {
             text = text.replace(SNATCHED_TEXT.trimStart(), '').trimEnd();
