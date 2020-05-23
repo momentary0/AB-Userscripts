@@ -371,6 +371,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                         text = text.trimStart();
                     }
                     if (i === nodes.length - 1) {
+                        text = text.trimEnd();
                         if (text.endsWith(types_2.SNATCHED_TEXT.trimStart())) {
                             output.push(text.replace(types_2.SNATCHED_TEXT.trimStart(), '').trimEnd());
                             text = types_2.SNATCHED_TEXT;
@@ -410,7 +411,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
     Object.defineProperty(exports, "__esModule", { value: true });
     function highlight(links, className) {
         let success = 0;
-        console.log("Highlighting " + links.length + " link elements...");
+        console.log("Highlighting " + links.length + " torrent elements...");
         for (const el of links) {
             let tokens = null;
             let output = null;
@@ -441,7 +442,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 console.log("------------------------------------");
             }
         }
-        console.log("Done highlighting, successful: " + success);
+        console.log(`Done highlighting: ${success} successful, ${links.length - success} failed.`);
         return success;
     }
     exports.highlight = highlight;

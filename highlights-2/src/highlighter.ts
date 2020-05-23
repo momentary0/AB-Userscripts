@@ -3,7 +3,7 @@ import { tokenise } from "./lexer";
 
 export function highlight(links: NodeListOf<HTMLAnchorElement>, className: string): number {
   let success = 0;
-  console.log("Highlighting " + links.length + " link elements...");
+  console.log("Highlighting " + links.length + " torrent elements...");
   for (const el of links) {
     let tokens = null;
     let output = null;
@@ -38,7 +38,7 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, className: strin
       console.log("------------------------------------");
     }
   }
-  console.log("Done highlighting, successful: " + success);
+  console.log(`Done highlighting: ${success} successful, ${links.length-success} failed.`);
   return success;
 }
 

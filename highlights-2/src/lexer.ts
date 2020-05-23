@@ -94,6 +94,7 @@ export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement
           text = text.trimStart();
         }
         if (i === nodes.length-1) {
+          text = text.trimEnd();
           if (text.endsWith(SNATCHED_TEXT.trimStart())) {
             output.push(text.replace(SNATCHED_TEXT.trimStart(), '').trimEnd());
             text = SNATCHED_TEXT;
