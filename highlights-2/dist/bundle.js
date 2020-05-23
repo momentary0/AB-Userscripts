@@ -345,7 +345,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                     i += closeSep + RPAREN_WITH_SEP.length;
                 }
                 output.push(types_2.makeCompoundToken(marker.split(' ')[0], right));
-                if (closeSep !== null) {
+                if (closeSep >= 0) {
                     output.push(types_2.makeSeparatorToken());
                 }
             }
@@ -359,16 +359,15 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
     exports.tokeniseElement = tokeniseElement;
     function preTokenise(nodes) {
         const output = [];
-        const ARROW = '»';
         let i = 0;
         for (const node of nodes) {
             switch (node.nodeType) {
                 case Node.TEXT_NODE:
                     let text = node.textContent;
                     let text2 = null;
-                    if (i === 0 && text.startsWith(ARROW)) {
+                    if (i === 0 && text.startsWith(types_2.ARROW)) {
                         text2 = text.slice(1).trimLeft();
-                        text = ARROW;
+                        text = types_2.ARROW;
                     }
                     if (i === nodes.length - 1) {
                         text = text.trimEnd();
@@ -411,10 +410,10 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
 define("highlighter", ["require", "exports", "parser", "lexer"], function (require, exports, parser_1, lexer_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function main() {
-        const links = document.querySelectorAll('.group_torrent > td > a[href*="&torrentid="]');
-        for (let i = 0; i < links.length; i++) {
-            const el = links[i];
+    function highlight(links, className) {
+        let success = 0;
+        console.log("Highlighting " + links.length + " link elements...");
+        for (const el of links) {
             let tokens = null;
             let output = null;
             let fields = null;
@@ -422,7 +421,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 const delim = el.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ';
                 tokens = lexer_1.tokenise(el.childNodes, delim);
                 [output, fields] = parser_1.parse(tokens, delim);
-                el.classList.add('userscript-highlight', 'torrent-page');
+                el.classList.add('userscript-highlight', className);
                 while (el.hasChildNodes()) {
                     el.removeChild(el.lastChild);
                 }
@@ -432,6 +431,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 for (const [k, v] of Object.entries(fields)) {
                     el.dataset[k] = v;
                 }
+                success++;
             }
             catch (e) {
                 console.error("Error while highlighting torrent: ", e);
@@ -443,6 +443,14 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 console.log("------------------------------------");
             }
         }
+        console.log("Done highlighting, successful: " + success);
+        return success;
+    }
+    exports.highlight = highlight;
+    function main() {
+        const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]';
+        const links = document.querySelectorAll(TORRENT_PAGE_QUERY);
+        highlight(links, 'torrent-page');
     }
     exports.main = main;
     function test() {

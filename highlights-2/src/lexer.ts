@@ -66,7 +66,7 @@ export function tokeniseString(input: string, delim: string): Token[] {
 
       output.push(makeCompoundToken(marker.split(' ')[0], right));
 
-      if (closeSep !== null) {
+      if (closeSep >= 0) {
         output.push(makeSeparatorToken());
       }
     }
@@ -80,7 +80,6 @@ export function tokeniseElement(input: HTMLElement): Token {
 
 export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement)[] {
   const output = [];
-  const ARROW = '»';
 
   let i = 0;
   for (const node of nodes) {

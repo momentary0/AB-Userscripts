@@ -1,10 +1,10 @@
 import { parse, SEP_SYMBOL } from "./parser";
 import { tokenise } from "./lexer";
 
-export function main() {
-  const links = document.querySelectorAll('.group_torrent > td > a[href*="&torrentid="]');
-  for (let i = 0; i < links.length; i++) {
-    const el = links[i] as HTMLAnchorElement;
+export function highlight(links: NodeListOf<HTMLAnchorElement>, className: string): number {
+  let success = 0;
+  console.log("Highlighting " + links.length + " link elements...");
+  for (const el of links) {
     let tokens = null;
     let output = null;
     let fields = null;
@@ -15,7 +15,7 @@ export function main() {
       tokens = tokenise(el.childNodes, delim);
       [output, fields] = parse(tokens, delim);
 
-      el.classList.add('userscript-highlight', 'torrent-page');
+      el.classList.add('userscript-highlight', className);
 
       while (el.hasChildNodes()) {
         el.removeChild(el.lastChild!);
@@ -27,6 +27,7 @@ export function main() {
       for (const [k, v] of Object.entries(fields)) {
         el.dataset[k] = v;
       }
+      success++;
     } catch (e) {
       console.error("Error while highlighting torrent: ", e);
       console.log("Element: ", el);
@@ -37,6 +38,15 @@ export function main() {
       console.log("------------------------------------");
     }
   }
+  console.log("Done highlighting, successful: " + success);
+  return success;
+}
+
+export function main() {
+  const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]'
+
+  const links = document.querySelectorAll(TORRENT_PAGE_QUERY) as NodeListOf<HTMLAnchorElement>;
+  highlight(links, 'torrent-page');
 }
 
 export function test() {
