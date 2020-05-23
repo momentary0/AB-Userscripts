@@ -1,0 +1,23 @@
+<html>
+    <head>Torrent Highlighter Test</head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha256-1fEPhSsRKlFKGfK3eO710tEweHh1fwokU5wFGDHO+vg=" crossorigin="anonymous"></script>
+        <script src="../dist/bundle.js"></script>
+        <script>
+            var test;
+            fetch('fate_series.json')
+            .then(x => x.json())
+            .then(x => {
+                console.log("Loaded test data.");
+                test = x;
+            });
+            var h, l, p, t;
+            require(['highlighter', 'lexer', 'parser', 'types'], (highlighter, lexer, parser, types) => {
+                h = highlighter;
+                l = lexer;
+                p = parser;
+                t = types;
+            });
+        </script>
+    </body>
+</html>
