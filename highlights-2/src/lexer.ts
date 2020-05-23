@@ -20,13 +20,13 @@ export function tokeniseString(input: string, delim: string): Token[] {
       throw new Error("Iteration limit exceeded in tokeniseString");
     }
 
-    let tail = input.slice(i);
+    let remaining = input.slice(i);
 
     // find the next separator or compound expression, if it exists.
     let markerIndex = Infinity;
     let marker = null;
     for (const x of LPAREN_OR_SEP) {
-      const n = tail.indexOf(x);
+      const n = remaining.indexOf(x);
       if (n >= 0 && n < markerIndex) {
         markerIndex = n;
         marker = x;
@@ -35,11 +35,12 @@ export function tokeniseString(input: string, delim: string): Token[] {
 
     // if no separator to the right, consume the rest of the string.
     if (marker === null) {
-      output.push(makeBasicToken(tail));
-      i += tail.length;
+      output.push(makeBasicToken(remaining));
+      i += remaining.length;
     } else if (marker === delim) {
       // if next is a separator, consume up to that separator.
-      output.push(makeBasicToken(tail.slice(0, markerIndex).trim()));
+      if (markerIndex > 0)
+        output.push(makeBasicToken(remaining.slice(0, markerIndex).trim()));
       output.push(makeSeparatorToken());
       i += markerIndex + marker.length;
     } else {
@@ -47,7 +48,7 @@ export function tokeniseString(input: string, delim: string): Token[] {
       i += marker.length; // consume the left and open paren.
 
       // find closing paren with separator.
-      const inner = tail.slice(marker.length);
+      const inner = remaining.slice(marker.length);
       const closeSep = inner.indexOf(RPAREN_WITH_SEP);
       let right;
       if (closeSep < 0) {

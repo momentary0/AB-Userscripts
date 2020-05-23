@@ -4,6 +4,7 @@ import { tokenise } from "./lexer";
 export function highlight(links: NodeListOf<HTMLAnchorElement>, className: string): number {
   let success = 0;
   console.log("Highlighting " + links.length + " torrent elements...");
+  const start = Date.now();
   for (const el of links) {
     let tokens = null;
     let output = null;
@@ -22,7 +23,7 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, className: strin
       }
       const df = document.createDocumentFragment();
       df.append(...output);
-      el.append(df);
+      el.appendChild(df);
 
       for (const [k, v] of Object.entries(fields)) {
         el.dataset[k] = v;
@@ -38,7 +39,7 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, className: strin
       console.log("------------------------------------");
     }
   }
-  console.log(`Done highlighting: ${success} successful, ${links.length-success} failed.`);
+  console.log(`Done highlighting in ${Date.now()-start} ms: ${success} successful, ${links.length-success} failed.`);
   return success;
 }
 

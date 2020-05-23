@@ -239,15 +239,13 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             if (result != null) {
                 i++;
                 const resultArray = Array.isArray(result) ? result : [result];
-                output.push(...resultArray
-                    .filter(e => typeof e == 'string' ? e : e.child)
-                    .map(e => {
-                    if (typeof e == 'string')
-                        return e;
-                    if (e.key)
+                for (const e of resultArray) {
+                    if (!(typeof e == 'string' ? e : e.child))
+                        continue;
+                    if (typeof e != 'string' && e.key)
                         seenFields[e.key] = e.value;
-                    return e;
-                }));
+                    output.push(e);
+                }
             }
             state = nextState;
         }
@@ -301,12 +299,12 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
             if (j++ > 10000) {
                 throw new Error("Iteration limit exceeded in tokeniseString");
             }
-            let tail = input.slice(i);
+            let remaining = input.slice(i);
             // find the next separator or compound expression, if it exists.
             let markerIndex = Infinity;
             let marker = null;
             for (const x of LPAREN_OR_SEP) {
-                const n = tail.indexOf(x);
+                const n = remaining.indexOf(x);
                 if (n >= 0 && n < markerIndex) {
                     markerIndex = n;
                     marker = x;
@@ -314,12 +312,13 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
             }
             // if no separator to the right, consume the rest of the string.
             if (marker === null) {
-                output.push(types_2.makeBasicToken(tail));
-                i += tail.length;
+                output.push(types_2.makeBasicToken(remaining));
+                i += remaining.length;
             }
             else if (marker === delim) {
                 // if next is a separator, consume up to that separator.
-                output.push(types_2.makeBasicToken(tail.slice(0, markerIndex).trim()));
+                if (markerIndex > 0)
+                    output.push(types_2.makeBasicToken(remaining.slice(0, markerIndex).trim()));
                 output.push(types_2.makeSeparatorToken());
                 i += markerIndex + marker.length;
             }
@@ -327,7 +326,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                 // next is a compound expression. consume up to the close parens.
                 i += marker.length; // consume the left and open paren.
                 // find closing paren with separator.
-                const inner = tail.slice(marker.length);
+                const inner = remaining.slice(marker.length);
                 const closeSep = inner.indexOf(RPAREN_WITH_SEP);
                 let right;
                 if (closeSep < 0) {
@@ -412,6 +411,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
     function highlight(links, className) {
         let success = 0;
         console.log("Highlighting " + links.length + " torrent elements...");
+        const start = Date.now();
         for (const el of links) {
             let tokens = null;
             let output = null;
@@ -426,7 +426,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 }
                 const df = document.createDocumentFragment();
                 df.append(...output);
-                el.append(df);
+                el.appendChild(df);
                 for (const [k, v] of Object.entries(fields)) {
                     el.dataset[k] = v;
                 }
@@ -442,7 +442,7 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                 console.log("------------------------------------");
             }
         }
-        console.log(`Done highlighting: ${success} successful, ${links.length - success} failed.`);
+        console.log(`Done highlighting in ${Date.now() - start} ms: ${success} successful, ${links.length - success} failed.`);
         return success;
     }
     exports.highlight = highlight;

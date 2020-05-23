@@ -242,13 +242,13 @@ export function mainParse(tokens: Token[]): [ParseOutput, SeenFields] {
     if (result != null) {
       i++;
       const resultArray = Array.isArray(result) ? result : [result];
-      output.push(...resultArray
-        .filter(e => typeof e == 'string' ? e : e.child)
-        .map(e => {
-          if (typeof e == 'string') return e;
-          if (e.key) seenFields[e.key] = e.value;
-          return e;
-        }));
+      for (const e of resultArray) {
+        if (!(typeof e == 'string' ? e : e.child))
+          continue;
+        if (typeof e != 'string' && e.key)
+          seenFields[e.key] = e.value;
+        output.push(e);
+      }
     }
     state = nextState;
   }
