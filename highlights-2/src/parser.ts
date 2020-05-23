@@ -170,7 +170,7 @@ const initHandler: TokenStateTransformer = (t, s) => {
 }
 
 const arrowTransformer: Transformer = (t, s) => {
-  if (t.type == 'BASIC' && t.text == ARROW)
+  if (t.type == 'SPECIAL' && t.special == 'arrow')
     return ARROW + ' ';
   return null;
 };

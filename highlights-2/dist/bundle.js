@@ -178,7 +178,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         return [START_STATES[FIRST_FIELDS[first]], null];
     };
     const arrowTransformer = (t, s) => {
-        if (t.type == 'BASIC' && t.text == types_1.ARROW)
+        if (t.type == 'SPECIAL' && t.special == 'arrow')
             return types_1.ARROW + ' ';
         return null;
     };
