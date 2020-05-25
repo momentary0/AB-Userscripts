@@ -348,7 +348,7 @@
                 var year = match[3];
                 var time = match[4]+':00';
                 // convert this absolute timestamp into something JS can parse
-                // and parse it.
+                // and parse it. ignore timezones because it's all relative anyway.
                 return Date.parse(year+'-'+month+'-'+day+'T'+time);
             }
             match = text_content_no_comma.replace(and_RegExp, '').match(duration_RegExp);
@@ -612,7 +612,7 @@
                             }
                         }
                     }
-                    console.log(table_data);
+                    // console.log(table_data);
                 };
             }
             if (sort_rows && table_data.length > 1) {
