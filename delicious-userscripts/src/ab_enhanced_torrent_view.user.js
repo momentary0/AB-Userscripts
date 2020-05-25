@@ -3,7 +3,7 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.05
+// @version     1.06
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -88,7 +88,9 @@
     var and_RegExp = /(and|\s)/ig;
     var duration_RegExp = /^(?:(\d+)years?)?(?:(\d+)months?)?(?:(\d+)weeks?)?(?:(\d+)days?)?(?:(\d+)hours?)?(?:(\d+)minutes?)?(?:(\d+)seconds?)?(?:ago)?(?:\s*\([^)]*\)\s*)*$/;
     var datetime_RegExp = /^(\d+)\-(\d{1,2})\-(\d{1,2})\s+(\d{1,2}):(\d{1,2})$/;
+    var abs_datetime_RegExp = /^([a-z]{3}) (\d{2}) (\d{4}) (\d{2}:\d{2}) [a-z]+$/i;
     var currency_RegExp = /^(?:[¥|€|£|\$]\s*)([\d\.]+)$/;
+    var monthNumbers = {Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12};
     function unit_prefix(prefix) {
         // If prefix is undefined, the regex failed to match a prefix
         // and we assume it is in bytes.
@@ -310,6 +312,7 @@
         var text_content = cell.textContent.trim();
         var text_content_no_comma = text_content.replace(/,/g, '').trim();
         var image = cell.querySelector('img');
+        var span = cell.querySelector('span[title]');
         if (cell.textContent === '' && (image !== null)) {
             return image.alt.toUpperCase();
         }
@@ -320,6 +323,17 @@
         match = text_content_no_comma.match(datetime_RegExp);
         if (match !== null) {
             return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10), parseInt(match[4], 10), parseInt(match[5], 10));
+        }
+        match = text_content_no_comma.match(abs_datetime_RegExp);
+        if (match !== null) {
+            var month = monthNumbers[match[1]].toString();
+            if (month.length < 2) month = '0'+month;
+            var day = match[2];
+            var year = match[3];
+            var time = match[4]+':00';
+            // convert this absolute timestamp into something JS can parse
+            // and parse it. ignore timezones because it's all relative anyway.
+            return Date.parse(year+'-'+month+'-'+day+'T'+time);
         }
         match = text_content_no_comma.replace(and_RegExp, '').match(duration_RegExp);
         if (match !== null) {
@@ -582,7 +596,7 @@
                         }
                     }
                 }
-                console.log(table_data);
+                // console.log(table_data);
             };
         }
         if (sort_rows && table_data.length > 1) {
