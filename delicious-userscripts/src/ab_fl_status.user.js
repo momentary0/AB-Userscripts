@@ -3,7 +3,7 @@
 // @author      Megure (inspired by Lemma, Alpha, NSC)
 // @description Shows current freeleech pool status in navbar with a pie-chart
 // @include     https://animebytes.tv/*
-// @version     0.1.1.2
+// @version     0.1.1.3
 // @icon        http://animebytes.tv/favicon.ico
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -65,9 +65,13 @@
     var locked = false;
     function getFLInfo() {
         function parseFLInfo(elem) {
+            console.log("Parsing FL info from element: ", elem);
             var boxes = elem.querySelectorAll('#content .box.pad');
             //console.log(boxes);
-            if (boxes.length < 3) return;
+            if (boxes.length < 3) {
+                console.error("Not enough boxes.");
+                return;
+            }
 
             // The first box holds the current amount, the max amount and the user's individual all-time contribution
             var match = boxes[0].textContent.match(/have ¥([0-9,]+) \/ ¥([0-9,]+)/i),
@@ -143,6 +147,7 @@
             parseFLInfo(document);
         else if (Date.now() - parseInt(GM_getValue('FLPoolLastUpdate', '0'), 10) > 3600000 && locked === false) {
             locked = true;
+            console.log("Attempting to update FL status...");
             // Fix suggested by https://animebytes.tv/user/profile/oregano
             // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
             try {
@@ -154,6 +159,7 @@
             xhr.open('GET', "https://animebytes.tv/konbini/pool", true);
             xhr.send();
             xhr.onreadystatechange = function () {
+                console.log("FL xhr.onreadystatechange: ", xhr.readyState);
                 if (xhr.readyState === 4) {
                     parseFLInfo(parser.parseFromString(xhr.responseText, 'text/html'));
                     updatePieChart();
@@ -208,7 +214,9 @@
             for (var i = 0; i < titles.length; i++) {
                 str += circlePart(amounts[i], titles[i], hrefs[i], colors[i]);
             }
-        } catch (e) { }
+        } catch (e) {
+            console.error("Error rendering FL pie chart.", e);
+        }
         return str + '</svg>';
     }
 
@@ -237,6 +245,7 @@
             a = document.createElement('a'),
             ul = document.createElement('ul'),
             li = document.createElement('li');
+        console.log("Inserting FL status. pos: ", pos);
         a.href = '/konbini/pool';
         nav.appendChild(a);
         if (pieLocations['navbar']) {
