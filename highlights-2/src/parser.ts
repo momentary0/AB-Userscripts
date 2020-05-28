@@ -1,10 +1,7 @@
-import { Handler, AnimeState, Transformer as TransformerVisitor, Token, BasicToken, makeBasicToken, SharedState as CommonState, MusicState, BookState, GameState, makeCompoundToken, makeSpecialToken, SNATCHED_TEXT, ARROW } from './types';
+import { Handler, AnimeState, Transformer, Token, BasicToken, SharedState, MusicState, BookState, GameState, makeCompoundToken, ARROW, AnyState } from './types';
 
-export const SEP_SYMBOL = Symbol('sep');
-export type SEP_SYMBOL = typeof SEP_SYMBOL;
 export type FinalOutput = (Node | string)[];
 
-type AnyState = CommonState | AnimeState | MusicState | BookState | GameState;
 type PreSpan = {
   type: 'span',
   key: string,
@@ -12,9 +9,9 @@ type PreSpan = {
   child: string | Node,
 };
 type ElementOrString = PreSpan | string;
-type ParseOutput = (ElementOrString | typeof SEP_SYMBOL)[];
+type ParseOutput = ElementOrString[];
 type TransformerResult = ElementOrString[] | ElementOrString | null;
-type TokenStateTransformer = TransformerVisitor<AnyState, Token, TransformerResult, SeenFields>;
+type TokenStateTransformer = Transformer<AnyState, Token, TransformerResult, SeenFields>;
 type SeenFields = {[key: string]: string};
 
 export const span = (key: string, value: string, child?: HTMLElement | string): PreSpan => {
@@ -23,8 +20,8 @@ export const span = (key: string, value: string, child?: HTMLElement | string): 
   return {type: 'span', key, value, child};
 };
 
-export type Decider = (t: Token, s: SeenFields) => AnyState;
-export type Transformer = (t: Token, s: SeenFields) => TransformerResult
+export type DFunction = (t: Token, s: SeenFields) => AnyState;
+export type TFunction = (t: Token, s: SeenFields) => TransformerResult
 
 export const preCapture = (pre: (t: Token, s: SeenFields) => [Token, SeenFields],
     transformer: TokenStateTransformer): TokenStateTransformer => {
@@ -39,8 +36,8 @@ function assertBasicToken(t: Token): asserts t is BasicToken {
     throw new Error('Expected basic token, got ' + t);
 }
 
-export const basicTransformer = (key1: string, key2?: string): Transformer => {
-  return (t, s) => {
+export const basicTransformer = (key1: string, key2?: string): TFunction => {
+  return (t) => {
     switch (t.type) {
       case 'BASIC':
         return span(key1, t.text);
@@ -53,8 +50,8 @@ export const basicTransformer = (key1: string, key2?: string): Transformer => {
   };
 };
 
-export const splitTransformer = (key1: string, key2: string): Transformer => {
-  return (t, s) => {
+export const splitTransformer = (key1: string, key2: string): TFunction => {
+  return (t) => {
     assertBasicToken(t);
     const i = t.text.indexOf(' ');
     console.assert(i >= 0);
@@ -73,29 +70,29 @@ export const toCompoundToken = (t: Token): Token => {
   return makeCompoundToken(left, right);
 };
 
-export const captureDT = (decider: Decider, transformer: Transformer): TokenStateTransformer => {
+export const captureDT = (decider: DFunction, transformer: TFunction): TokenStateTransformer => {
   return (t, s) => [decider(t, s), transformer(t, s)];
 };
 
-export const captureD = (decider: Decider, key: string, key2?: string): TokenStateTransformer =>
+export const captureD = (decider: DFunction, key: string, key2?: string): TokenStateTransformer =>
   captureDT(decider, basicTransformer(key, key2));
 
-export const captureT = (next: AnyState, transform: Transformer): TokenStateTransformer =>
+export const captureT = (next: AnyState, transform: TFunction): TokenStateTransformer =>
   captureDT(() => next, transform);
 
 export const capture = (next: AnyState, key: string, key2?: string): TokenStateTransformer =>
   captureD(() => next, key, key2);
 
-export const maybeFlag = (key: string, expected: string): Transformer => {
-  return (t, s) => {
+export const maybeFlag = (key: string, expected: string): TFunction => {
+  return (t) => {
     if (t.type !== 'BASIC' || t.text !== expected) return null;
     return span(key, expected);
   }
 };
 
-export const maybeList = (key: string, ...options: string[]): Transformer => {
+export const maybeList = (key: string, ...options: string[]): TFunction => {
   const set = new Set(options);
-  return (t, s) => {
+  return (t) => {
     if (t.type !== 'BASIC' || !set.has(t.text)) return null;
     return span(key, t.text);
   }
@@ -103,8 +100,8 @@ export const maybeList = (key: string, ...options: string[]): Transformer => {
 
 export const basename = (url: string) => url.split('/').slice(-1)[0].split('.')[0];
 
-export const maybeImage = (key: string, imageFile: string, value?: string): Transformer => {
-  return (t, s) => {
+export const maybeImage = (key: string, imageFile: string, value?: string): TFunction => {
+  return (t) => {
     if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG') return null;
     if (basename((t.element as HTMLImageElement).src) !== imageFile) return null;
     return span(key, value ?? imageFile, t.element);
@@ -118,7 +115,7 @@ const TRAILING_IMAGES = [
 ];
 const fallbackTransformer = basicTransformer('misc', 'misc');
 
-const trailingFieldsTransformer: Transformer = (t, s) => {
+const trailingFieldsTransformer: TFunction = (t, s) => {
   if (t.type === 'SPECIAL' && t.special === 'snatched') {
     return [' - ', span('snatched', '', 'Snatched')];
   }
@@ -158,18 +155,16 @@ const START_STATES = {
   book: BookState.TRANSLATION,
 };
 
-const initHandler: TokenStateTransformer = (t, s) => {
+const initHandler: TokenStateTransformer = (t) => {
   if (t.type != 'BASIC' && t.type != 'COMPOUND')
     throw new Error('Need basic or compound as first token, not ' + t);
 
   const first = (t.type == 'COMPOUND' ? t.left : t.text);
-  if (FIRST_FIELDS[first] === undefined)
-    throw new Error('Unknown first field text: ' + first);
 
-  return [START_STATES[FIRST_FIELDS[first]], null];
+  return [START_STATES[FIRST_FIELDS[first]] ?? SharedState.UNKNOWN, null];
 }
 
-const arrowTransformer: Transformer = (t, s) => {
+const arrowTransformer: TFunction = (t) => {
   if (t.type == 'SPECIAL' && t.special == 'arrow')
     return ARROW + ' ';
   return null;
@@ -180,9 +175,12 @@ const GAME_ARCHIVED = ['Archived', 'Unarchived'];
 const BOOK_FORMATS = ['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'];
 
 export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
-  [CommonState.ARROW]: captureT(CommonState.BEGIN_PARSE, arrowTransformer),
-  [CommonState.BEGIN_PARSE]: initHandler,
-  [CommonState.COMMON_TRAILING_FIELDS]: captureT(CommonState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
+  [SharedState.BBCODE]: capture(SharedState.COLONS, 'name'),
+  [SharedState.COLONS]: captureT(SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
+  [SharedState.ARROW]: captureT(SharedState.BEGIN_PARSE, arrowTransformer),
+  [SharedState.BEGIN_PARSE]: initHandler,
+  [SharedState.COMMON_TRAILING_FIELDS]: captureT(SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
+  [SharedState.UNKNOWN]: capture(SharedState.UNKNOWN, 'misc', 'misc'),
 
   [AnimeState.SOURCE]: capture(AnimeState.CONTAINER, 'source'),
   [AnimeState.CONTAINER]: preCapture((t, s) => [toCompoundToken(t), s],
@@ -194,34 +192,34 @@ export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
   [AnimeState.AUDIO_CODEC]: captureT(AnimeState.DUAL_AUDIO, splitTransformer('audioCodec', 'audioChannels')),
   [AnimeState.DUAL_AUDIO]: captureT(AnimeState.REMASTER, maybeFlag('dualAudio', 'Dual Audio')),
   [AnimeState.REMASTER]: captureT(AnimeState.SUBBING_AND_GROUP, maybeImage('remastered', 'rmstr')),
-  [AnimeState.SUBBING_AND_GROUP]: capture(CommonState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
+  [AnimeState.SUBBING_AND_GROUP]: capture(SharedState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
 
   [MusicState.ENCODING]: capture(MusicState.BITRATE, 'encoding'),
   [MusicState.BITRATE]: capture(MusicState.SOURCE, 'bitrate'),
   [MusicState.SOURCE]: capture(MusicState.LOG, 'source'),
   [MusicState.LOG]: captureT(MusicState.CUE, maybeFlag('log', 'Log')),
-  [MusicState.CUE]: captureT(CommonState.COMMON_TRAILING_FIELDS, maybeFlag('cue', 'Cue')),
+  [MusicState.CUE]: captureT(SharedState.COMMON_TRAILING_FIELDS, maybeFlag('cue', 'Cue')),
 
   [GameState.TYPE]: capture(GameState.PLATFORM, 'type'),
   [GameState.PLATFORM]: capture(GameState.REGION, 'platform'),
   [GameState.REGION]: captureT(GameState.ARCHIVED, maybeList('region', ...GAME_REGIONS)),
   [GameState.ARCHIVED]: captureT(GameState.SCENE, maybeList('archived', ...GAME_ARCHIVED)),
-  [GameState.SCENE]: captureT(CommonState.COMMON_TRAILING_FIELDS, maybeFlag('scene', 'Scene')),
+  [GameState.SCENE]: captureT(SharedState.COMMON_TRAILING_FIELDS, maybeFlag('scene', 'Scene')),
 
   [BookState.TRANSLATION]: capture(BookState.FORMAT, 'translation', 'group'),
   [BookState.FORMAT]: captureT(BookState.ONGOING, maybeList('format', ...BOOK_FORMATS)),
-  [BookState.ONGOING]: captureT(CommonState.COMMON_TRAILING_FIELDS, maybeFlag('ongoing', 'Ongoing')),
+  [BookState.ONGOING]: captureT(SharedState.COMMON_TRAILING_FIELDS, maybeFlag('ongoing', 'Ongoing')),
 };
 
 export function preParse(tokens: Token[]): Token[] {
   return tokens;
 }
 
-export function mainParse(tokens: Token[]): [ParseOutput, SeenFields] {
+export function mainParse(tokens: Token[], start: AnyState): [ParseOutput, SeenFields] {
   const output: ParseOutput = [];
   const seenFields: SeenFields = {};
 
-  let state: AnyState = CommonState.ARROW;
+  let state: AnyState = start;
   let i = 0;
   let j = 0;
   while (i < tokens.length) {
@@ -230,15 +228,17 @@ export function mainParse(tokens: Token[]): [ParseOutput, SeenFields] {
     }
     const token = tokens[i];
     if (token.type == 'SEPARATOR') {
-      output.push(SEP_SYMBOL);
+      output.push(token.sep);
       i++;
       continue;
     }
 
     const handler: TokenStateTransformer = TRANSITION_ACTIONS[state]!;
-    console.assert(handler != null);
+    if (!handler)
+      throw new Error("No handler associated with state: " + state);
 
     const [nextState, result] = handler(token, seenFields);
+    // console.debug("Parse state transition from " + state + ": ", [nextState, result]);
     if (result != null) {
       i++;
       const resultArray = Array.isArray(result) ? result : [result];
@@ -259,12 +259,10 @@ export function mainParse(tokens: Token[]): [ParseOutput, SeenFields] {
 const templateSpan = document.createElement('span');
 templateSpan.className = 'userscript-highlight torrent-field';
 
-export function postParse(parsed: ParseOutput, delim: string): FinalOutput {
+export function postParse(parsed: ParseOutput): FinalOutput {
   return parsed.map(e => {
     if (typeof e == 'string') {
       return e;
-    } else if (e === SEP_SYMBOL) {
-      return delim;
     } else {
       const span = templateSpan.cloneNode(false) as HTMLSpanElement;
       if (e.key)
@@ -275,7 +273,7 @@ export function postParse(parsed: ParseOutput, delim: string): FinalOutput {
   });
 }
 
-export function parse(tokens: Token[], delim: string): [FinalOutput, SeenFields] {
-  const [parsed, fields] = mainParse(preParse(tokens))
-  return [postParse(parsed, delim), fields];
+export function parse(tokens: Token[], start: AnyState): [FinalOutput, SeenFields] {
+  const [parsed, fields] = mainParse(preParse(tokens), start);
+  return [postParse(parsed), fields];
 }

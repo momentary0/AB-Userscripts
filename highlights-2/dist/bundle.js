@@ -5,12 +5,15 @@ define("types", ["require", "exports"], function (require, exports) {
     exports.makeCompoundToken = (left, right) => ({ type: 'COMPOUND', left, right });
     exports.makeElementToken = (element) => ({ type: 'ELEMENT', element });
     exports.makeSpecialToken = (special) => ({ type: 'SPECIAL', special });
-    exports.makeSeparatorToken = () => ({ type: 'SEPARATOR' });
+    exports.makeSeparatorToken = (sep) => ({ type: 'SEPARATOR', sep });
     var SharedState;
     (function (SharedState) {
         SharedState[SharedState["ARROW"] = 0] = "ARROW";
-        SharedState[SharedState["BEGIN_PARSE"] = 1] = "BEGIN_PARSE";
-        SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 2] = "COMMON_TRAILING_FIELDS";
+        SharedState[SharedState["BBCODE"] = 1] = "BBCODE";
+        SharedState[SharedState["COLONS"] = 2] = "COLONS";
+        SharedState[SharedState["BEGIN_PARSE"] = 3] = "BEGIN_PARSE";
+        SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 4] = "COMMON_TRAILING_FIELDS";
+        SharedState[SharedState["UNKNOWN"] = 5] = "UNKNOWN";
     })(SharedState = exports.SharedState || (exports.SharedState = {}));
     var AnimeState;
     (function (AnimeState) {
@@ -49,11 +52,11 @@ define("types", ["require", "exports"], function (require, exports) {
     })(BookState = exports.BookState || (exports.BookState = {}));
     exports.SNATCHED_TEXT = ' - Snatched';
     exports.ARROW = '»';
+    exports.COLONS = ' :: ';
 });
 define("parser", ["require", "exports", "types"], function (require, exports, types_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SEP_SYMBOL = Symbol('sep');
     exports.span = (key, value, child) => {
         if (child === undefined)
             child = value;
@@ -70,7 +73,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             throw new Error('Expected basic token, got ' + t);
     }
     exports.basicTransformer = (key1, key2) => {
-        return (t, s) => {
+        return (t) => {
             switch (t.type) {
                 case 'BASIC':
                     return exports.span(key1, t.text);
@@ -83,7 +86,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         };
     };
     exports.splitTransformer = (key1, key2) => {
-        return (t, s) => {
+        return (t) => {
             assertBasicToken(t);
             const i = t.text.indexOf(' ');
             console.assert(i >= 0);
@@ -107,7 +110,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     exports.captureT = (next, transform) => exports.captureDT(() => next, transform);
     exports.capture = (next, key, key2) => exports.captureD(() => next, key, key2);
     exports.maybeFlag = (key, expected) => {
-        return (t, s) => {
+        return (t) => {
             if (t.type !== 'BASIC' || t.text !== expected)
                 return null;
             return exports.span(key, expected);
@@ -115,7 +118,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     };
     exports.maybeList = (key, ...options) => {
         const set = new Set(options);
-        return (t, s) => {
+        return (t) => {
             if (t.type !== 'BASIC' || !set.has(t.text))
                 return null;
             return exports.span(key, t.text);
@@ -123,7 +126,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     };
     exports.basename = (url) => url.split('/').slice(-1)[0].split('.')[0];
     exports.maybeImage = (key, imageFile, value) => {
-        return (t, s) => {
+        return (t) => {
             if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG')
                 return null;
             if (exports.basename(t.element.src) !== imageFile)
@@ -169,15 +172,14 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         game: types_1.GameState.TYPE,
         book: types_1.BookState.TRANSLATION,
     };
-    const initHandler = (t, s) => {
+    const initHandler = (t) => {
+        var _a;
         if (t.type != 'BASIC' && t.type != 'COMPOUND')
             throw new Error('Need basic or compound as first token, not ' + t);
         const first = (t.type == 'COMPOUND' ? t.left : t.text);
-        if (FIRST_FIELDS[first] === undefined)
-            throw new Error('Unknown first field text: ' + first);
-        return [START_STATES[FIRST_FIELDS[first]], null];
+        return [(_a = START_STATES[FIRST_FIELDS[first]]) !== null && _a !== void 0 ? _a : types_1.SharedState.UNKNOWN, null];
     };
-    const arrowTransformer = (t, s) => {
+    const arrowTransformer = (t) => {
         if (t.type == 'SPECIAL' && t.special == 'arrow')
             return types_1.ARROW + ' ';
         return null;
@@ -186,9 +188,12 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     const GAME_ARCHIVED = ['Archived', 'Unarchived'];
     const BOOK_FORMATS = ['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'];
     exports.TRANSITION_ACTIONS = {
+        [types_1.SharedState.BBCODE]: exports.capture(types_1.SharedState.COLONS, 'name'),
+        [types_1.SharedState.COLONS]: exports.captureT(types_1.SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
         [types_1.SharedState.ARROW]: exports.captureT(types_1.SharedState.BEGIN_PARSE, arrowTransformer),
         [types_1.SharedState.BEGIN_PARSE]: initHandler,
         [types_1.SharedState.COMMON_TRAILING_FIELDS]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
+        [types_1.SharedState.UNKNOWN]: exports.capture(types_1.SharedState.UNKNOWN, 'misc', 'misc'),
         [types_1.AnimeState.SOURCE]: exports.capture(types_1.AnimeState.CONTAINER, 'source'),
         [types_1.AnimeState.CONTAINER]: exports.preCapture((t, s) => [exports.toCompoundToken(t), s], exports.captureD((t) => t.type === 'COMPOUND' ? types_1.AnimeState.ASPECT_RATIO : types_1.AnimeState.VIDEO_CODEC, 'container', 'region')),
         [types_1.AnimeState.ASPECT_RATIO]: exports.captureD((t, s) => s.source == 'DVD9' || s.source == 'DVD5'
@@ -217,10 +222,10 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         return tokens;
     }
     exports.preParse = preParse;
-    function mainParse(tokens) {
+    function mainParse(tokens, start) {
         const output = [];
         const seenFields = {};
-        let state = types_1.SharedState.ARROW;
+        let state = start;
         let i = 0;
         let j = 0;
         while (i < tokens.length) {
@@ -229,13 +234,15 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             }
             const token = tokens[i];
             if (token.type == 'SEPARATOR') {
-                output.push(exports.SEP_SYMBOL);
+                output.push(token.sep);
                 i++;
                 continue;
             }
             const handler = exports.TRANSITION_ACTIONS[state];
-            console.assert(handler != null);
+            if (!handler)
+                throw new Error("No handler associated with state: " + state);
             const [nextState, result] = handler(token, seenFields);
+            // console.debug("Parse state transition from " + state + ": ", [nextState, result]);
             if (result != null) {
                 i++;
                 const resultArray = Array.isArray(result) ? result : [result];
@@ -254,13 +261,10 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     exports.mainParse = mainParse;
     const templateSpan = document.createElement('span');
     templateSpan.className = 'userscript-highlight torrent-field';
-    function postParse(parsed, delim) {
+    function postParse(parsed) {
         return parsed.map(e => {
             if (typeof e == 'string') {
                 return e;
-            }
-            else if (e === exports.SEP_SYMBOL) {
-                return delim;
             }
             else {
                 const span = templateSpan.cloneNode(false);
@@ -272,9 +276,9 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         });
     }
     exports.postParse = postParse;
-    function parse(tokens, delim) {
-        const [parsed, fields] = mainParse(preParse(tokens));
-        return [postParse(parsed, delim), fields];
+    function parse(tokens, start) {
+        const [parsed, fields] = mainParse(preParse(tokens), start);
+        return [postParse(parsed), fields];
     }
     exports.parse = parse;
 });
@@ -319,7 +323,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                 // if next is a separator, consume up to that separator.
                 if (markerIndex > 0)
                     output.push(types_2.makeBasicToken(remaining.slice(0, markerIndex).trim()));
-                output.push(types_2.makeSeparatorToken());
+                output.push(types_2.makeSeparatorToken(delim));
                 i += markerIndex + marker.length;
             }
             else {
@@ -344,7 +348,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                 }
                 output.push(types_2.makeCompoundToken(marker.split(' ')[0], right));
                 if (closeSep >= 0) {
-                    output.push(types_2.makeSeparatorToken());
+                    output.push(types_2.makeSeparatorToken(delim));
                 }
             }
         }
@@ -368,6 +372,13 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                             text = text.slice(1);
                         }
                         text = text.trimStart();
+                        const colons = text.indexOf(types_2.COLONS);
+                        if (colons >= 0) {
+                            const left = text.slice(0, colons);
+                            output.push(left);
+                            output.push(types_2.COLONS);
+                            text = text.slice(colons + types_2.COLONS.length).trimLeft();
+                        }
                     }
                     if (i === nodes.length - 1) {
                         text = text.trimEnd();
@@ -405,25 +416,42 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
     }
     exports.tokenise = tokenise;
 });
-define("highlighter", ["require", "exports", "parser", "lexer"], function (require, exports, parser_1, lexer_1) {
+define("highlighter", ["require", "exports", "parser", "lexer", "types"], function (require, exports, parser_1, lexer_1, types_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function highlight(links, className) {
+    function highlight(links, start, className) {
+        const count = (needle, haystack) => { var _a; return ((_a = haystack.match(needle)) !== null && _a !== void 0 ? _a : []).length; };
+        const HIGHLIGHT_CLASS = 'userscript-highlight';
         let success = 0;
-        console.log("Highlighting " + links.length + " torrent elements...");
-        const start = Date.now();
+        console.log(`Highlighting ${links.length} elements with ${className} class...`);
+        const startTime = Date.now();
         for (const el of links) {
+            if (el.classList.contains(HIGHLIGHT_CLASS)) {
+                console.error("Highlighter: Refusing to highlight element which is already "
+                    + 'highlighted', el);
+                break;
+            }
             let tokens = null;
             let output = null;
             let fields = null;
             try {
-                const delim = el.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ';
-                tokens = lexer_1.tokenise(el.childNodes, delim);
-                [output, fields] = parser_1.parse(tokens, delim);
-                el.classList.add('userscript-highlight', className);
-                while (el.hasChildNodes()) {
-                    el.removeChild(el.lastChild);
+                el.classList.add(HIGHLIGHT_CLASS, className);
+                let delim = null;
+                if (el.href.indexOf('torrents.php') != -1) {
+                    delim = ' | ';
                 }
+                else if (el.href.indexOf('torrents2.php') != -1) {
+                    delim = ' / ';
+                }
+                else {
+                    const pipes = count(/ \| /g, el.textContent);
+                    const slashes = count(/ \/ /g, el.textContent);
+                    delim = pipes > slashes ? ' | ' : ' / ';
+                }
+                tokens = lexer_1.tokenise(el.childNodes, delim);
+                [output, fields] = parser_1.parse(tokens, start);
+                while (el.hasChildNodes())
+                    el.removeChild(el.lastChild);
                 const df = document.createDocumentFragment();
                 df.append(...output);
                 el.appendChild(df);
@@ -431,31 +459,40 @@ define("highlighter", ["require", "exports", "parser", "lexer"], function (requi
                     el.dataset[k] = v;
                 }
                 if (fields.misc !== undefined) {
-                    console.warn('Highlighter: Generated data-misc field for torrent. ' +
-                        'This might be due to a lexer/parser bug or unsupported data field.', el.href);
-                    throw 'data-misc';
+                    throw 'misc';
                 }
                 success++;
             }
             catch (e) {
-                if (e !== 'data-misc')
-                    console.error("Highlighter: Error while highlighting torrent: ", e);
-                console.log("Element: ", el);
-                // console.log("Child nodes: ", Array.from(el.childNodes));
-                console.log("Tokenised: ", tokens);
-                // console.log("Converted: ", output);
-                console.log("Data fields: ", fields);
-                console.log("------------------------------------");
+                switch (e) {
+                    case 'misc':
+                        console.error('Highlighter: Generated data-misc field for torrent. '
+                            + 'This might be due to a lexer/parser bug or unsupported data field.\n'
+                            + el.href + '\n'
+                            + JSON.stringify(el.textContent));
+                        break;
+                    default:
+                        console.error("Highlighter: Fatal error while highlighting torrent: ", e);
+                        console.log("Element: ", el);
+                        // console.log("Child nodes: ", Array.from(el.childNodes));
+                        console.log("Tokenised: ", tokens);
+                        // console.log("Converted: ", output);
+                        console.log("Data fields: ", fields);
+                        console.log("------------------------------------");
+                        break;
+                }
             }
         }
-        console.log(`Done highlighting in ${Date.now() - start} ms: ${success} successful, ${links.length - success} failed.`);
+        console.log(`Done highlighting in ${Date.now() - startTime} ms: ${success} successful, ${links.length - success} failed.`);
         return success;
     }
     exports.highlight = highlight;
     function main() {
+        const q = (s) => document.querySelectorAll(s);
         const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]';
-        const links = document.querySelectorAll(TORRENT_PAGE_QUERY);
-        highlight(links, 'torrent-page');
+        highlight(q(TORRENT_PAGE_QUERY), types_3.SharedState.ARROW, 'torrent-page');
+        const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
+        highlight(q(TORRENT_BBCODE_QUERY), types_3.SharedState.BBCODE, 'torrent-bbcode');
     }
     exports.main = main;
     function test() {

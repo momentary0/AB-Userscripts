@@ -27,6 +27,7 @@ export type SpecialToken = {
 
 export type Separator = {
   type: 'SEPARATOR',
+  sep: string,
 }
 
 export type Token = BasicToken | CompoundToken | Separator | ElementToken | SpecialToken;
@@ -35,13 +36,16 @@ export const makeBasicToken = (text: string): BasicToken => ({ type: 'BASIC', te
 export const makeCompoundToken = (left: string, right: string): CompoundToken => ({ type: 'COMPOUND', left, right });
 export const makeElementToken = (element: HTMLElement): ElementToken => ({ type: 'ELEMENT', element });
 export const makeSpecialToken = (special: SpecialTypes): SpecialToken => ({ type: 'SPECIAL', special });
-export const makeSeparatorToken = (): Separator => ({ type: 'SEPARATOR' });
+export const makeSeparatorToken = (sep: string, ): Separator => ({ type: 'SEPARATOR', sep });
 
 
 export enum SharedState {
   ARROW,
+  BBCODE,
+  COLONS,
   BEGIN_PARSE,
   COMMON_TRAILING_FIELDS, // FL, exclusive, snatched, hentai, etc.
+  UNKNOWN,
 }
 
 export enum AnimeState {
@@ -79,6 +83,8 @@ export enum BookState {
   ONGOING
 }
 
+export type AnyState = SharedState | AnimeState | MusicState | BookState | GameState;
+
 export type Transformer<S, T, U, H> = (token: T, state: H) => [S, U];
 
 export type Handler<S, T> = {
@@ -88,3 +94,4 @@ export type Handler<S, T> = {
 
 export const SNATCHED_TEXT = ' - Snatched';
 export const ARROW = '»';
+export const COLONS = ' :: ';

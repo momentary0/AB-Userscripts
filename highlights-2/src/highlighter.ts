@@ -1,26 +1,47 @@
-import { parse, SEP_SYMBOL } from "./parser";
+import { parse } from "./parser";
 import { tokenise } from "./lexer";
+import { SharedState, AnyState } from "./types";
 
-export function highlight(links: NodeListOf<HTMLAnchorElement>, className: string): number {
+export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState, className: string): number {
+  const count = (needle: RegExp, haystack: string) => (haystack.match(needle) ?? []).length;
+
+  const HIGHLIGHT_CLASS = 'userscript-highlight';
+
   let success = 0;
-  console.log("Highlighting " + links.length + " torrent elements...");
-  const start = Date.now();
+  console.log(`Highlighting ${links.length} elements with ${className} class...`);
+  const startTime = Date.now();
+
   for (const el of links) {
+
+    if (el.classList.contains(HIGHLIGHT_CLASS)) {
+      console.error("Highlighter: Refusing to highlight element which is already "
+        + 'highlighted', el);
+      break;
+    }
+
     let tokens = null;
     let output = null;
     let fields = null;
 
     try {
-      const delim = el.href.indexOf('torrents.php') !== -1 ? ' | ' : ' / ';
+      el.classList.add(HIGHLIGHT_CLASS, className);
+
+      let delim = null;
+      if (el.href.indexOf('torrents.php') != -1) {
+        delim = ' | ';
+      } else if (el.href.indexOf('torrents2.php') != -1) {
+        delim = ' / ';
+      } else {
+        const pipes = count(/ \| /g, el.textContent!);
+        const slashes = count(/ \/ /g, el.textContent!);
+        delim = pipes > slashes ? ' | ' : ' / ';
+      }
 
       tokens = tokenise(el.childNodes, delim);
-      [output, fields] = parse(tokens, delim);
+      [output, fields] = parse(tokens, start);
 
-      el.classList.add('userscript-highlight', className);
+      while (el.hasChildNodes()) el.removeChild(el.lastChild!);
 
-      while (el.hasChildNodes()) {
-        el.removeChild(el.lastChild!);
-      }
       const df = document.createDocumentFragment();
       df.append(...output);
       el.appendChild(df);
@@ -29,32 +50,43 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, className: strin
         el.dataset[k] = v;
       }
       if (fields.misc !== undefined) {
-        console.warn('Highlighter: Generated data-misc field for torrent. ' +
-          'This might be due to a lexer/parser bug or unsupported data field.',
-          el.href);
-        throw 'data-misc';
+        throw 'misc';
       }
+
       success++;
     } catch (e) {
-      if (e !== 'data-misc')
-        console.error("Highlighter: Error while highlighting torrent: ", e);
-      console.log("Element: ", el);
-      // console.log("Child nodes: ", Array.from(el.childNodes));
-      console.log("Tokenised: ", tokens);
-      // console.log("Converted: ", output);
-      console.log("Data fields: ", fields);
-      console.log("------------------------------------");
+      switch (e) {
+        case 'misc':
+          console.error('Highlighter: Generated data-misc field for torrent. '
+            + 'This might be due to a lexer/parser bug or unsupported data field.\n'
+            + el.href + '\n'
+            + JSON.stringify(el.textContent));
+          break;
+        default:
+          console.error("Highlighter: Fatal error while highlighting torrent: ", e);
+          console.log("Element: ", el);
+          // console.log("Child nodes: ", Array.from(el.childNodes));
+          console.log("Tokenised: ", tokens);
+          // console.log("Converted: ", output);
+          console.log("Data fields: ", fields);
+          console.log("------------------------------------");
+          break;
+      }
     }
   }
-  console.log(`Done highlighting in ${Date.now()-start} ms: ${success} successful, ${links.length-success} failed.`);
+
+  console.log(`Done highlighting in ${Date.now()-startTime} ms: ${success} successful, ${links.length-success} failed.`);
   return success;
 }
 
 export function main() {
-  const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]'
+  const q = (s: string) => document.querySelectorAll(s) as NodeListOf<HTMLAnchorElement>;
 
-  const links = document.querySelectorAll(TORRENT_PAGE_QUERY) as NodeListOf<HTMLAnchorElement>;
-  highlight(links, 'torrent-page');
+  const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]';
+  highlight(q(TORRENT_PAGE_QUERY), SharedState.ARROW, 'torrent-page');
+
+  const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
+  highlight(q(TORRENT_BBCODE_QUERY), SharedState.BBCODE, 'torrent-bbcode');
 }
 
 export function test() {

@@ -1,4 +1,4 @@
-import { Token, makeBasicToken, makeSeparatorToken, makeCompoundToken, makeElementToken, AnimeState, SNATCHED_TEXT, makeSpecialToken, ARROW } from './types';
+import { Token, makeBasicToken, makeSeparatorToken, makeCompoundToken, makeElementToken, AnimeState, SNATCHED_TEXT, makeSpecialToken, ARROW, COLONS } from './types';
 
 export function tokeniseString(input: string, delim: string): Token[] {
   if (input === ARROW) {
@@ -41,7 +41,7 @@ export function tokeniseString(input: string, delim: string): Token[] {
       // if next is a separator, consume up to that separator.
       if (markerIndex > 0)
         output.push(makeBasicToken(remaining.slice(0, markerIndex).trim()));
-      output.push(makeSeparatorToken());
+      output.push(makeSeparatorToken(delim));
       i += markerIndex + marker.length;
     } else {
       // next is a compound expression. consume up to the close parens.
@@ -67,7 +67,7 @@ export function tokeniseString(input: string, delim: string): Token[] {
       output.push(makeCompoundToken(marker.split(' ')[0], right));
 
       if (closeSep >= 0) {
-        output.push(makeSeparatorToken());
+        output.push(makeSeparatorToken(delim));
       }
     }
   }
@@ -93,6 +93,14 @@ export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement
             text = text.slice(1);
           }
           text = text.trimStart();
+
+          const colons = text.indexOf(COLONS);
+          if (colons >= 0) {
+            const left = text.slice(0, colons);
+            output.push(left);
+            output.push(COLONS);
+            text = text.slice(colons + COLONS.length).trimLeft();
+          }
         }
         if (i === nodes.length-1) {
           text = text.trimEnd();
