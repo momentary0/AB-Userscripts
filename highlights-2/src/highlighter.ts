@@ -2,7 +2,7 @@ import { parse } from "./parser";
 import { tokenise } from "./lexer";
 import { SharedState, AnyState } from "./types";
 
-export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState, className: string): number {
+export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState, className: string, defaultDelim?: string): number {
   const count = (needle: RegExp, haystack: string) => (haystack.match(needle) ?? []).length;
 
   const HIGHLIGHT_CLASS = 'userscript-highlight';
@@ -26,8 +26,10 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState,
     try {
       el.classList.add(HIGHLIGHT_CLASS, className);
 
-      let delim = null;
-      if (el.href.indexOf('torrents.php') != -1) {
+      let delim = defaultDelim;
+      if (delim) {
+        // use given delim.
+      } else if (el.href.indexOf('torrents.php') != -1) {
         delim = ' | ';
       } else if (el.href.indexOf('torrents2.php') != -1) {
         delim = ' / ';
@@ -82,8 +84,12 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState,
 export function main() {
   const q = (s: string) => document.querySelectorAll(s) as NodeListOf<HTMLAnchorElement>;
 
-  const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]';
+  const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="]';
   highlight(q(TORRENT_PAGE_QUERY), SharedState.ARROW, 'torrent-page');
+
+  // torrents on search result pages are always separated by ' | '.
+  const TORRENT_SEARCH_QUERY = '.torrent_properties > a[href*="&torrentid="]';
+  highlight(q(TORRENT_SEARCH_QUERY), SharedState.BEGIN_PARSE, 'torrent-page', ' | ');
 
   const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
   highlight(q(TORRENT_BBCODE_QUERY), SharedState.BBCODE, 'torrent-bbcode');

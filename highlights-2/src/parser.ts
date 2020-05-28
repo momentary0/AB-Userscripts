@@ -1,4 +1,4 @@
-import { Handler, AnimeState, Transformer, Token, BasicToken, SharedState, MusicState, BookState, GameState, makeCompoundToken, ARROW, AnyState } from './types';
+import { Handler, AnimeState, Transformer, Token, BasicToken, SharedState, MusicState, BookState, GameState, makeCompoundToken, ARROW, AnyState, EPISODE_TEXT, SCENE_TEXT } from './types';
 
 export type FinalOutput = (Node | string)[];
 
@@ -120,9 +120,16 @@ const trailingFieldsTransformer: TFunction = (t, s) => {
     return [' - ', span('snatched', '', 'Snatched')];
   }
 
-  if (t.type !== 'ELEMENT') {
-    return fallbackTransformer(t, s);
+  if (t.type === 'BASIC') {
+    if (t.text === SCENE_TEXT)
+      return span('scene', SCENE_TEXT, SCENE_TEXT);
+    if (t.text.startsWith(EPISODE_TEXT))
+      return span('episode', t.text.replace(EPISODE_TEXT, ''), t.text);
   }
+
+  if (t.type !== 'ELEMENT')
+    return fallbackTransformer(t, s);
+
   const imageMatches = TRAILING_IMAGES.map(trans => trans(t, s)).filter(x => x !== null);
   if (imageMatches) {
     return imageMatches[0];

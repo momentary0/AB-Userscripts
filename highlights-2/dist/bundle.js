@@ -49,6 +49,8 @@ define("types", ["require", "exports"], function (require, exports) {
         BookState[BookState["FORMAT"] = 401] = "FORMAT";
         BookState[BookState["ONGOING"] = 402] = "ONGOING";
     })(BookState = exports.BookState || (exports.BookState = {}));
+    exports.SCENE_TEXT = 'Scene';
+    exports.EPISODE_TEXT = 'Episode ';
     exports.SNATCHED_TEXT = ' - Snatched';
     exports.ARROW = '»';
     exports.COLONS = ' :: ';
@@ -144,9 +146,14 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         if (t.type === 'SPECIAL' && t.special === 'snatched') {
             return [' - ', exports.span('snatched', '', 'Snatched')];
         }
-        if (t.type !== 'ELEMENT') {
-            return fallbackTransformer(t, s);
+        if (t.type === 'BASIC') {
+            if (t.text === types_1.SCENE_TEXT)
+                return exports.span('scene', types_1.SCENE_TEXT, types_1.SCENE_TEXT);
+            if (t.text.startsWith(types_1.EPISODE_TEXT))
+                return exports.span('episode', t.text.replace(types_1.EPISODE_TEXT, ''), t.text);
         }
+        if (t.type !== 'ELEMENT')
+            return fallbackTransformer(t, s);
         const imageMatches = TRAILING_IMAGES.map(trans => trans(t, s)).filter(x => x !== null);
         if (imageMatches) {
             return imageMatches[0];
@@ -417,7 +424,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
 define("highlighter", ["require", "exports", "parser", "lexer", "types"], function (require, exports, parser_1, lexer_1, types_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function highlight(links, start, className) {
+    function highlight(links, start, className, defaultDelim) {
         const count = (needle, haystack) => { var _a; return ((_a = haystack.match(needle)) !== null && _a !== void 0 ? _a : []).length; };
         const HIGHLIGHT_CLASS = 'userscript-highlight';
         let success = 0;
@@ -434,8 +441,11 @@ define("highlighter", ["require", "exports", "parser", "lexer", "types"], functi
             let fields = null;
             try {
                 el.classList.add(HIGHLIGHT_CLASS, className);
-                let delim = null;
-                if (el.href.indexOf('torrents.php') != -1) {
+                let delim = defaultDelim;
+                if (delim) {
+                    // use given delim.
+                }
+                else if (el.href.indexOf('torrents.php') != -1) {
                     delim = ' | ';
                 }
                 else if (el.href.indexOf('torrents2.php') != -1) {
@@ -487,8 +497,11 @@ define("highlighter", ["require", "exports", "parser", "lexer", "types"], functi
     exports.highlight = highlight;
     function main() {
         const q = (s) => document.querySelectorAll(s);
-        const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="], .torrent_properties > a[href*="&torrentid="]';
+        const TORRENT_PAGE_QUERY = '.group_torrent > td > a[href*="&torrentid="]';
         highlight(q(TORRENT_PAGE_QUERY), types_3.SharedState.ARROW, 'torrent-page');
+        // torrents on search result pages are always separated by ' | '.
+        const TORRENT_SEARCH_QUERY = '.torrent_properties > a[href*="&torrentid="]';
+        highlight(q(TORRENT_SEARCH_QUERY), types_3.SharedState.BEGIN_PARSE, 'torrent-page', ' | ');
         const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
         highlight(q(TORRENT_BBCODE_QUERY), types_3.SharedState.BBCODE, 'torrent-bbcode');
     }

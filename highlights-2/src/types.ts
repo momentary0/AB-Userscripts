@@ -91,6 +91,8 @@ export type Handler<S, T> = {
   [state in S]?: T
 };
 
+export const SCENE_TEXT = 'Scene';
+export const EPISODE_TEXT = 'Episode ';
 export const SNATCHED_TEXT = ' - Snatched';
 export const ARROW = '»';
 export const COLONS = ' :: ';
