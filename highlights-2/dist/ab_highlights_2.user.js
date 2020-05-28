@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AB Highlights 2
 // @namespace    TheFallingMan
-// @version      2.1.0
+// @version      2.1.1
 // @description  Rewritten torrent highlighter. Adds attributes to torrent links, allowing CSS styling.
 // @author       TheFallingMan
 // @icon         https://animebytes.tv/favicon.ico

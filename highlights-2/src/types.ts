@@ -45,7 +45,6 @@ export enum SharedState {
   COLONS,
   BEGIN_PARSE,
   COMMON_TRAILING_FIELDS, // FL, exclusive, snatched, hentai, etc.
-  UNKNOWN,
 }
 
 export enum AnimeState {

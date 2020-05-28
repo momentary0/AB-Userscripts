@@ -161,7 +161,7 @@ const initHandler: TokenStateTransformer = (t) => {
 
   const first = (t.type == 'COMPOUND' ? t.left : t.text);
 
-  return [START_STATES[FIRST_FIELDS[first]] ?? SharedState.UNKNOWN, null];
+  return [START_STATES[FIRST_FIELDS[first]] ?? SharedState.COMMON_TRAILING_FIELDS, null];
 }
 
 const arrowTransformer: TFunction = (t) => {
@@ -180,7 +180,6 @@ export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
   [SharedState.ARROW]: captureT(SharedState.BEGIN_PARSE, arrowTransformer),
   [SharedState.BEGIN_PARSE]: initHandler,
   [SharedState.COMMON_TRAILING_FIELDS]: captureT(SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
-  [SharedState.UNKNOWN]: capture(SharedState.UNKNOWN, 'misc', 'misc'),
 
   [AnimeState.SOURCE]: capture(AnimeState.CONTAINER, 'source'),
   [AnimeState.CONTAINER]: preCapture((t, s) => [toCompoundToken(t), s],

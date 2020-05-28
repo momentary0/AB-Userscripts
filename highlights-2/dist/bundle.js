@@ -13,7 +13,6 @@ define("types", ["require", "exports"], function (require, exports) {
         SharedState[SharedState["COLONS"] = 2] = "COLONS";
         SharedState[SharedState["BEGIN_PARSE"] = 3] = "BEGIN_PARSE";
         SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 4] = "COMMON_TRAILING_FIELDS";
-        SharedState[SharedState["UNKNOWN"] = 5] = "UNKNOWN";
     })(SharedState = exports.SharedState || (exports.SharedState = {}));
     var AnimeState;
     (function (AnimeState) {
@@ -177,7 +176,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         if (t.type != 'BASIC' && t.type != 'COMPOUND')
             throw new Error('Need basic or compound as first token, not ' + t);
         const first = (t.type == 'COMPOUND' ? t.left : t.text);
-        return [(_a = START_STATES[FIRST_FIELDS[first]]) !== null && _a !== void 0 ? _a : types_1.SharedState.UNKNOWN, null];
+        return [(_a = START_STATES[FIRST_FIELDS[first]]) !== null && _a !== void 0 ? _a : types_1.SharedState.COMMON_TRAILING_FIELDS, null];
     };
     const arrowTransformer = (t) => {
         if (t.type == 'SPECIAL' && t.special == 'arrow')
@@ -193,7 +192,6 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         [types_1.SharedState.ARROW]: exports.captureT(types_1.SharedState.BEGIN_PARSE, arrowTransformer),
         [types_1.SharedState.BEGIN_PARSE]: initHandler,
         [types_1.SharedState.COMMON_TRAILING_FIELDS]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
-        [types_1.SharedState.UNKNOWN]: exports.capture(types_1.SharedState.UNKNOWN, 'misc', 'misc'),
         [types_1.AnimeState.SOURCE]: exports.capture(types_1.AnimeState.CONTAINER, 'source'),
         [types_1.AnimeState.CONTAINER]: exports.preCapture((t, s) => [exports.toCompoundToken(t), s], exports.captureD((t) => t.type === 'COMPOUND' ? types_1.AnimeState.ASPECT_RATIO : types_1.AnimeState.VIDEO_CODEC, 'container', 'region')),
         [types_1.AnimeState.ASPECT_RATIO]: exports.captureD((t, s) => s.source == 'DVD9' || s.source == 'DVD5'
