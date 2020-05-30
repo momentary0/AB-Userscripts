@@ -1,10 +1,17 @@
-import { Token, makeBasicToken, makeSeparatorToken, makeCompoundToken, makeElementToken, AnimeState, SNATCHED_TEXT, makeSpecialToken, ARROW, COLONS } from './types';
+import { Token, makeBasicToken, makeSeparatorToken, makeCompoundToken, makeElementToken, AnimeState, SNATCHED_TEXT, makeSpecialToken, ARROW, COLONS, DASH } from './types';
 
 export function tokeniseString(input: string, delim: string): Token[] {
-  if (input === ARROW) {
-    return [makeSpecialToken('arrow')];
-  } else if (input === SNATCHED_TEXT) {
-    return [makeSpecialToken('snatched')];
+  switch (input) {
+    case ARROW:
+      return [makeSpecialToken('arrow', ARROW + ' ')];
+    case SNATCHED_TEXT:
+      return [makeSpecialToken('snatched', 'Snatched')];
+    case DASH:
+      return [makeSpecialToken('dash', DASH)];
+    case ' [':
+      return [makeSpecialToken('lbracket', ' [')];
+    case ']':
+      return [makeSpecialToken('rbracket', ']')];
   }
 
   const RPAREN_WITH_SEP = ')' + delim;
@@ -96,8 +103,33 @@ export function preTokenise(nodes: NodeListOf<ChildNode>): (string | HTMLElement
 
           const colons = text.indexOf(COLONS);
           if (colons >= 0) {
-            const left = text.slice(0, colons);
+            let left = text.slice(0, colons);
+
+            let year = null;
+            const yearMatch = / \[(\d{4})\]$/.exec(left);
+            if (yearMatch) {
+              year = yearMatch[1];
+              left = left.slice(0, yearMatch.index);
+            }
+
+            let right = null;
+            const dash = left.lastIndexOf(DASH);
+            if (dash != -1) {
+              right = left.slice(dash + DASH.length); // everything after dash
+              left = left.slice(0, dash); // everything before dash
+            }
             output.push(left);
+
+            if (right) {
+              output.push(DASH);
+              output.push(right);
+            }
+            if (year) {
+              output.push(' [');
+              output.push(year);
+              output.push(']');
+            }
+
             output.push(COLONS);
             text = text.slice(colons + COLONS.length).trimLeft();
           }

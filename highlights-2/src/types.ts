@@ -19,29 +19,35 @@ export type ElementToken = {
   element: HTMLElement,
 };
 
-export type SpecialTypes = 'snatched' | 'arrow';
+export type SpecialTypes = 'snatched' | 'arrow' | 'dash' | 'lbracket' | 'rbracket';
 export type SpecialToken = {
   type: 'SPECIAL',
   special: SpecialTypes,
+  text: string,
 };
 
-export type Separator = {
+export type SeparatorToken = {
   type: 'SEPARATOR',
   sep: string,
 }
 
-export type Token = BasicToken | CompoundToken | Separator | ElementToken | SpecialToken;
+export type Token = BasicToken | CompoundToken | SeparatorToken | ElementToken | SpecialToken;
 
 export const makeBasicToken = (text: string): BasicToken => ({ type: 'BASIC', text });
 export const makeCompoundToken = (left: string, right: string): CompoundToken => ({ type: 'COMPOUND', left, right });
 export const makeElementToken = (element: HTMLElement): ElementToken => ({ type: 'ELEMENT', element });
-export const makeSpecialToken = (special: SpecialTypes): SpecialToken => ({ type: 'SPECIAL', special });
-export const makeSeparatorToken = (sep: string, ): Separator => ({ type: 'SEPARATOR', sep });
+export const makeSpecialToken = (special: SpecialTypes, text: string): SpecialToken => ({ type: 'SPECIAL', special, text });
+export const makeSeparatorToken = (sep: string, ): SeparatorToken => ({ type: 'SEPARATOR', sep });
 
 
 export enum SharedState {
   ARROW,
-  BBCODE,
+  BBCODE_LEFT,
+  BBCODE_DASH,
+  BBCODE_RIGHT,
+  BBCODE_LBRACKET,
+  BBCODE_RBRACKET,
+  BBCODE_YEAR,
   COLONS,
   BEGIN_PARSE,
   COMMON_TRAILING_FIELDS, // FL, exclusive, snatched, hentai, etc.
@@ -96,3 +102,4 @@ export const EPISODE_TEXT = 'Episode ';
 export const SNATCHED_TEXT = ' - Snatched';
 export const ARROW = '»';
 export const COLONS = ' :: ';
+export const DASH = ' - ';

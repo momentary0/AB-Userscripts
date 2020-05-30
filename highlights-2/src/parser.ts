@@ -1,4 +1,4 @@
-import { Handler, AnimeState, Transformer, Token, BasicToken, SharedState, MusicState, BookState, GameState, makeCompoundToken, ARROW, AnyState, EPISODE_TEXT, SCENE_TEXT } from './types';
+import { Handler, AnimeState, Transformer, Token, BasicToken, SharedState, MusicState, BookState, GameState, makeCompoundToken, ARROW, AnyState, EPISODE_TEXT, SCENE_TEXT, SpecialTypes } from './types';
 
 export type FinalOutput = (Node | string)[];
 
@@ -80,6 +80,18 @@ export const captureT = (next: AnyState, transform: TFunction): TokenStateTransf
 
 export const capture = (next: AnyState, key: string, key2?: string): TokenStateTransformer =>
   captureD(() => next, key, key2);
+
+export const nullCapture = (next: AnyState): TokenStateTransformer =>
+  captureT(next, () => null);
+
+export type TokenStatePredicate = (t: Token, s: SeenFields) => boolean;
+export const switchCapture = (predicate: TokenStatePredicate, captureTrue: TokenStateTransformer,
+    captureFalse: TokenStateTransformer): TokenStateTransformer => {
+  return (t, s) => predicate(t, s) ? captureTrue(t, s) : captureFalse(t, s);
+};
+
+export const isSpecial = (type: SpecialTypes): TokenStatePredicate =>
+  (t, s) => t.type === 'SPECIAL' && t.special === type;
 
 export const maybeFlag = (key: string, expected: string): TFunction => {
   return (t) => {
@@ -171,16 +183,31 @@ const initHandler: TokenStateTransformer = (t) => {
 
 const arrowTransformer: TFunction = (t) => {
   if (t.type == 'SPECIAL' && t.special == 'arrow')
-    return ARROW + ' ';
+    return t.text;
   return null;
 };
+
+const specialTransformer: TFunction = (t) => {
+  if (t.type !== 'SPECIAL')
+    throw new Error('Expected special token.');
+  return t.text;
+}
 
 const GAME_REGIONS = ['Region Free', 'NTSC-J', 'NTSC-U', 'PAL', 'JPN', 'ENG', 'EUR'];
 const GAME_ARCHIVED = ['Archived', 'Unarchived'];
 const BOOK_FORMATS = ['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'];
 
 export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
-  [SharedState.BBCODE]: capture(SharedState.COLONS, 'name'),
+  // i'm very sorry for this code.
+  [SharedState.BBCODE_LEFT]: capture(SharedState.BBCODE_DASH, 'left'),
+  [SharedState.BBCODE_DASH]: switchCapture(isSpecial('dash'),
+    captureT(SharedState.BBCODE_RIGHT, specialTransformer), nullCapture(SharedState.BBCODE_LBRACKET)),
+  [SharedState.BBCODE_RIGHT]: capture(SharedState.BBCODE_LBRACKET, 'right'),
+  [SharedState.BBCODE_LBRACKET]: switchCapture(isSpecial('lbracket'),
+    captureT(SharedState.BBCODE_YEAR, specialTransformer), nullCapture(SharedState.COLONS)),
+  [SharedState.BBCODE_YEAR]: capture(SharedState.BBCODE_RBRACKET, 'year'),
+  [SharedState.BBCODE_RBRACKET]: captureT(SharedState.COLONS, specialTransformer),
+
   [SharedState.COLONS]: captureT(SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
   [SharedState.ARROW]: captureT(SharedState.BEGIN_PARSE, arrowTransformer),
   [SharedState.BEGIN_PARSE]: initHandler,

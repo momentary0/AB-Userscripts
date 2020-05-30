@@ -96,7 +96,7 @@ export function main() {
   highlight(q(TORRENT_SEARCH_QUERY), SharedState.BEGIN_PARSE, 'torrent-page', ' | ');
 
   const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
-  highlight(q(TORRENT_BBCODE_QUERY), SharedState.BBCODE, 'torrent-bbcode');
+  highlight(q(TORRENT_BBCODE_QUERY), SharedState.BBCODE_LEFT, 'torrent-bbcode');
 }
 
 export function test() {

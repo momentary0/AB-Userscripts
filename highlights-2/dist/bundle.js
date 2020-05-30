@@ -4,15 +4,20 @@ define("types", ["require", "exports"], function (require, exports) {
     exports.makeBasicToken = (text) => ({ type: 'BASIC', text });
     exports.makeCompoundToken = (left, right) => ({ type: 'COMPOUND', left, right });
     exports.makeElementToken = (element) => ({ type: 'ELEMENT', element });
-    exports.makeSpecialToken = (special) => ({ type: 'SPECIAL', special });
+    exports.makeSpecialToken = (special, text) => ({ type: 'SPECIAL', special, text });
     exports.makeSeparatorToken = (sep) => ({ type: 'SEPARATOR', sep });
     var SharedState;
     (function (SharedState) {
         SharedState[SharedState["ARROW"] = 0] = "ARROW";
-        SharedState[SharedState["BBCODE"] = 1] = "BBCODE";
-        SharedState[SharedState["COLONS"] = 2] = "COLONS";
-        SharedState[SharedState["BEGIN_PARSE"] = 3] = "BEGIN_PARSE";
-        SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 4] = "COMMON_TRAILING_FIELDS";
+        SharedState[SharedState["BBCODE_LEFT"] = 1] = "BBCODE_LEFT";
+        SharedState[SharedState["BBCODE_DASH"] = 2] = "BBCODE_DASH";
+        SharedState[SharedState["BBCODE_RIGHT"] = 3] = "BBCODE_RIGHT";
+        SharedState[SharedState["BBCODE_LBRACKET"] = 4] = "BBCODE_LBRACKET";
+        SharedState[SharedState["BBCODE_RBRACKET"] = 5] = "BBCODE_RBRACKET";
+        SharedState[SharedState["BBCODE_YEAR"] = 6] = "BBCODE_YEAR";
+        SharedState[SharedState["COLONS"] = 7] = "COLONS";
+        SharedState[SharedState["BEGIN_PARSE"] = 8] = "BEGIN_PARSE";
+        SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 9] = "COMMON_TRAILING_FIELDS";
     })(SharedState = exports.SharedState || (exports.SharedState = {}));
     var AnimeState;
     (function (AnimeState) {
@@ -54,6 +59,7 @@ define("types", ["require", "exports"], function (require, exports) {
     exports.SNATCHED_TEXT = ' - Snatched';
     exports.ARROW = '»';
     exports.COLONS = ' :: ';
+    exports.DASH = ' - ';
 });
 define("parser", ["require", "exports", "types"], function (require, exports, types_1) {
     "use strict";
@@ -108,6 +114,11 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     exports.captureD = (decider, key, key2) => exports.captureDT(decider, exports.basicTransformer(key, key2));
     exports.captureT = (next, transform) => exports.captureDT(() => next, transform);
     exports.capture = (next, key, key2) => exports.captureD(() => next, key, key2);
+    exports.nullCapture = (next) => exports.captureT(next, () => null);
+    exports.switchCapture = (predicate, captureTrue, captureFalse) => {
+        return (t, s) => predicate(t, s) ? captureTrue(t, s) : captureFalse(t, s);
+    };
+    exports.isSpecial = (type) => (t, s) => t.type === 'SPECIAL' && t.special === type;
     exports.maybeFlag = (key, expected) => {
         return (t) => {
             if (t.type !== 'BASIC' || t.text !== expected)
@@ -185,14 +196,25 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     };
     const arrowTransformer = (t) => {
         if (t.type == 'SPECIAL' && t.special == 'arrow')
-            return types_1.ARROW + ' ';
+            return t.text;
         return null;
+    };
+    const specialTransformer = (t) => {
+        if (t.type !== 'SPECIAL')
+            throw new Error('Expected special token.');
+        return t.text;
     };
     const GAME_REGIONS = ['Region Free', 'NTSC-J', 'NTSC-U', 'PAL', 'JPN', 'ENG', 'EUR'];
     const GAME_ARCHIVED = ['Archived', 'Unarchived'];
     const BOOK_FORMATS = ['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'];
     exports.TRANSITION_ACTIONS = {
-        [types_1.SharedState.BBCODE]: exports.capture(types_1.SharedState.COLONS, 'name'),
+        // i'm very sorry for this code.
+        [types_1.SharedState.BBCODE_LEFT]: exports.capture(types_1.SharedState.BBCODE_DASH, 'left'),
+        [types_1.SharedState.BBCODE_DASH]: exports.switchCapture(exports.isSpecial('dash'), exports.captureT(types_1.SharedState.BBCODE_RIGHT, specialTransformer), exports.nullCapture(types_1.SharedState.BBCODE_LBRACKET)),
+        [types_1.SharedState.BBCODE_RIGHT]: exports.capture(types_1.SharedState.BBCODE_LBRACKET, 'right'),
+        [types_1.SharedState.BBCODE_LBRACKET]: exports.switchCapture(exports.isSpecial('lbracket'), exports.captureT(types_1.SharedState.BBCODE_YEAR, specialTransformer), exports.nullCapture(types_1.SharedState.COLONS)),
+        [types_1.SharedState.BBCODE_YEAR]: exports.capture(types_1.SharedState.BBCODE_RBRACKET, 'year'),
+        [types_1.SharedState.BBCODE_RBRACKET]: exports.captureT(types_1.SharedState.COLONS, specialTransformer),
         [types_1.SharedState.COLONS]: exports.captureT(types_1.SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
         [types_1.SharedState.ARROW]: exports.captureT(types_1.SharedState.BEGIN_PARSE, arrowTransformer),
         [types_1.SharedState.BEGIN_PARSE]: initHandler,
@@ -290,11 +312,17 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function tokeniseString(input, delim) {
-        if (input === types_2.ARROW) {
-            return [types_2.makeSpecialToken('arrow')];
-        }
-        else if (input === types_2.SNATCHED_TEXT) {
-            return [types_2.makeSpecialToken('snatched')];
+        switch (input) {
+            case types_2.ARROW:
+                return [types_2.makeSpecialToken('arrow', types_2.ARROW + ' ')];
+            case types_2.SNATCHED_TEXT:
+                return [types_2.makeSpecialToken('snatched', 'Snatched')];
+            case types_2.DASH:
+                return [types_2.makeSpecialToken('dash', types_2.DASH)];
+            case ' [':
+                return [types_2.makeSpecialToken('lbracket', ' [')];
+            case ']':
+                return [types_2.makeSpecialToken('rbracket', ']')];
         }
         const RPAREN_WITH_SEP = ')' + delim;
         const LPAREN_OR_SEP = [
@@ -378,8 +406,29 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                         text = text.trimStart();
                         const colons = text.indexOf(types_2.COLONS);
                         if (colons >= 0) {
-                            const left = text.slice(0, colons);
+                            let left = text.slice(0, colons);
+                            let year = null;
+                            const yearMatch = / \[(\d{4})\]$/.exec(left);
+                            if (yearMatch) {
+                                year = yearMatch[1];
+                                left = left.slice(0, yearMatch.index);
+                            }
+                            let right = null;
+                            const dash = left.lastIndexOf(types_2.DASH);
+                            if (dash != -1) {
+                                right = left.slice(dash + types_2.DASH.length); // everything after dash
+                                left = left.slice(0, dash); // everything before dash
+                            }
                             output.push(left);
+                            if (right) {
+                                output.push(types_2.DASH);
+                                output.push(right);
+                            }
+                            if (year) {
+                                output.push(' [');
+                                output.push(year);
+                                output.push(']');
+                            }
                             output.push(types_2.COLONS);
                             text = text.slice(colons + types_2.COLONS.length).trimLeft();
                         }
@@ -505,7 +554,7 @@ define("highlighter", ["require", "exports", "parser", "lexer", "types"], functi
         const TORRENT_SEARCH_QUERY = '.torrent_properties > a[href*="&torrentid="]';
         highlight(q(TORRENT_SEARCH_QUERY), types_3.SharedState.BEGIN_PARSE, 'torrent-page', ' | ');
         const TORRENT_BBCODE_QUERY = ':not(.group_torrent)>:not(.torrent_properties)>a[href*="/torrent/"]:not([title])';
-        highlight(q(TORRENT_BBCODE_QUERY), types_3.SharedState.BBCODE, 'torrent-bbcode');
+        highlight(q(TORRENT_BBCODE_QUERY), types_3.SharedState.BBCODE_LEFT, 'torrent-bbcode');
     }
     exports.main = main;
     function test() {
