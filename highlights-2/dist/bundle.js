@@ -59,9 +59,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.span = (key, value, child) => {
-        if (child === undefined)
-            child = value;
-        return { type: 'span', key, value, child };
+        return { type: 'span', key, value: value || key, child: child !== null && child !== void 0 ? child : value };
     };
     exports.preCapture = (pre, transformer) => {
         return (t, s) => {
@@ -89,7 +87,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     exports.splitTransformer = (key1, key2) => {
         return (t) => {
             assertBasicToken(t);
-            const i = t.text.indexOf(' ');
+            const i = t.text.lastIndexOf(' ');
             console.assert(i >= 0);
             return [exports.span(key1, t.text.substr(0, i)), ' ', exports.span(key2, t.text.slice(i + 1))];
         };
@@ -132,11 +130,11 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
                 return null;
             if (exports.basename(t.element.src) !== imageFile)
                 return null;
-            return exports.span(key, value !== null && value !== void 0 ? value : imageFile, t.element);
+            return exports.span(key, value !== null && value !== void 0 ? value : key, t.element);
         };
     };
     const TRAILING_IMAGES = [
-        exports.maybeImage('freeleech', 'flicon'),
+        exports.maybeImage('freeleech', 'flicon', 'Freeleech'),
         exports.maybeImage('hentai', 'hentai', 'Uncensored'),
         exports.maybeImage('hentai', 'hentaic', 'Censored'),
     ];
@@ -144,7 +142,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     const trailingFieldsTransformer = (t, s) => {
         var _a;
         if (t.type === 'SPECIAL' && t.special === 'snatched') {
-            return [' - ', exports.span('snatched', '', 'Snatched')];
+            return [' - ', exports.span('snatched', 'Snatched', 'Snatched')];
         }
         if (t.type === 'BASIC') {
             if (t.text === types_1.SCENE_TEXT)
@@ -159,9 +157,9 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             return imageMatches[0];
         }
         if (t.element.tagName === 'FONT' && ((_a = t.element.textContent) === null || _a === void 0 ? void 0 : _a.trim()) == 'Exclusive!') {
-            return exports.span('exclusive', '', t.element);
+            return exports.span('exclusive', 'Exclusive', t.element);
         }
-        return exports.span('misc', '', t.element);
+        return fallbackTransformer(t, s);
     };
     const FIRST_FIELDS = {
         'Blu-ray': 'anime', 'Web': 'anime', 'TV': 'anime',
@@ -207,7 +205,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         [types_1.AnimeState.RESOLUTION]: exports.capture(types_1.AnimeState.AUDIO_CODEC, 'resolution'),
         [types_1.AnimeState.AUDIO_CODEC]: exports.captureT(types_1.AnimeState.DUAL_AUDIO, exports.splitTransformer('audioCodec', 'audioChannels')),
         [types_1.AnimeState.DUAL_AUDIO]: exports.captureT(types_1.AnimeState.REMASTER, exports.maybeFlag('dualAudio', 'Dual Audio')),
-        [types_1.AnimeState.REMASTER]: exports.captureT(types_1.AnimeState.SUBBING_AND_GROUP, exports.maybeImage('remastered', 'rmstr')),
+        [types_1.AnimeState.REMASTER]: exports.captureT(types_1.AnimeState.SUBBING_AND_GROUP, exports.maybeImage('remastered', 'rmstr', 'Remastered')),
         [types_1.AnimeState.SUBBING_AND_GROUP]: exports.capture(types_1.SharedState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
         [types_1.MusicState.ENCODING]: exports.capture(types_1.MusicState.BITRATE, 'encoding'),
         [types_1.MusicState.BITRATE]: exports.capture(types_1.MusicState.SOURCE, 'bitrate'),
@@ -276,6 +274,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
                 if (e.key)
                     span.dataset[e.key] = e.value;
                 span.append(e.child);
+                span.dataset.field = e.value;
                 return span;
             }
         });
@@ -463,9 +462,12 @@ define("highlighter", ["require", "exports", "parser", "lexer", "types"], functi
                 const df = document.createDocumentFragment();
                 df.append(...output);
                 el.appendChild(df);
+                let fieldsString = '';
                 for (const [k, v] of Object.entries(fields)) {
                     el.dataset[k] = v;
+                    fieldsString += v.replace(/\s/g, '_') + ' ';
                 }
+                el.dataset.fields = fieldsString;
                 if (fields.misc !== undefined) {
                     throw 'misc';
                 }

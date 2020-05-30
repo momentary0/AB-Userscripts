@@ -48,9 +48,13 @@ export function highlight(links: NodeListOf<HTMLAnchorElement>, start: AnyState,
       df.append(...output);
       el.appendChild(df);
 
+      let fieldsString = '';
       for (const [k, v] of Object.entries(fields)) {
         el.dataset[k] = v;
+        fieldsString += v.replace(/\s/g, '_') + ' ';
       }
+      el.dataset.fields = fieldsString;
+
       if (fields.misc !== undefined) {
         throw 'misc';
       }

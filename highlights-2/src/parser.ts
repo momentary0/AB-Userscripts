@@ -15,9 +15,7 @@ type TokenStateTransformer = Transformer<AnyState, Token, TransformerResult, See
 type SeenFields = {[key: string]: string};
 
 export const span = (key: string, value: string, child?: HTMLElement | string): PreSpan => {
-  if (child === undefined)
-    child = value;
-  return {type: 'span', key, value, child};
+  return {type: 'span', key, value: value || key, child: child ?? value};
 };
 
 export type DFunction = (t: Token, s: SeenFields) => AnyState;
@@ -53,7 +51,7 @@ export const basicTransformer = (key1: string, key2?: string): TFunction => {
 export const splitTransformer = (key1: string, key2: string): TFunction => {
   return (t) => {
     assertBasicToken(t);
-    const i = t.text.indexOf(' ');
+    const i = t.text.lastIndexOf(' ');
     console.assert(i >= 0);
     return [span(key1, t.text.substr(0, i)), ' ', span(key2, t.text.slice(i+1))];
   };
@@ -104,12 +102,12 @@ export const maybeImage = (key: string, imageFile: string, value?: string): TFun
   return (t) => {
     if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG') return null;
     if (basename((t.element as HTMLImageElement).src) !== imageFile) return null;
-    return span(key, value ?? imageFile, t.element);
+    return span(key, value ?? key, t.element);
   };
 }
 
 const TRAILING_IMAGES = [
-  maybeImage('freeleech', 'flicon'),
+  maybeImage('freeleech', 'flicon', 'Freeleech'),
   maybeImage('hentai', 'hentai', 'Uncensored'),
   maybeImage('hentai', 'hentaic', 'Censored'),
 ];
@@ -117,7 +115,7 @@ const fallbackTransformer = basicTransformer('misc', 'misc');
 
 const trailingFieldsTransformer: TFunction = (t, s) => {
   if (t.type === 'SPECIAL' && t.special === 'snatched') {
-    return [' - ', span('snatched', '', 'Snatched')];
+    return [' - ', span('snatched', 'Snatched', 'Snatched')];
   }
 
   if (t.type === 'BASIC') {
@@ -136,10 +134,10 @@ const trailingFieldsTransformer: TFunction = (t, s) => {
   }
 
   if (t.element.tagName === 'FONT' && t.element.textContent?.trim() == 'Exclusive!') {
-    return span('exclusive', '', t.element);
+    return span('exclusive', 'Exclusive', t.element);
   }
 
-  return span('misc', '', t.element);
+  return fallbackTransformer(t, s);
 };
 
 const FIRST_FIELDS: {[s: string]: keyof typeof START_STATES} = {
@@ -197,7 +195,7 @@ export const TRANSITION_ACTIONS: Handler<AnyState, TokenStateTransformer> = {
   [AnimeState.RESOLUTION]: capture(AnimeState.AUDIO_CODEC, 'resolution'),
   [AnimeState.AUDIO_CODEC]: captureT(AnimeState.DUAL_AUDIO, splitTransformer('audioCodec', 'audioChannels')),
   [AnimeState.DUAL_AUDIO]: captureT(AnimeState.REMASTER, maybeFlag('dualAudio', 'Dual Audio')),
-  [AnimeState.REMASTER]: captureT(AnimeState.SUBBING_AND_GROUP, maybeImage('remastered', 'rmstr')),
+  [AnimeState.REMASTER]: captureT(AnimeState.SUBBING_AND_GROUP, maybeImage('remastered', 'rmstr', 'Remastered')),
   [AnimeState.SUBBING_AND_GROUP]: capture(SharedState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
 
   [MusicState.ENCODING]: capture(MusicState.BITRATE, 'encoding'),
@@ -274,6 +272,7 @@ export function postParse(parsed: ParseOutput): FinalOutput {
       if (e.key)
         span.dataset[e.key] = e.value;
       span.append(e.child);
+      span.dataset.field = e.value;
       return span;
     }
   });
