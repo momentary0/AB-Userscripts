@@ -3,7 +3,7 @@
 // @author      TheFallingMan
 // @description Drag and drop, and paste images to upload.
 // @include     https://animebytes.tv/*
-// @version     0.1.2
+// @version     0.1.3
 // @icon        http://animebytes.tv/favicon.ico
 // ==/UserScript==
 
@@ -105,7 +105,8 @@
             var inlineLink = uploadFormDiv.querySelector(
                 'a[href="' + headerLink.getAttribute('href') + '"]');
             headerLink.href = headerLink.href + '&torrentid=' + torrentIdMatch[1];
-            inlineLink.href = inlineLink.href + '&torrentid=' + torrentIdMatch[1];
+            if (inlineLink)
+                inlineLink.href = inlineLink.href + '&torrentid=' + torrentIdMatch[1];
         }
     }
     /**
