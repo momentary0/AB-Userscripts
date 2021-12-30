@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AnimeBytes delicious user scripts (updated)
 // @author      aldy, potatoe, alpha, Megure
-// @version     2.1.11
+// @version     2.1.12
 // @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
 // @match       https://*.animebytes.tv/*
 // @icon        http://animebytes.tv/favicon.ico
@@ -23,7 +23,7 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.06
+// @version     1.07
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -40,10 +40,12 @@
         delicious.settings.init(settingsKeys[i], true);
     }
     delicious.settings.init('ABTorrentsYenTimeFrame', '24');
+    delicious.settings.init('ABTorrentsShowYenPerGb', false);
     if (delicious.settings.ensureSettingsInserted()) {
         var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
         var s = section.querySelector('.settings_section_body');
         s.appendChild(delicious.settings.createCheckbox('ABTorrentsShowYen', 'Show yen generation', 'Show yen generation for torrents, with detailed information when hovered.'));
+        s.appendChild(delicious.settings.createCheckbox('ABTorrentsShowYenPerGb', 'Show yen generation per Gb', 'Show yen generation for torrents, with detailed information when hovered.'));
         s.appendChild(delicious.settings.createDropDown('ABTorrentsYenTimeFrame', 'Yen time frame', 'Shows yen generated in this amount of time.', [['Hour', '1'],
             ['Day', '24'],
             ['Week', '168']], { default: '24' }));
@@ -56,6 +58,7 @@
     var _debug = false;
     var days_per_year = 365.256363;
     var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
+    var show_yen_per_gb = GM_getValue('ABTorrentsShowYenPerGb', 'true') === 'true';
     var show_required_time = GM_getValue('ABTorrentsReqTime', 'true') === 'true';
     var sort_rows = GM_getValue('ABSortTorrents', 'true') === 'true';
     var filter_torrents = GM_getValue('ABTorrentsFilter', 'true') === 'true';
@@ -225,7 +228,7 @@
     }
     // Creates title when hovering over yen generation to break down factors
     function yen_generation_title(size, seeders, duration) {
-        var title = 'Click to toggle between Yen per ' + time_frame_string + '\nand Yen per ' + time_frame_string + ' per GB of size.\n\n';
+        var title = show_yen_per_gb ? '' : 'Click to toggle between Yen per ' + time_frame_string + '\nand Yen per ' + time_frame_string + ' per GB of size.\n\n';
         // Added f_duration(0) and f_seeders(1) to account for 2017 yen changes.
         // The changes altered the initial values of these and hence altered the 'base' yen/h here.
         title += '¥' + (f_seeders(1) * f_duration(0) * time_frame * f_size(size)).toPrecision(6) + ' \tbase for size';
@@ -263,6 +266,19 @@
             }
         }
         return title;
+    }
+    function create_cell(row, options) {
+        var cell = document.createElement(options.tag);
+        cell.textContent = options.text;
+        cell.title = options.title;
+        cell.className = options.className;
+        if (!show_yen_per_gb) {
+            cell.addEventListener('click', toggle_yen());
+        }
+        if (options.display) {
+            cell.style.display = options.display;
+        }
+        row.appendChild(cell);
     }
     // Toggle yen generation per time and per time and size
     var yen_per_GB = false;
@@ -393,19 +409,19 @@
         if (size_index !== null && seeders_index !== null && show_yen) {
             _debug && console.log('adding yen to row: ' + row.innerHTML);
             var title = yen_generation_title(size, seeders, duration);
-            var td1 = document.createElement('td');
-            td1.textContent = '¥' + yen_to_string(f(size, seeders, duration));
-            td1.title = title;
-            td1.className = 'UserScriptToggleYen';
-            var td2 = document.createElement('td');
-            td2.textContent = '¥' + yen_to_string(f(size, seeders, duration) / size);
-            td2.title = title;
-            td2.className = 'UserScriptToggleYenPerGB';
-            td2.style.display = 'none';
-            td1.addEventListener('click', toggle_yen());
-            td2.addEventListener('click', toggle_yen());
-            row.appendChild(td2);
-            row.appendChild(td1);
+            create_cell(row, {
+                tag: 'td',
+                text: '¥' + yen_to_string(f(size, seeders, duration)),
+                title: title,
+                className: 'UserScriptToggleYen'
+            });
+            create_cell(row, {
+                tag: 'td',
+                text: '¥' + yen_to_string(f(size, seeders, duration) / size),
+                title: title,
+                className: 'UserScriptToggleYenPerGB',
+                display: show_yen_per_gb ? '' : 'none'
+            });
             if (location.pathname.indexOf('/torrents2') != -1
                 && !document.getElementById('torrents2_fix')) {
                 var style = document.createElement('style');
@@ -485,26 +501,26 @@
             column += cell.colSpan;
         }
         if (size_index !== null && seeders_index !== null && show_yen) {
-            var td1 = document.createElement(headers.cells[0].nodeName);
-            td1.textContent = '¥/' + time_frame_string.charAt(0);
-            td1.title = '¥ per ' + time_frame_string;
-            td1.className = 'UserScriptToggleYen';
-            var td2 = document.createElement(headers.cells[0].nodeName);
-            td2.textContent = '¥/' + time_frame_string.charAt(0) + '/GB';
-            td2.title = '¥ per ' + time_frame_string + ' per GB';
-            td2.className = 'UserScriptToggleYenPerGB';
-            td2.style.display = 'none';
-            td1.addEventListener('click', toggle_yen());
-            td2.addEventListener('click', toggle_yen());
-            headers.appendChild(td2);
-            headers.appendChild(td1);
+            create_cell(headers, {
+                tag: headers.cells[0].nodeName,
+                text: '¥/' + time_frame_string.charAt(0),
+                title: '¥ per ' + time_frame_string,
+                className: 'UserScriptToggleYen'
+            });
+            create_cell(headers, {
+                tag: headers.cells[0].nodeName,
+                text: '¥/' + time_frame_string.charAt(0) + '/GB',
+                title: '¥ per ' + time_frame_string + ' per GB',
+                className: 'UserScriptToggleYenPerGB',
+                display: show_yen_per_gb ? '' : 'none'
+            });
             // Increase colSpan of non-torrent rows in the table
             var non_torrents = table.querySelectorAll('tr.edition_info,tr.pad,tr[id^="group_"]');
             for (var i = 0, length = non_torrents.length; i < length; i++) {
                 var non_torrent = non_torrents[i];
                 var cells_1 = non_torrent.cells;
                 var last_cell = cells_1[cells_1.length - 1];
-                last_cell.colSpan += 1;
+                last_cell.colSpan += show_yen_per_gb ? 2 : 1;
             }
         }
         // Parse table data
