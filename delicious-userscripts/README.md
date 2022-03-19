@@ -25,6 +25,6 @@ A summary of the steps is below.
 3. Generate dist/ab_delicious_scripts.user.js by running _update_template.py.
    For example,
 
-     python3 _update_template.py
+       python3 _update_template.py
 
 4. Commit and push / pull request as usual.
