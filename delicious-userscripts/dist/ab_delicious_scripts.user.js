@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        AnimeBytes delicious user scripts (updated)
 // @author      aldy, potatoe, alpha, Megure
-// @version     2.1.11
+// @version     2.1.12
 // @description Userscripts to enhance AnimeBytes in various ways. (Updated by TheFallingMan)
 // @match       https://*.animebytes.tv/*
 // @icon        http://animebytes.tv/favicon.ico
@@ -11,6 +11,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.23/plugin/customParseFormat.js
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 /**
  * This is the bundle metadata header and should be *manually* updated when
  * a userscript @require's more scripts or updates to a new version.
@@ -18,12 +19,13 @@
  * The automated python script will alter the "grant" and "require" tags above
  * depending on the individual scripts.
  */
+
 // ==UserScript==
 // @name        Enhanced Torrent View
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.06
+// @version     1.07
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -31,6 +33,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.23/plugin/customParseFormat.js
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Enhanced Torrent View by Megure
 // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 (function EnhancedTorrentView() {
@@ -40,20 +43,49 @@
         delicious.settings.init(settingsKeys[i], true);
     }
     delicious.settings.init('ABTorrentsYenTimeFrame', '24');
+
     if (delicious.settings.ensureSettingsInserted()) {
         var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
         var s = section.querySelector('.settings_section_body');
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsShowYen', 'Show yen generation', 'Show yen generation for torrents, with detailed information when hovered.'));
-        s.appendChild(delicious.settings.createDropDown('ABTorrentsYenTimeFrame', 'Yen time frame', 'Shows yen generated in this amount of time.', [['Hour', '1'],
-            ['Day', '24'],
-            ['Week', '168']], { default: '24' }));
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsReqTime', 'Show required seeding time', 'Shows minimal required seeding time for torrents in their description and when size is hovered.'));
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsFilter', 'Filter torrents', 'Shows a box above torrent tables, where you can filter the torrents from that table.'));
-        s.appendChild(delicious.settings.createCheckbox('ABSortTorrents', 'Sort torrents', 'Allows torrent tables to be sorted.'));
-        s.appendChild(delicious.settings.createCheckbox('ABHistDynLoad', 'Dynamic history tables', 'Dynamically load more pages into the transfer history page.'));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsShowYen',
+            'Show yen generation',
+            'Show yen generation for torrents, with detailed information when hovered.'
+        ));
+        s.appendChild(delicious.settings.createDropDown(
+            'ABTorrentsYenTimeFrame',
+            'Yen time frame',
+            'Shows yen generated in this amount of time.',
+            [['Hour', '1'],
+                ['Day', '24'],
+                ['Week', '168']],
+            {default: '24'}
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsReqTime',
+            'Show required seeding time',
+            'Shows minimal required seeding time for torrents in their description and when size is hovered.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsFilter',
+            'Filter torrents',
+            'Shows a box above torrent tables, where you can filter the torrents from that table.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABSortTorrents',
+            'Sort torrents',
+            'Allows torrent tables to be sorted.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABHistDynLoad',
+            'Dynamic history tables',
+            'Dynamically load more pages into the transfer history page.'
+        ));
         delicious.settings.insertSection(section);
     }
+
     var _debug = false;
+
     var days_per_year = 365.256363;
     var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
     var show_required_time = GM_getValue('ABTorrentsReqTime', 'true') === 'true';
@@ -80,12 +112,11 @@
     var datetime_RegExp = /^(\d+)\-(\d{1,2})\-(\d{1,2})\s+(\d{1,2}):(\d{1,2})$/;
     var abs_datetime_RegExp = /^([a-z]{3}) (\d{2}) (\d{4}) (\d{2}:\d{2}) [a-z]+$/i;
     var currency_RegExp = /^(?:[¥|€|£|\$]\s*)([\d\.]+)$/;
-    var monthNumbers = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+    var monthNumbers = {Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12};
     function unit_prefix(prefix) {
         // If prefix is undefined, the regex failed to match a prefix
         // and we assume it is in bytes.
-        if (typeof prefix === 'undefined')
-            return 1 / 1073741824;
+        if (typeof prefix === 'undefined') return 1 / 1073741824;
         // This is called with only the prefix of the byte unit
         switch (prefix.toUpperCase()) {
             case '':
@@ -181,6 +212,8 @@
     // when displaying yen/week.
     //var f_interest = 24 * days_per_year / time_frame * (Math.pow(2, time_frame / (24 * days_per_year)) - 1) / Math.log(2);
     var f_interest = 1;
+
+
     // The duration factor for yen generation
     // seeding duration is only available on the "Seeding Torrents" page. Assumes 0 on any other.
     // duration is in hours.
@@ -204,8 +237,7 @@
     function f_seeders(seeders) {
         if (seeders > 3) {
             return 3 / Math.sqrt(seeders + 4);
-        }
-        else {
+        } else {
             return 2;
         }
     }
@@ -217,6 +249,7 @@
     if (isNaN(f_age)) {
         f_age = 1;
     }
+
     // Compound function for yen generation
     function f(size, seeders, duration) {
         //console.log("size: " + size + " seed: " + seeders + " dur: " + duration + " f_age: " + f_age + " time_f: " + time_frame + " int: " + f_interest);
@@ -226,6 +259,7 @@
     // Creates title when hovering over yen generation to break down factors
     function yen_generation_title(size, seeders, duration) {
         var title = 'Click to toggle between Yen per ' + time_frame_string + '\nand Yen per ' + time_frame_string + ' per GB of size.\n\n';
+
         // Added f_duration(0) and f_seeders(1) to account for 2017 yen changes.
         // The changes altered the initial values of these and hence altered the 'base' yen/h here.
         title += '¥' + (f_seeders(1) * f_duration(0) * time_frame * f_size(size)).toPrecision(6) + ' \tbase for size';
@@ -250,6 +284,7 @@
         title += '\n\n¥ per ' + time_frame_string + ' \t¥ per ' + time_frame_string + ' per GB\t#seeders\n';
         var start = Math.max(seeders - 1, 3);
         var end = Math.max(seeders + 1, 3);
+
         // edited to <= 3, 2017.
         for (var i = start; i <= end; i++) {
             title += '¥' + f(size, i, duration).toPrecision(6) + '  \t';
@@ -267,9 +302,7 @@
     // Toggle yen generation per time and per time and size
     var yen_per_GB = false;
     function toggle_yen(toggle) {
-        if (toggle === void 0) {
-            toggle = true;
-        }
+        if (toggle === void 0) { toggle = true; }
         return function () {
             if (toggle) {
                 yen_per_GB = yen_per_GB !== true;
@@ -316,14 +349,13 @@
         match = text_content_no_comma.match(abs_datetime_RegExp);
         if (match !== null) {
             var month = monthNumbers[match[1]].toString();
-            if (month.length < 2)
-                month = '0' + month;
+            if (month.length < 2) month = '0'+month;
             var day = match[2];
             var year = match[3];
-            var time = match[4] + ':00';
+            var time = match[4]+':00';
             // convert this absolute timestamp into something JS can parse
             // and parse it. ignore timezones because it's all relative anyway.
-            return Date.parse(year + '-' + month + '-' + day + 'T' + time);
+            return Date.parse(year+'-'+month+'-'+day+'T'+time);
         }
         match = text_content_no_comma.replace(and_RegExp, '').match(duration_RegExp);
         if (match !== null) {
@@ -379,7 +411,7 @@
         // Add required time to size_cell and blockquote in torrent_row
         if (size_index !== null && show_required_time) {
             var seeding_time = Math.max(0, size - 10) * 5 + 72;
-            seeding_time = Math.min(21 * 24, seeding_time); // seeding time is capped at 21 days.
+            seeding_time = Math.min(21*24, seeding_time); // seeding time is capped at 21 days.
             size_cell.title = 'You need to seed this torrent for at least\n' + duration_to_string(seeding_time) + '\nor it will become a hit and run!';
             if (torrent_row !== null) {
                 var block_quote = torrent_row.querySelector('blockquote');
@@ -406,13 +438,17 @@
             td2.addEventListener('click', toggle_yen());
             row.appendChild(td2);
             row.appendChild(td1);
+
             if (location.pathname.indexOf('/torrents2') != -1
                 && !document.getElementById('torrents2_fix')) {
                 var style = document.createElement('style');
                 style.id = 'torrents2_fix';
-                style.appendChild(document.createTextNode('.torrent_properties { width: 60%; }'));
+                style.appendChild(document.createTextNode(
+                    '.torrent_properties { width: 60%; }'
+                ));
                 document.body.appendChild(style);
             }
+
         }
         // Parse row data
         var row_data = [row, torrent_row];
@@ -466,6 +502,7 @@
         for (var i = 0, length = cells.length; i < length; i++) {
             var cell = cells[i];
             //console.log(cell);
+
             // Get rid of non-breakable spaces -.-
             var text_content = cell.textContent.replace(/\u00a0/g, ' ').trim().toLowerCase();
             var title = cell.title.trim().toLowerCase();
@@ -543,9 +580,7 @@
             };
         }
         function sort_by_index(index, toggle) {
-            if (toggle === void 0) {
-                toggle = true;
-            }
+            if (toggle === void 0) { toggle = true; }
             return function (event) {
                 if (event !== null) {
                     event.stopPropagation();
@@ -621,9 +656,7 @@
             var next_anchors = [];
             // Loads the previous or next page into tableData, triggered by MouseEvent
             function load_history_page(prev) {
-                if (prev === void 0) {
-                    prev = false;
-                }
+                if (prev === void 0) { prev = false; }
                 return function (event) {
                     if (event !== null) {
                         event.stopPropagation();
@@ -777,10 +810,18 @@
                 }
                 for (var j = 0; j < torrent_tags.length; j++) {
                     var tag = torrent_tags[j];
-                    // Fucking ISOs...
-                    if (tag.indexOf('ISO') === 0) {
-                        torrent_tags.splice(j + 1, 0, '');
+                    
+                    // Fucking ISOs... (and VOB IFOs...)
+                    if (tag.indexOf('ISO') === 0 || tag.indexOf('VOB IFO') === 0) {
+                        // These usually do not have codecs specified but /sometimes/ they do.
+
+                        var resolutionRegex = /^(\d{2,}x\d{2,}|\d{1,}[ipK])$/; // https://regex101.com/r/siJcrd/1
+                        // If the next tag is a resolution, then codec is NOT specified and we add a blank.
+                        if (resolutionRegex.test(torrent_tags[j+1] || '')) {
+                            torrent_tags.splice(j + 1, 0, '');
+                        }
                     }
+                    
                     if (tag !== '') {
                         if (!available_tags.hasOwnProperty(tag)) {
                             available_tags[tag] = 0;
@@ -909,6 +950,7 @@
             parse_table(table);
         }
     }
+
     // If yen should be shown and user creation is not yet saved, try to get and save it
     if (show_yen && (GM_getValue('creation', '0').toString() === '0' || GM_getValue('creation', '0') === 'null')) {
         // check if we are on a profile page by looking for the "Edit my profile" link.
@@ -930,8 +972,7 @@
                 const no_tz = join_str.trim().replace(TIMEZONE_RE, '$1');
                 // eslint-disable-next-line no-undef
                 const date = dayjs(no_tz, DATE_FORMAT);
-                if (!date.isValid())
-                    return false;
+                if (!date.isValid()) return false;
                 GM_setValue('creation', JSON.stringify(date.valueOf()));
                 return true;
             });
@@ -939,6 +980,7 @@
         }
     }
 }).call(this);
+
 // ==UserScript==
 // @name        AB - Freeleech Pool Status
 // @author      Megure (inspired by Lemma, Alpha, NSC)
@@ -950,11 +992,13 @@
 // @grant       GM_setValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Freeleech Pool Status by Megure, inspired by Lemma, Alpha, NSC
 // Shows current freeleech pool status in navbar with a pie-chart
 // Updates only once every hour or when pool site is visited, showing a pie-chart on pool site
 (function ABFLStatus() {
     delicious.settings._migrateStringSetting('deliciousflpoolposition');
+
     delicious.settings.init('deliciousflpoolposition', 'after #userinfo_minor');
     delicious.settings.init('deliciousfreeleechpool', true);
     delicious.settings.init('deliciousnavbarpiechart', true);
@@ -962,21 +1006,37 @@
         'navbar': delicious.settings.get('deliciousnavbarpiechart'),
         'profile': delicious.settings.get('deliciousnavbarpiechart')
     });
+
     if (delicious.settings.ensureSettingsInserted()) {
         var section = delicious.settings.createCollapsibleSection('Delicious Freeleech Pool');
         var s = section.querySelector('.settings_section_body');
-        s.appendChild(delicious.settings.createCheckbox('deliciousfreeleechpool', 'Enable/Disable', 'Shows current freeleech pool progress in the navbar and on user pages'
+        s.appendChild(delicious.settings.createCheckbox(
+            'deliciousfreeleechpool',
+            'Enable/Disable',
+            'Shows current freeleech pool progress in the navbar and on user pages'
             + ' (updated once an hour or when freeleech pool site is visited).'));
-        s.appendChild(delicious.settings.createDropDown('deliciousflpoolposition', 'Navbar Position', 'Select position of freeleech pool progress in the navbar or disable it.', [['Before user info', 'before #userinfo_minor'],
-            ['After user info', 'after #userinfo_minor'],
-            ['Before menu', 'before .main-menu.nobullet'],
-            ['After menu', 'after .main-menu.nobullet'],
-            ['Don\'t display', 'none']], { default: 'after #userinfo_minor' }));
-        s.appendChild(delicious.settings.createFieldSetSetting('deliciousflpiepositions', 'FL Pie Chart Locations', [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]));
+        s.appendChild(delicious.settings.createDropDown(
+            'deliciousflpoolposition',
+            'Navbar Position',
+            'Select position of freeleech pool progress in the navbar or disable it.',
+            [['Before user info', 'before #userinfo_minor'],
+                ['After user info', 'after #userinfo_minor'],
+                ['Before menu', 'before .main-menu.nobullet'],
+                ['After menu', 'after .main-menu.nobullet'],
+                ['Don\'t display', 'none']],
+            {default: 'after #userinfo_minor'}
+        ));
+        s.appendChild(delicious.settings.createFieldSetSetting(
+            'deliciousflpiepositions',
+            'FL Pie Chart Locations',
+            [['Navbar dropdown', 'navbar'], ['User profile', 'profile']]
+        ));
         delicious.settings.insertSection(section);
     }
+
     if (!delicious.settings.get('deliciousfreeleechpool'))
         return;
+
     function niceNumber(num) {
         var res = '';
         while (num >= 1000) {
@@ -995,13 +1055,15 @@
                 console.error("Not enough boxes.");
                 return;
             }
+
             // The first box holds the current amount, the max amount and the user's individual all-time contribution
-            var match = boxes[0].textContent.match(/have ¥([0-9,]+) \/ ¥([0-9,]+)/i), max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10), current = parseInt(GM_getValue('FLPoolCurrent', '0'), 10);
+            var match = boxes[0].textContent.match(/have ¥([0-9,]+) \/ ¥([0-9,]+)/i),
+                max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
+                current = parseInt(GM_getValue('FLPoolCurrent', '0'), 10);
             if (match == null) {
                 // Updated 2018-02-23 according to oregano's suggestion
                 match = boxes[0].textContent.match(/You must wait for freeleech to be over before donating/i);
-                if (match != null)
-                    current = max;
+                if (match != null) current = max;
             }
             else {
                 current = parseInt(match[1].replace(/,/g, ''), 10);
@@ -1015,17 +1077,24 @@
             match = boxes[0].textContent.match(/you've donated ¥([0-9,]+)/i);
             if (match != null)
                 GM_setValue('FLPoolContribution', parseInt(match[1].replace(/,/g, ''), 10));
+
             // The third box holds the top 10 donators for the current box
-            var box = boxes[2], firstP = box.querySelector('p'), tr = box.querySelector('table').querySelectorAll('tbody > tr');
+            var box = boxes[2],
+                firstP = box.querySelector('p'),
+                tr = box.querySelector('table').querySelectorAll('tbody > tr');
+
             var titles = [], hrefs = [], amounts = [], colors = [], sum = 0;
             for (var i = 0; i < tr.length; i++) {
-                var el = tr[i], td = el.querySelectorAll('td');
+                var el = tr[i],
+                    td = el.querySelectorAll('td');
+
                 titles[i] = td[0].textContent;
                 hrefs[i] = td[0].querySelector('a').href;
                 amounts[i] = parseInt(td[1].textContent.replace(/[,¥]/g, ''), 10);
                 colors[i] = 'red';
                 sum += amounts[i];
             }
+
             // Updated 2018-02-23. Properly draw full pie when FL active.
             if (current === max && sum === 0) {
                 titles[0] = "Freeleech!";
@@ -1042,17 +1111,20 @@
                 hrefs[next_index] = 'https://animebytes.tv/konbini/pool';
                 amounts[next_index] = current - sum;
                 colors[next_index] = 'lightgrey';
+
                 titles[next_index + 1] = 'Missing';
                 hrefs[next_index + 1] = 'https://animebytes.tv/konbini/pool';
                 amounts[next_index + 1] = max - current;
                 colors[next_index + 1] = 'black';
             }
+
             GM_setValue('FLPoolLastUpdate', Date.now());
             GM_setValue('FLPoolTitles', JSON.stringify(titles));
             GM_setValue('FLPoolHrefs', JSON.stringify(hrefs));
             GM_setValue('FLPoolAmounts', JSON.stringify(amounts));
             GM_setValue('FLPoolColors', JSON.stringify(colors));
         }
+
         // Either parse document or retrieve freeleech pool site 60*60*1000 ms after last retrieval
         if (/konbini\/pool$/i.test(document.URL))
             parseFLInfo(document);
@@ -1063,8 +1135,7 @@
             // https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/18
             try {
                 var xhr = XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
-            }
-            catch (exc) {
+            } catch (exc) {
                 var xhr = new XMLHttpRequest();
             }
             parser = new DOMParser();
@@ -1080,10 +1151,10 @@
             };
         }
     }
+
     function getPieChart() {
         function circlePart(diff, title, href, color) {
-            if (diff == 0)
-                return '';
+            if (diff == 0) return '';
             var x = Math.sin(phi), y = Math.cos(phi);
             phi -= 2 * Math.PI * diff / max;
             var v = Math.sin(phi), w = Math.cos(phi);
@@ -1091,6 +1162,7 @@
             if (2 * diff > max)
                 z = 1; // use long arc
             var perc = (100 * diff / max).toFixed(1) + '%\n' + niceNumber(diff) + ' ¥';
+
             // 2018-02-23 Hardcoded since rounding errors were making the pie a thin strip when it was a single
             // slice at 100%.
             if (diff === max) {
@@ -1104,26 +1176,33 @@
                 z = 1;
                 x = 0;
                 y = -1;
+
             }
             return '<a xlink:href="' + href + '" xlink:title="' + title + '\n' + perc + '"><path title="' + title + '\n' + perc +
                 '" stroke-width="0.01" stroke="grey" fill="' + color + '" d="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z">\n' +
+
                 '<animate begin="mouseover" attributeName="d" to="M0,0 L' + 1.1 * v + ',' + 1.1 * w + ' A1.1,1.1 0 ' + z + ',0 ' + 1.1 * x + ',' + 1.1 * y + 'z" dur="0.3s" fill="freeze" />\n' +
                 '<animate begin="mouseout"  attributeName="d" to="M0,0 L' + v + ',' + w + ' A1,1 0 ' + z + ',0 ' + x + ',' + y + 'z" dur="0.3s" fill="freeze" />\n' +
                 '</path></a>\n\n';
         }
+
         var str = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-1.11 -1.11 2.22 2.22" height="200px" width="100%">' +
             '<title>Most Donated To This Box Pie-Chart</title>';
         try {
-            var phi = Math.PI, max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10), titles = JSON.parse(GM_getValue('FLPoolTitles', '[]')), hrefs = JSON.parse(GM_getValue('FLPoolHrefs', '[]')), amounts = JSON.parse(GM_getValue('FLPoolAmounts', '[]')), colors = JSON.parse(GM_getValue('FLPoolColors', '[]'));
+            var phi = Math.PI, max = parseInt(GM_getValue('FLPoolMax', '50000000'), 10),
+                titles = JSON.parse(GM_getValue('FLPoolTitles', '[]')),
+                hrefs = JSON.parse(GM_getValue('FLPoolHrefs', '[]')),
+                amounts = JSON.parse(GM_getValue('FLPoolAmounts', '[]')),
+                colors = JSON.parse(GM_getValue('FLPoolColors', '[]'));
             for (var i = 0; i < titles.length; i++) {
                 str += circlePart(amounts[i], titles[i], hrefs[i], colors[i]);
             }
-        }
-        catch (e) {
+        } catch (e) {
             console.error("Error rendering FL pie chart.", e);
         }
         return str + '</svg>';
     }
+
     function updatePieChart() {
         var pieChart = getPieChart();
         p.innerHTML = pieChart;
@@ -1138,9 +1217,17 @@
         a.textContent = 'FL: ' + (100 * parseInt(GM_getValue('FLPoolCurrent', '0'), 10) / parseInt(GM_getValue('FLPoolMax', '50000000'), 10)).toFixed(1) + '%';
         nav.replaceChild(a, nav.firstChild);
     }
+
     var pos = delicious.settings.get('deliciousflpoolposition');
+
     if (pos !== 'none' || /user\.php\?id=/i.test(document.URL) || /konbini\/pool/i.test(document.URL)) {
-        var p = document.createElement('p'), p2 = document.createElement('center'), p3 = document.createElement('p'), nav = document.createElement('li'), a = document.createElement('a'), ul = document.createElement('ul'), li = document.createElement('li');
+        var p = document.createElement('p'),
+            p2 = document.createElement('center'),
+            p3 = document.createElement('p'),
+            nav = document.createElement('li'),
+            a = document.createElement('a'),
+            ul = document.createElement('ul'),
+            li = document.createElement('li');
         console.log("Inserting FL status. pos: ", pos);
         a.href = '/konbini/pool';
         nav.appendChild(a);
@@ -1149,8 +1236,10 @@
             outerSpan.className += "dropit hover clickmenu";
             outerSpan.addEventListener('click', delicious.utilities.toggleSubnav);
             outerSpan.innerHTML += '<span class="stext">▼</span>';
+
             // nav is the li.navmenu
             nav.appendChild(outerSpan);
+
             // this ul contains the pie (somehow)
             ul.appendChild(li);
             ul.className = 'subnav nobullet';
@@ -1170,7 +1259,9 @@
                     parent.insertBefore(nav, parent.firstChild);
             }
         }
+
         updatePieChart();
+
         if (pieLocations['profile'] && /user\.php\?id=/i.test(document.URL)) {
             var userstats = document.querySelector('#user_rightcol > .box');
             if (userstats != null) {
@@ -1186,6 +1277,7 @@
                 }
             }
         }
+
         if (/konbini\/pool/i.test(document.URL)) {
             var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Most Donated to This Box\s*$/i.test(node.data); } });
             if (tw.nextNode() !== null) {
@@ -1206,59 +1298,100 @@
 // @icon        http://animebytes.tv/favicon.ico
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 //import '../delicious-library/src/ab_delicious_library'
+
 (function ForumSearchEnhancement() {
     delicious.settings.init('ABForumSearchWorkInFS', true);
     delicious.settings.init('ABForumSearchWorkInRest', true);
+
     var textSettings = ['ABForumSearchHighlightBG', 'ABForumSearchHighlightFG',
         'ABForumLoadText', 'ABForumLoadingText', 'ABForumToggleText'];
     for (var j = 0; j < textSettings.length; j++) {
         delicious.settings._migrateStringSetting(textSettings[j]);
     }
+
     if (delicious.settings.get('ABForumSearchHighlightBG') === 'none')
         delicious.settings.set('ABForumSearchHighlightBG', null);
     if (delicious.settings.get('ABForumSearchHighlightFG') === 'none')
         delicious.settings.set('ABForumSearchHighlightFG', null);
+
     if (delicious.settings.ensureSettingsInserted()) {
         var section = delicious.settings.createCollapsibleSection('Forum Search Enhancements');
         var s = section.querySelector('.settings_section_body');
-        s.appendChild(delicious.settings.createCheckbox('ABForumSearchWorkInFS', 'Load posts into search results', 'Allows you to load posts and threads into search results, slide through posts and filter for authors.'));
-        s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightBG', 'Color for search terms', 'Background color for search terms within posts and headers.', { default: '#FFC000' }));
-        s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightFG', 'Color for search terms', 'Text color for search terms within posts and headers.', { default: '#000000' }));
-        s.appendChild(delicious.settings.createCheckbox('ABForumEnhWorkInRest', 'Load posts into forum view', 'Allows you to load posts and threads into the general forum view.', { default: false }));
-        s.appendChild(delicious.settings.createTextSetting('ABForumLoadText', 'Text for links to be loaded', 'The text to be shown for forum links that have not been loaded yet.', { default: '(Load) ', width: '8em' }));
-        s.appendChild(delicious.settings.createTextSetting('ABForumLoadingText', 'Text for loading links', 'The text to be shown for forum links that are currently being loaded.', { default: '(Loading) ', width: '8em' }));
-        s.appendChild(delicious.settings.createTextSetting('ABForumToggleText', 'Text for loaded links', 'The text to be shown for forum links that have been loaded and can now be toggled.', { default: '(Toggle) ', width: '8em' }));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABForumSearchWorkInFS',
+            'Load posts into search results',
+            'Allows you to load posts and threads into search results, slide through posts and filter for authors.'
+        ));
+
+        s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightBG',
+            'Color for search terms', 'Background color for search terms within posts and headers.',
+            {default: '#FFC000'}));
+        s.appendChild(delicious.settings.createColourSetting('ABForumSearchHighlightFG',
+            'Color for search terms', 'Text color for search terms within posts and headers.',
+            {default: '#000000'}));
+
+        s.appendChild(delicious.settings.createCheckbox('ABForumEnhWorkInRest',
+            'Load posts into forum view', 'Allows you to load posts and threads into the general forum view.',
+            {default: false}));
+        s.appendChild(delicious.settings.createTextSetting('ABForumLoadText',
+            'Text for links to be loaded', 'The text to be shown for forum links that have not been loaded yet.',
+            {default: '(Load) ', width: '8em'}));
+        s.appendChild(delicious.settings.createTextSetting('ABForumLoadingText', 'Text for loading links',
+            'The text to be shown for forum links that are currently being loaded.',
+            {default: '(Loading) ', width: '8em'}));
+        s.appendChild(delicious.settings.createTextSetting('ABForumToggleText', 'Text for loaded links',
+            'The text to be shown for forum links that have been loaded and can now be toggled.',
+            {default: '(Toggle) ', width: '8em'}));
+
         delicious.settings.insertSection(section);
     }
-    if (!((/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL))
-        && !/action=viewthread/i.test(document.URL)))
+
+    if (!( (/^http.*:\/\/animebytes\.tv\/forums\.php/i.test(document.URL))
+        && !/action=viewthread/i.test(document.URL) ))
         return;
+
+
     var a, allResults, background_color, button, cb, filterPost, forumIds, forumid, getFirstTagParent, hideSubSelection, i, j, input, len, linkbox1, loadPost, loadText, loadThreadPage, loadingText, myCell, myLINK, newCheckbox, newLinkBox, patt, processThreadPage, quickLink, quickLinkSubs, result, sR, searchForums, searchForumsCB, searchForumsNew, showFastSearchLinks, showPost, strong, tP, textReplace, text_color, toggleText, toggleVisibility, user_filter, user_td, user_tr, workInForumSearch, workInRestOfForum;
+
     background_color = delicious.settings.get('ABForumSearchHighlightBG', '#FFC000');
+
     text_color = delicious.settings.get('ABForumSearchHighlightFG', '#000000');
+
     toggleText = delicious.settings.get('ABForumToggleText', '(Toggle) ');
+
     loadText = delicious.settings.get('ABForumLoadText', '(Load) ');
+
     loadingText = delicious.settings.get('ABForumLoadingText', '(Loading) ');
+
     hideSubSelection = delicious.settings.get('ABForumSearchHideSubfor', true);
+
     workInForumSearch = delicious.settings.get('ABForumSearchWorkInFS', true) && document.URL.indexOf('action=search') >= 0;
+
     workInRestOfForum = delicious.settings.get('ABForumEnhWorkInRest', false) && (document.URL.indexOf('action=viewforum') >= 0 || document.URL.indexOf('?') === -1);
+
     showFastSearchLinks = delicious.settings.get('ABForumEnhFastSearch', true) && document.URL.indexOf('action=viewforum') >= 0;
+
     user_filter = [];
+
     sR = [];
+
     tP = [];
+
     cb = [];
+
     getFirstTagParent = function (elem, tag) {
         while (elem !== null && elem.tagName !== 'BODY' && elem.tagName !== tag) {
             elem = elem.parentNode;
         }
         if (elem === null || elem.tagName !== tag) {
             return null;
-        }
-        else {
+        } else {
             return elem;
         }
     };
+
     textReplace = function (elem) {
         var node, regExp, walk;
         if (patt !== '' && (background_color !== 'none' || text_color !== 'none')) {
@@ -1287,6 +1420,7 @@
             }
         }
     };
+
     processThreadPage = function (id, threadid, page, parent, link) {
         return function () {
             var _i, cell, i, j, len, len1, linkbox, myColsp, nextPost, pagenums, post, prevPost, ref, ref1, td, threadPage, tr, user_id;
@@ -1342,6 +1476,7 @@
             sR[id].parent.parentNode.insertBefore(tr, sR[id].parent.nextSibling);
         };
     };
+
     loadThreadPage = function (threadid, page) {
         var threadPage, xhr;
         threadPage = "threadid=" + threadid + "&page=" + page;
@@ -1369,6 +1504,7 @@
             }
         };
     };
+
     loadPost = function (link, index, filtered) {
         return function (event) {
             var cell, id, match, newLink, node, page, threadPage, threadid;
@@ -1384,19 +1520,16 @@
             match = link.href.match(/([^#]*)(?:#post(\d+))?/i);
             if (match != null) {
                 id = match[2] != null ? 'post' + match[2] : id = index + link.href;
-            }
-            else {
+            } else {
                 return;
             }
             if (id in sR) {
                 if (filtered === true) {
                     filterPost(id)();
-                }
-                else {
+                } else {
                     toggleVisibility(id);
                 }
-            }
-            else {
+            } else {
                 page = link.href.match(/page=(\d+)/i);
                 page = page != null ? parseInt(page[1], 10) : 1;
                 link.previousSibling.textContent = loadingText;
@@ -1407,15 +1540,13 @@
                         if (filtered === true) {
                             cb[threadPage].push(filterPost(id));
                         }
-                    }
-                    else {
+                    } else {
                         processThreadPage(id, threadid, page, node, newLink)();
                         if (filtered === true) {
                             filterPost(id)();
                         }
                     }
-                }
-                else {
+                } else {
                     loadThreadPage(threadid, page);
                     cb[threadPage].push(processThreadPage(id, threadid, page, node, newLink));
                     if (filtered === true) {
@@ -1425,17 +1556,18 @@
             }
         };
     };
+
     toggleVisibility = function (id) {
         var elem;
         elem = sR[id];
         if (elem.td.parentNode.style.visibility === 'collapse') {
             showPost(id, null)();
             return elem.td.parentNode.style.visibility = 'visible';
-        }
-        else {
+        } else {
             return elem.td.parentNode.style.visibility = 'collapse';
         }
     };
+
     showPost = function (id, prev) {
         return function (event) {
             var elem, nextTP, prevTP, threadPage;
@@ -1452,67 +1584,57 @@
                     if (prevTP in tP) {
                         if (tP[prevTP] === 'Loading') {
                             cb[prevTP].push(showPost(id, prev));
-                        }
-                        else {
+                        } else {
                             elem.page = elem.page - 1;
                             elem.index = tP[prevTP].length - 1;
                             elem.td.replaceChild(tP[prevTP][elem.index], elem.td.lastChild);
                         }
-                    }
-                    else {
+                    } else {
                         loadThreadPage(elem.threadid, elem.page - 1);
                         cb[prevTP].push(showPost(id, prev));
                     }
-                }
-                else {
+                } else {
                     elem.index = Math.max(elem.index - 1, 0);
                     if (elem.td.children.length === 2) {
                         elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
-                    }
-                    else {
+                    } else {
                         elem.td.appendChild(tP[threadPage][elem.index]);
                     }
                 }
-            }
-            else if (prev === false) {
+            } else if (prev === false) {
                 if (elem.index === 24) {
                     if (nextTP in tP) {
                         if (tP[nextTP] === 'Loading') {
                             cb[prevTP].push(showPost(id, prev));
-                        }
-                        else {
+                        } else {
                             if (tP[nextTP].length > 0) {
                                 elem.page = elem.page + 1;
                                 elem.index = 0;
                                 elem.td.replaceChild(tP[nextTP][0], elem.td.lastChild);
                             }
                         }
-                    }
-                    else {
+                    } else {
                         loadThreadPage(elem.threadid, elem.page + 1);
                         cb[nextTP].push(showPost(id, prev));
                     }
-                }
-                else {
+                } else {
                     elem.index = Math.min(elem.index + 1, tP[threadPage].length - 1);
                     if (elem.td.children.length === 2) {
                         elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
-                    }
-                    else {
+                    } else {
                         elem.td.appendChild(tP[threadPage][elem.index]);
                     }
                 }
-            }
-            else {
+            } else {
                 if (elem.td.children.length === 2) {
                     elem.td.replaceChild(tP[threadPage][elem.index], elem.td.lastChild);
-                }
-                else {
+                } else {
                     elem.td.appendChild(tP[threadPage][elem.index]);
                 }
             }
         };
     };
+
     filterPost = function (id) {
         return function () {
             var elem, i, len, toFilter, user_name;
@@ -1531,12 +1653,12 @@
             }
         };
     };
+
     if (workInRestOfForum || workInForumSearch) {
         patt = document.querySelector('form[action=""] input[name="search"]');
         if (patt != null) {
             patt = patt.value.trim().replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&').replace(/\s+/g, '|');
-        }
-        else {
+        } else {
             patt = '';
         }
         allResults = document.querySelectorAll('a[href^="/forums.php?action=viewthread"]');
@@ -1551,6 +1673,7 @@
             myCell.insertBefore(a, result);
         }
     }
+
     if (workInForumSearch) {
         user_tr = document.createElement('tr');
         user_td = [];
@@ -1596,6 +1719,7 @@
         }, true);
     }
 }).call(this);
+
 // ==UserScript==
 // @name        AB - Hide treats
 // @author      Alpha
@@ -1607,15 +1731,20 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Hide treats by Alpha
 // Hide treats on profile.
-(function ABHideTreats() {
-    var _enabled = delicious.settings.basicScriptCheckbox('delicioustreats', 'Disgusting Treats', 'Hide those hideous treats on profile pages!');
+(function ABHideTreats(){
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioustreats',
+        'Disgusting Treats',
+        'Hide those hideous treats on profile pages!'
+    );
     if (!_enabled)
         return;
+
     var treatsnode = document.evaluate('//*[@id="user_leftcol"]/div[@class="box" and div[@class="head" and .="Treats"]]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    if (treatsnode)
-        treatsnode.style.display = "none";
+    if (treatsnode) treatsnode.style.display = "none";
 })();
 // ==UserScript==
 // @name        AB - HYPER QUOTE!
@@ -1628,16 +1757,25 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 //import '../delicious-library/src/ab_delicious_library';
+
 /* global delicious */
+
 (function ABHyperQuote() {
-    var _enabled = delicious.settings.basicScriptCheckbox('delicioushyperquote', 'Delicious Hyper Quote', 'Select text and press Ctrl+V to instantly quote it.');
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioushyperquote',
+        'Delicious Hyper Quote',
+        'Select text and press Ctrl+V to instantly quote it.'
+    );
     if (!_enabled)
         return;
+
     if (document.getElementById('quickpost') === null)
         return;
     /** Debug flag. */
     var _debug = false;
+
     function formattedUTCString(date, timezone) {
         var creation = new Date(date);
         if (isNaN(creation.getTime()))
@@ -1647,6 +1785,7 @@
             return creation[1] + ' ' + creation[2] + ' ' + creation[3] + ', ' + creation[4].substring(0, 5) + (timezone !== false ? ' ' + creation[5] : '');
         }
     }
+
     /**
      * Quotes the entire selection.
      *
@@ -1655,15 +1794,13 @@
      * */
     function QUOTEALL() {
         var sel = window.getSelection();
-        if (sel.rangeCount === 0)
-            return;
+        if (sel.rangeCount === 0) return;
         // If there's only one range, happy days.
         if (sel.rangeCount === 1) {
             _debug && console.log('Quoting one range:');
             _debug && console.log(sel.getRangeAt(0));
             QUOTEMANY(sel.getRangeAt(0));
-        }
-        else {
+        } else {
             _debug && console.log('Dealing with multiple ranges.');
             // Ohhh boy.... firefox, why...?
             var allRanges = [];
@@ -1681,7 +1818,7 @@
             // Start at 2nd range, because we have already set startRange
             // and previousRange above. Also, first range has no previous
             // range to compare to.
-            for (var i = 1; i < sel.rangeCount + 1; i++) {
+            for (var i = 1; i < sel.rangeCount+1; i++) {
                 if (i < sel.rangeCount)
                     thisRange = sel.getRangeAt(i);
                 else
@@ -1692,11 +1829,10 @@
                 // endOffset+1 is to get the childNode _after_ the previous
                 // range ends, since ranges don't overlap (hopefully)
                 if (thisRange !== null && thisRange.startOffset === 0 &&
-                    previousRange.endContainer.childNodes[previousRange.endOffset + 1] === thisRange.startContainer) {
+                    previousRange.endContainer.childNodes[previousRange.endOffset+1] === thisRange.startContainer) {
                     // Store this range as the previous and continue looping.
                     previousRange = thisRange;
-                }
-                else {
+                } else {
                     // Else, the current range does not continue from
                     // the previous one.
                     if (startRange !== previousRange) {
@@ -1705,8 +1841,7 @@
                         newRange.setStart(startRange.startContainer, startRange.startOffset);
                         newRange.setEnd(previousRange.endContainer, previousRange.endOffset);
                         allRanges.push(newRange);
-                    }
-                    else {
+                    } else {
                         // No adjacent ranges to startRange.
                         // They're both the same, append either.
                         allRanges.push(previousRange);
@@ -1721,6 +1856,7 @@
             }
         }
     }
+
     /**
      * Quotes many posts.
      *
@@ -1738,8 +1874,7 @@
          * @param {boolean} prev
          */
         function removeChildren(node, prev) {
-            if (node === null || node.parentNode === null)
-                return;
+            if (node === null || node.parentNode === null) return;
             if (prev === true)
                 while (node.parentNode.firstChild !== node)
                     node.parentNode.removeChild(node.parentNode.firstChild);
@@ -1762,7 +1897,9 @@
             _debug && console.log(elem);
             return -1;
         }
+
         // TODO: refactor bbcodeChildren to use these functions.
+
         /**
          *
          * @param {HTMLElement} quoteNode
@@ -1780,11 +1917,11 @@
                     && link.textContent.slice(0, 6) === 'wrote '
                     && strong.tagName.toUpperCase() === 'STRONG'
                     && strong.firstElementChild.href.indexOf('/user.php?id=') !== -1);
-            }
-            catch (e) {
+            } catch (e) {
                 return false;
             }
         }
+
         function isUsernameQuote(quoteNode) {
             try {
                 var wrote = quoteNode.previousSibling;
@@ -1793,12 +1930,13 @@
                     && strong.nodeType === Node.ELEMENT_NODE
                     && strong.tagName.toUpperCase() === 'STRONG'
                     && strong.childNodes.length === 1
-                    && strong.firstChild.nodeType === Node.TEXT_NODE);
-            }
-            catch (e) {
+                    && strong.firstChild.nodeType === Node.TEXT_NODE
+                );
+            } catch (e) {
                 return false;
             }
         }
+
         /**
          * Returns a new documentFragment containing 'num' many nodes
          * which are previous siblings of 'node', cloned.
@@ -1811,10 +1949,12 @@
             var docFrag = document.createDocumentFragment();
             var index = inArray(node.parentNode.childNodes, node);
             for (var q = 0; q < num; q++) {
-                docFrag.appendChild(node.parentNode.childNodes[index - num + q].cloneNode(true));
+                docFrag.appendChild(
+                    node.parentNode.childNodes[index-num+q].cloneNode(true));
             }
             return docFrag;
         }
+
         /**
          * Array of [number, docFrag] pairs where number is a
          * data-hyper-quote value referencing a unique node
@@ -1836,12 +1976,11 @@
                 numToSave = 4;
             else if (isUsernameQuote(node))
                 numToSave = 2;
+
             if (numToSave) {
                 var num;
-                if (savedPreviousNodes.length)
-                    num = savedPreviousNodes.slice(-1)[0] + 1;
-                else
-                    num = 1;
+                if (savedPreviousNodes.length) num = savedPreviousNodes.slice(-1)[0] + 1;
+                else num = 1;
                 var pair = [num, savePreviousNodes(numToSave, node)];
                 node.dataset['hyperQuote'] = num;
                 savedPreviousNodes.push(pair);
@@ -1849,6 +1988,7 @@
             }
             return null;
         }
+
         /**
          * Traverses upwards from 'node' to the topmost element in the document.
          *
@@ -1868,6 +2008,7 @@
             }
             return [bottomNode, path];
         }
+
         /**
          * Reverse of traverseUpwards,
          * descending to the element in the original position using a known
@@ -1878,34 +2019,37 @@
          */
         function traverseDownwards(topNode, path) {
             for (var i = path.length - 1; i >= 0; i--) {
-                if (path[i] === -1)
-                    return;
+                if (path[i] === -1) return;
                 topNode = topNode.childNodes[path[i]];
             }
             return topNode;
         }
-        if (range.collapsed === true)
-            return;
+
+        if (range.collapsed === true) return;
+
         // Goes from the startContainer to root document node, storing its
         // path in 'start'.
         var html1 = range.startContainer;
         var t = traverseUpwards(html1, true);
         html1 = t[0];
         var start = t[1];
+
         // Similarly for the endContainer.
         var html2 = range.endContainer;
         var u = traverseUpwards(html2, false);
         html2 = u[0];
         var end = u[1];
+
         // These should be equal as they originate from the same <html> tag.
-        if (html1 !== html2 || html1 === null)
-            return;
+        if (html1 !== html2 || html1 === null) return;
         // Take a copy which we can edit as we need.
         var htmlCopy = html1.cloneNode(true);
+
         // Descends the copied HTML tree to get to the startContainer
         // and endContainer, using the indexes stored previously.
         var startNode = traverseDownwards(htmlCopy, start);
         var endNode = traverseDownwards(htmlCopy, end);
+
         // Slices the start and end containers so they contain only
         // the selected text.
         if (endNode.nodeType === 3)
@@ -1920,9 +2064,11 @@
                 for (var j = 0; j < range.startOffset; j++)
                     startNode.removeChild(startNode.firstChild);
         }
+
         // Removes all elements before startNode and after endNode.
         removeChildren(startNode, true);
         removeChildren(endNode, false);
+
         // Finds the bottommost element which is a parent of both
         // startNode and endNode. This is done to find the deepest quote
         // which was quoted.
@@ -1932,13 +2078,17 @@
         var rootQuote = null;
         var secondChild = null; // Set in 'while' conditional.
         while ( // I'm really sorry about this code ;-;
-        (commonRoot.childNodes.length === 1) // If only one child, the result is obvious.
-            || (commonRoot.childNodes.length === 2 // If 2 children.
+            (commonRoot.childNodes.length === 1) // If only one child, the result is obvious.
+            || (
+                commonRoot.childNodes.length === 2 // If 2 children.
                 && (secondChild = commonRoot.childNodes[1])
                 && ( // If second child is a text node, we require it be whitespace.
-                (secondChild.nodeType === Node.TEXT_NODE && !secondChild.nodeValue.trim())
+                    (secondChild.nodeType === Node.TEXT_NODE && !secondChild.nodeValue.trim())
                     || // If it is an element, we require it to be <br>.
-                        (secondChild.tagName && secondChild.tagName.toUpperCase() === 'BR')))) {
+                    (secondChild.tagName && secondChild.tagName.toUpperCase() === 'BR')
+                )
+            )
+        ) {
             // If these conditions hold, the child is a common parent of both
             // startNode and endNode, as other elements were deleted earlier.
             commonRoot = commonRoot.firstChild;
@@ -1948,21 +2098,24 @@
                 rootQuote = commonRoot;
             }
         }
+
         // Restores extra nodes before a quote such as username and link.
         // Must be done after the common root checking otherwise it will
         // mess up the process.
         for (var k = 0; k < savedPreviousNodes.length; k++) {
             // Use selectors on the copied HTML tree to find the corresponding
             // nodes.
-            var selector = '[data-hyper-quote="' + savedPreviousNodes[k][0] + '"]';
+            var selector = '[data-hyper-quote="'+savedPreviousNodes[k][0]+'"]';
             var copyNode = htmlCopy.querySelector(selector);
             copyNode.parentNode.insertBefore(savedPreviousNodes[k][1], copyNode);
+
             // Delete original document's data-hyper-quote attribute.
             // We don't care about htmlCopy's attributes as it gets reset
             // every time.
             delete document.querySelector(selector).dataset['hyperQuote'];
         }
         savedPreviousNodes = [];
+
         // If there is a [quote] common to start and end. In other worse,
         // the selection is contained entirely within one quote.
         if (rootQuote) {
@@ -1973,12 +2126,14 @@
             sel.scrollIntoView();
             return;
         }
+
         // Otherwise, quote as usual.
         var posts = htmlCopy.querySelectorAll('div[id^="post"],div[id^="msg"]');
         for (var l = 0; l < posts.length; l++) {
             QUOTEONE(posts[l]);
         }
     }
+
     /**
      * Returns BBCode of one whole div.post.
      *
@@ -1987,6 +2142,7 @@
     function bbcodeChildrenTrim(postDiv) {
         return bbcodeChildren(postDiv).trim();
     }
+
     /**
      * Returns BBCode of parentNode's children.
      *
@@ -2011,18 +2167,19 @@
                 var text = thisNode.nodeValue;
                 // If this isn't the first child and previous is a <br>,
                 // collapse leading space.
-                if (i > 0 && parentNode.childNodes[i - 1].nodeType === Node.ELEMENT_NODE
-                    && parentNode.childNodes[i - 1].tagName.toUpperCase() === 'BR')
+                if (i > 0 && parentNode.childNodes[i-1].nodeType === Node.ELEMENT_NODE
+                    && parentNode.childNodes[i-1].tagName.toUpperCase() === 'BR')
                     text = text.replace(/^\s+/, '');
                 // If this isn't the last child and next is a <br>,
                 // collapse trailing space.
-                if (i + 1 < parentNode.childNodes.length
-                    && parentNode.childNodes[i + 1].nodeType === Node.ELEMENT_NODE
-                    && parentNode.childNodes[i + 1].tagName.toUpperCase() === 'BR')
+                if (i+1 < parentNode.childNodes.length
+                    && parentNode.childNodes[i+1].nodeType === Node.ELEMENT_NODE
+                    && parentNode.childNodes[i+1].tagName.toUpperCase() === 'BR')
                     text = text.replace(/\s+$/, '');
                 bbcodeString += text;
                 continue;
             }
+
             /**
              * Whether this element represents the start of a
              * post number (e.g. `[quote=#1559283]`) quote.
@@ -2033,32 +2190,33 @@
                 // is not a quote block, as the surrounding structure
                 // will not be there.
                 //debugger;
-                isSmartQuote = ((i + 4 < parentNode.childNodes.length)
+                isSmartQuote = (
+                    (i+4 < parentNode.childNodes.length)
                     // thisNode is a <strong></strong> node containing the
                     // user link.
                     && thisNode.nodeType === Node.ELEMENT_NODE
                     && thisNode.tagName.toUpperCase() === 'STRONG'
                     && thisNode.firstElementChild.href.indexOf('user.php?id=') !== -1
                     // i+1 is a " " text node.
-                    && !parentNode.childNodes[i + 1].nodeValue.trim()
+                    && !parentNode.childNodes[i+1].nodeValue.trim()
                     // i+2 is the <a> node linking to the post.
-                    && parentNode.childNodes[i + 2].textContent.indexOf('wrote') !== -1
-                    && parentNode.childNodes[i + 2].firstElementChild.tagName.toUpperCase() === 'SPAN'
-                    && parentNode.childNodes[i + 2].firstElementChild.title
+                    && parentNode.childNodes[i+2].textContent.indexOf('wrote') !== -1
+                    && parentNode.childNodes[i+2].firstElementChild.tagName.toUpperCase() === 'SPAN'
+                    && parentNode.childNodes[i+2].firstElementChild.title
                     // i+3 is the :
-                    && parentNode.childNodes[i + 3].nodeValue.indexOf(':') !== -1
+                    && parentNode.childNodes[i+3].nodeValue.indexOf(':') !== -1
                     // i+4 is the quote.
-                    && parentNode.childNodes[i + 4].classList.contains('blockquote'));
-            }
-            catch (exception) {
-                _debug && console.log(exception);
-            }
+                    && parentNode.childNodes[i+4].classList.contains('blockquote')
+                );
+            } catch (exception) { _debug && console.log(exception); }
             _debug && console.log('isSmartQuote: ' + isSmartQuote);
             if (isSmartQuote) {
-                bbcodeString += bbcodeSmartQuote(thisNode, parentNode.childNodes[i + 2], parentNode.childNodes[i + 4]);
+                bbcodeString += bbcodeSmartQuote(thisNode,
+                    parentNode.childNodes[i+2], parentNode.childNodes[i+4]);
                 i += 4; // Skip the next 4 nodes.
                 continue;
             }
+
             /**
              * Whether this element represents the start of a
              * `[quote=username]` quote.
@@ -2070,52 +2228,56 @@
                 // (i.e. [b]username[/b] wrote ...)
                 // results in identical rendered output.
                 isBasicQuote = (
-                // Similar logic as above.
-                (i + 2 < parentNode.childNodes.length)
+                    // Similar logic as above.
+                    (i+2 < parentNode.childNodes.length)
                     && thisNode.nodeType === Node.ELEMENT_NODE
                     && thisNode.tagName.toUpperCase() === 'STRONG'
                     && thisNode.childNodes.length === 1
                     && thisNode.firstChild.nodeType === Node.TEXT_NODE
-                    && parentNode.childNodes[i + 1].nodeValue.trim() === 'wrote:'
-                    && parentNode.childNodes[i + 2].classList.contains('blockquote'));
-            }
-            catch (exception) {
-                _debug && console.log(exception);
-            }
+                    && parentNode.childNodes[i+1].nodeValue.trim() === 'wrote:'
+                    && parentNode.childNodes[i+2].classList.contains('blockquote')
+                );
+            } catch (exception) { _debug && console.log(exception); }
             if (isBasicQuote) {
-                bbcodeString += bbcodeQuote(thisNode.firstChild.nodeValue, parentNode.childNodes[i + 2]);
+                bbcodeString += bbcodeQuote(thisNode.firstChild.nodeValue, parentNode.childNodes[i+2]);
                 i += 2;
                 continue;
             }
+
             var isMediainfo = false;
             try {
                 isMediainfo = (
-                // Spoiler button
-                thisNode.classList.contains('hideContainer')
-                    && (( // Either followed by a .mediainfo table
-                    (i + 1 < parentNode.childNodes.length)
-                        && parentNode.childNodes[i + 1].tagName.toUpperCase() === 'TABLE'
-                        && parentNode.childNodes[i + 1].classList.contains('mediainfo'))
+                    // Spoiler button
+                    thisNode.classList.contains('hideContainer')
+                    && (
+                        (// Either followed by a .mediainfo table
+                            (i+1 < parentNode.childNodes.length)
+                            && parentNode.childNodes[i+1].tagName.toUpperCase() === 'TABLE'
+                            && parentNode.childNodes[i+1].classList.contains('mediainfo'))
                         || ( // OR, which was originally followed by a mediainfo table.
-                        (i + 1 === parentNode.childNodes.length)
+                            (i+1 === parentNode.childNodes.length)
                             && thisNode.firstElementChild.value.length > 4
                             && thisNode.firstElementChild.value.indexOf('.') !== -1
-                            && document.querySelector('.hideContainer > .spoilerButton[value="'
-                                + thisNode.firstElementChild.value + '"]').parentNode.nextElementSibling.classList.contains('mediainfo'))));
-            }
-            catch (exception) {
-                _debug && console.log(exception);
-            }
+                            && document.querySelector(
+                                '.hideContainer > .spoilerButton[value="'
+                                + thisNode.firstElementChild.value+'"]'
+                            ).parentNode.nextElementSibling.classList.contains('mediainfo'))
+                    )
+                );
+            } catch (exception) { _debug && console.log(exception); }
             if (isMediainfo) {
-                bbcodeString += bbcodeMediainfo(thisNode, parentNode.childNodes[i + 1]);
+                bbcodeString += bbcodeMediainfo(thisNode,
+                    parentNode.childNodes[i+1]);
                 i += 1;
                 continue;
             }
+
             // Otherwise, we handle it as a normal node.
             bbcodeString += bbcodeOneElement(thisNode);
         }
         return bbcodeString;
     }
+
     /**
      * Returns a quote BBCode, with quoteName as the = parameter, containing
      * the contents of quoteNode.
@@ -2125,10 +2287,12 @@
      */
     function bbcodeQuote(quoteName, quoteNode) {
         var contents = bbcodeChildrenTrim(quoteNode);
-        return ('[quote' + (quoteName ? '=' + quoteName : '') + ']\n'
-            + contents
-            + '\n[/quote]\n');
+        return (
+            '[quote'+(quoteName?'='+quoteName:'')+']\n'
+            +contents
+            +'\n[/quote]\n');
     }
+
     /**
      * Returns an appropriate [quote] tag using a post number.
      *
@@ -2139,14 +2303,10 @@
     function bbcodeSmartQuote(strongNode, wroteLink, quoteNode) {
         var quoteType = '';
         var href = wroteLink.href;
-        if (href.indexOf('/forums.php') !== -1)
-            quoteType = '#';
-        else if (href.indexOf('/user.php') !== -1)
-            quoteType = '*';
-        else if (href.indexOf('/torrents.php') !== -1)
-            quoteType = '-1';
-        else if (href.indexOf('/torrents2.php') !== -1)
-            quoteType = '-2';
+        if (href.indexOf('/forums.php') !== -1) quoteType = '#';
+        else if (href.indexOf('/user.php') !== -1) quoteType = '*';
+        else if (href.indexOf('/torrents.php') !== -1) quoteType = '-1';
+        else if (href.indexOf('/torrents2.php') !== -1) quoteType = '-2';
         if (quoteType !== '') {
             var id = /#(?:msg|post)?(\d+)$/.exec(href); // post number
             // We have to be careful with newlines otherwise too much whitespace
@@ -2155,9 +2315,10 @@
                 return bbcodeQuote(quoteType + id[1], quoteNode);
         }
         // We shouldn't ever reach this.
-        return ('[url=' + wroteLink.href + ']Unknown quote[/url][quote]'
-            + bbcodeChildren(quoteNode) + '[/quote]');
+        return ('[url='+wroteLink.href+']Unknown quote[/url][quote]'
+            +bbcodeChildren(quoteNode)+'[/quote]');
     }
+
     /**
      * Returns BBCode of one <strong> node.
      *
@@ -2166,20 +2327,20 @@
     function bbcodeStrong(strongNode) {
         // Special case of "Added on ..." text.
         if (strongNode.childNodes.length === 1
-            && strongNode.firstChild.nodeType === Node.TEXT_NODE
-            && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
+        && strongNode.firstChild.nodeType === Node.TEXT_NODE
+        && strongNode.firstChild.nodeValue.slice(0, 9) === 'Added on ') {
             var dateString = strongNode.firstChild.nodeValue.slice(9);
             var end = '';
             if (dateString.slice(-1) === ':') {
                 dateString = dateString.slice(0, -1);
                 end = ':';
             }
-            return '[b]Added on ' + formattedUTCString(dateString) + end + '[/b]';
-        }
-        else {
-            return '[b]' + bbcodeChildren(strongNode) + '[/b]';
+            return '[b]Added on '+formattedUTCString(dateString)+end+'[/b]';
+        } else {
+            return '[b]'+bbcodeChildren(strongNode)+'[/b]';
         }
     }
+
     /**
      * Returns BBCode of a div element.
      *
@@ -2194,10 +2355,10 @@
     function bbcodeDiv(divNode) {
         if (divNode.style.textAlign) {
             var align = divNode.style.textAlign;
-            return '[align=' + align + ']' + bbcodeChildren(divNode) + '[/align]';
+            return '[align='+align+']'+bbcodeChildren(divNode)+'[/align]';
         }
         if (divNode.classList.contains('codeBox')) {
-            return '[code]' + divNode.firstElementChild.firstChild.nodeValue + '[/code]';
+            return '[code]'+divNode.firstElementChild.firstChild.nodeValue+'[/code]';
         }
         if (divNode.classList.contains('spoilerContainer')) {
             return bbcodeSpoiler(divNode);
@@ -2205,6 +2366,7 @@
         // This fallback shouldn't ever occur.
         return bbcodeChildren(divNode);
     }
+
     /**
      * Returns BBCode of a spoiler element, considering for
      * custom button text.
@@ -2215,6 +2377,7 @@
         var isSpoiler = !spoilerDiv.classList.contains('hideContainer');
         // [hide] or [spoiler]
         var bbcodeTag = isSpoiler ? 'spoiler' : 'hide';
+
         // If we have less than 2 children, then this is an abnormal spoiler.
         if (spoilerDiv.children.length < 2) {
             // If the only child of this div isn't the spoiler's contents,
@@ -2224,7 +2387,7 @@
             }
             // Otherwise, only the inside of a spoiler is selected.
             // In this case, we have no button to work with. Compromise.
-            return '[' + bbcodeTag + ']' + bbcodeChildren(spoilerDiv.firstElementChild) + '[/' + bbcodeTag + ']';
+            return '['+bbcodeTag+']'+bbcodeChildren(spoilerDiv.firstElementChild)+'[/'+bbcodeTag+']';
         }
         var label = spoilerDiv.firstElementChild.value.replace(/^(Hide|Show)/, '');
         if (isSpoiler) // ' spoiler' is appended automatically to spoiler buttons
@@ -2232,20 +2395,23 @@
         if (label) {
             label = label.slice(1); // slice space.
         }
-        return '[' + bbcodeTag + (label ? '=' + label : '') + ']\n' +
-            bbcodeChildrenTrim(spoilerDiv.children[1]) + '\n[/' + bbcodeTag + ']';
+        return '['+bbcodeTag + (label ? '='+label : '') + ']\n' +
+            bbcodeChildrenTrim(spoilerDiv.children[1]) + '\n[/'+bbcodeTag+']';
     }
+
+
     /**
      * Returns BBCode for a [mediainfo] tag.
      *
      * @param {HTMLDivElement} buttonDiv Div containing the button and spoiler.
      * @param {HTMLTableElement} mediainfoTable
      */
-    function bbcodeMediainfo(buttonDiv, mediainfoTable) {
-        if (buttonDiv.children.length < 2)
-            return '';
+    function bbcodeMediainfo(buttonDiv, mediainfoTable) { // eslint-disable-line no-unused-vars
+        if (buttonDiv.children.length < 2) return '';
         return '[mediainfo]' + bbcodeChildren(buttonDiv.children[1]) + '[/mediainfo]';
     }
+
+
     /**
      * Returns BBCode of a <ol> or <ul> tag.
      *
@@ -2259,11 +2425,11 @@
             // <li> or <ol>/<ul>.
             str += bbcodeTag + bbcodeChildren(listNode.children[c]);
             // For whitespace.
-            if (str.slice(-1) !== '\n')
-                str += '\n';
+            if (str.slice(-1) !== '\n') str += '\n';
         }
         return str;
     }
+
     /**
      * Returns BBCode of an image element, possibly a smiley.
      *
@@ -2276,8 +2442,9 @@
         // Note: AB proxies images, so quoted images will not
         // necessarily use the same URL as the original did.
         // Original URL is b64 encoded within the CDN URL.
-        return '[img]' + imgNode.src + '[/img]';
+        return '[img]'+imgNode.src+'[/img]';
     }
+
     /**
      * Returns a string containing the hex representation of a number,
      * padded to 2 hex digits.
@@ -2290,6 +2457,7 @@
             h = '0' + h;
         return h;
     }
+
     /** Regex matching colour in rgb(x, y, z) format. */
     var rgbRegex = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/i;
     /**
@@ -2314,13 +2482,13 @@
             // Check for rgb() format colours.
             if (rgbMatch)
                 colour = ('#' + numToHex(parseInt(rgbMatch[1]))
-                    + numToHex(parseInt(rgbMatch[2]))
-                    + numToHex(parseInt(rgbMatch[3])));
-            return '[color=' + colour + ']' + bbcodeChildren(spanNode) + '[/color]';
+                +numToHex(parseInt(rgbMatch[2]))
+                +numToHex(parseInt(rgbMatch[3])));
+            return '[color='+colour+']' + bbcodeChildren(spanNode) + '[/color]';
         }
         if (spanNode.className.slice(0, 4) === 'size') {
             var size = spanNode.className.replace('size', '');
-            return '[size=' + size + ']' + bbcodeChildren(spanNode) + '[/size]';
+            return '[size='+size+']'+bbcodeChildren(spanNode)+'[/size]';
         }
         if (spanNode.className === 'last-edited') {
             return '';
@@ -2332,6 +2500,7 @@
             return formattedUTCString(spanNode.title);
         return bbcodeChildren(spanNode);
     }
+
     /**
      * Given a HTML span element representing a smiley, finds and returns
      * the smiley's BBCode.
@@ -2357,8 +2526,11 @@
         }
         return ':' + smiley + ':';
     }
+
+
     var userRegex = /^\/user\.php\?id=(\d+)$/;
     var torrentRegex = /^torrents2?\.php\?id=\d+&torrentid=(\d+)$/;
+
     /**
      *
      * @param {HTMLAnchorElement} linkElement
@@ -2372,24 +2544,27 @@
         var href = linkElement.href;
         /** Actual href as typed into HTML */
         var realHref = linkElement.getAttribute('href');
+
         var userMatch = userRegex.exec(realHref);
         if (userMatch)
-            return '[user=' + href + ']' + bbcodeChildren(linkElement) + '[/user]';
+            return '[user='+href+']'+bbcodeChildren(linkElement)+'[/user]';
         var torrentMatch = torrentRegex.exec(realHref);
         if (torrentMatch) {
             // If the link's text contains &nbsp; we assume it is a torrent
             // link.
             if (linkElement.textContent.indexOf('\xa0\xa0[') !== -1)
-                return '[torrent]' + href + '[/torrent]';
+                return '[torrent]'+href+'[/torrent]';
             else
-                return '[torrent=' + href + ']' + bbcodeChildren(linkElement) + '[/torrent]';
+                return '[torrent='+href+']'+bbcodeChildren(linkElement)+'[/torrent]';
         }
         // Actually, torrent and user links could be written using [url=]
         // and the rendered output would be the same.
-        return ('[url=' + realHref + ']' + bbcodeChildren(linkElement) + '[/url]');
+        return ('[url='+realHref+']'+ bbcodeChildren(linkElement) + '[/url]');
     }
+
     var youtubeRegex = /\/embed\/([^?]+)\?/i;
     var soundcloudRegex = /\/player\/\?url=([^&]+)&/i;
+
     /**
      * Returns BBCode for embedded media.
      *
@@ -2398,15 +2573,16 @@
     function bbcodeIframe(iframeNode) {
         var src = iframeNode.src;
         if (src.indexOf('youtube.com/embed') !== -1) {
-            return '[youtube]https://youtube.com/watch?v=' + youtubeRegex.exec(src)[1] + '[/youtube]';
+            return '[youtube]https://youtube.com/watch?v='+youtubeRegex.exec(src)[1]+'[/youtube]';
         }
         if (src.indexOf('soundcloud.com/player') !== -1) {
             // The original soundcloud URL is encoded and forms a part of the
             // embed URL.
-            return '[soundcloud]' + decodeURIComponent(soundcloudRegex.exec(src)[1]) + '[/soundcloud]';
+            return '[soundcloud]'+decodeURIComponent(soundcloudRegex.exec(src)[1])+'[/soundcloud]';
         }
         return 'Embedded media: ' + src;
     }
+
     /**
      * Returns BBCode for one element.
      *
@@ -2425,30 +2601,31 @@
             return '';
         }
         switch (node.tagName.toUpperCase()) {
-            case 'DIV': return bbcodeDiv(node);
-            case 'SPAN': return bbcodeSpan(node);
-            case 'BR': return '\n';
-            case 'STRONG': return bbcodeStrong(node);
-            case 'EM': return '[i]' + bbcodeChildren(node) + '[/i]';
-            case 'U': return '[u]' + bbcodeChildren(node) + '[/u]';
-            case 'S': return '[s]' + bbcodeChildren(node) + '[/s]';
-            case 'OL': return bbcodeList(node, '[#] ');
-            case 'UL': return bbcodeList(node, '[*] ');
-            case 'A': return bbcodeLink(node);
-            case 'IMG': return bbcodeImage(node);
-            case 'IFRAME': return bbcodeIframe(node);
-            case 'BLOCKQUOTE': return bbcodeQuote('', node);
-            case 'HR': return '[hr]';
-            case 'TABLE': return bbcodeChildren(node); // crude representation of a table
-            case 'CAPTION': return '[b]' + bbcodeChildren(node) + '[/b]\n';
-            case 'TBODY': return bbcodeChildren(node);
-            case 'TH': return bbcodeChildren(node) + '\n';
-            case 'TR': return bbcodeChildren(node) + '\n';
-            case 'TD': return bbcodeChildren(node) + '\t';
-            default:
-                return '<' + node.tagName + '>' + bbcodeChildren(node) + '</' + node.tagName + '>';
+        case 'DIV': return bbcodeDiv(node);
+        case 'SPAN': return bbcodeSpan(node);
+        case 'BR': return '\n';
+        case 'STRONG': return bbcodeStrong(node);
+        case 'EM': return '[i]'+bbcodeChildren(node)+'[/i]';
+        case 'U': return '[u]'+bbcodeChildren(node)+'[/u]';
+        case 'S': return '[s]'+bbcodeChildren(node)+'[/s]';
+        case 'OL': return bbcodeList(node, '[#] ');
+        case 'UL': return bbcodeList(node, '[*] ');
+        case 'A': return bbcodeLink(node);
+        case 'IMG': return bbcodeImage(node);
+        case 'IFRAME': return bbcodeIframe(node);
+        case 'BLOCKQUOTE': return bbcodeQuote('', node);
+        case 'HR': return '[hr]';
+        case 'TABLE': return bbcodeChildren(node); // crude representation of a table
+        case 'CAPTION': return '[b]'+bbcodeChildren(node)+'[/b]\n';
+        case 'TBODY': return bbcodeChildren(node);
+        case 'TH': return bbcodeChildren(node) + '\n';
+        case 'TR': return bbcodeChildren(node) + '\n';
+        case 'TD': return bbcodeChildren(node) + '\t';
+        default:
+            return '<'+node.tagName+'>' + bbcodeChildren(node) + '</'+node.tagName+'>';
         }
     }
+
     /**
      * Quotes one post, with post number.
      *
@@ -2459,19 +2636,16 @@
         //var res = HTMLtoBB(post.querySelector('div.post,div.body').innerHTML),
         var res = bbcodeChildrenTrim(post.querySelector('div.post, div.body'));
         var author, creation, postid, type = '';
-        if (res === '')
-            return;
+        if (res === '') return;
+
         postid = post.id.match(/(?:msg|post)(\d+)/i);
         if (postid === null)
             return;
-        if (window.location.pathname === '/forums.php')
-            type = '#';
-        if (window.location.pathname === '/user.php')
-            type = '*';
-        if (window.location.pathname === '/torrents.php')
-            type = '-1';
-        if (window.location.pathname === '/torrents2.php')
-            type = '-2';
+
+        if (window.location.pathname === '/forums.php') type = '#';
+        if (window.location.pathname === '/user.php') type = '*';
+        if (window.location.pathname === '/torrents.php') type = '-1';
+        if (window.location.pathname === '/torrents2.php') type = '-2';
         if (type !== '')
             res = '[quote=' + type + postid[1] + ']' + res + '[/quote]\n';
         else {
@@ -2487,6 +2661,7 @@
                 else
                     author = '';
             }
+
             creation = document.querySelector('div#' + postid[0] + ' > div > div > p.posted_info > span');
             if (creation === null)
                 creation = document.querySelector('div#' + postid[0] + ' > div > span > span.usercomment_posttime');
@@ -2494,13 +2669,17 @@
                 creation = ' on ' + formattedUTCString(creation.title.replace(/-/g, '/'));
             else
                 creation = '';
+
             res = author + '[url=' + window.location.pathname + window.location.search + '#' + postid[0] + ']wrote' + creation + '[/url]:\n[quote]' + res + '[/quote]\n\n';
         }
+
         document.getElementById('quickpost').value += res;
+
         var sel = document.getElementById('quickpost');
         if (sel !== null)
             sel.scrollIntoView();
     }
+
     document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey) && (e.keyCode === 'V'.charCodeAt(0)))
             QUOTEALL();
@@ -2517,15 +2696,23 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
+
 // Keyboard shortcuts by Alpha, mod by Megure
 // Enables keyboard shortcuts for forum (new post and edit) and PM
 (function ABKeyboardShortcuts() {
     var _debug = false;
-    var _enabled = delicious.settings.basicScriptCheckbox('deliciouskeyboard', 'Delicious Keyboard Shortcuts', 'Keyboard shortcuts to make typing BBCode easier.');
+
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'deliciouskeyboard',
+        'Delicious Keyboard Shortcuts',
+        'Keyboard shortcuts to make typing BBCode easier.'
+    );
     if (!_enabled)
         return;
     if (document.querySelector('textarea') === null)
         return;
+
     function custom_insert_text(open, close) {
         var elem = document.activeElement;
         if (elem.selectionStart || elem.selectionStart == '0') {
@@ -2538,8 +2725,7 @@
                 elem.setSelectionRange(startPos + open.length, startPos + open.length);
             else
                 elem.setSelectionRange(startPos + open.length, endPos + open.length);
-        }
-        else if (document.selection && document.selection.createRange) {
+        } else if (document.selection && document.selection.createRange) {
             elem.focus();
             var sel = document.selection.createRange();
             sel.text = open + sel.text + close;
@@ -2548,15 +2734,16 @@
                 sel.select();
             }
             elem.focus();
-        }
-        else {
+        } else {
             elem.value += open;
             elem.focus();
             elem.value += close;
         }
     }
+
     var ctrlorcmd = (navigator.appVersion.indexOf('Mac') != -1) ? '⌘' : 'Ctrl';
     var insertedQueries = [];
+
     function insert(e, key, ctrl, alt, shift, open, close, query) {
         /* Function to handle detecting key combinations and inserting the
         shortcut text onto the relevent buttons. */
@@ -2571,25 +2758,27 @@
         // Javascript has some discrepancies with symbols and their keycodes.
         var keyCode;
         switch (key) {
-            case '.':
-                keyCode = 190;
-                break;
-            case '/':
-                keyCode = 191;
-                break;
-            default:
-                keyCode = key.charCodeAt(0);
+        case '.':
+            keyCode = 190;
+            break;
+        case '/':
+            keyCode = 191;
+            break;
+        default:
+            keyCode = key.charCodeAt(0);
         }
+
         // Checks if correct modifiers are pressed
         if (document.activeElement.tagName.toLowerCase() === 'textarea' &&
-            (ctrl === (e.ctrlKey || e.metaKey)) &&
-            (alt === e.altKey) &&
-            (shift === e.shiftKey) &&
-            (e.keyCode === keyCode)) {
+        (ctrl === (e.ctrlKey || e.metaKey)) &&
+        (alt === e.altKey) &&
+        (shift === e.shiftKey) &&
+        (e.keyCode === keyCode)) {
             e.preventDefault();
             custom_insert_text(open, close);
             return false;
         }
+
         if (query !== undefined) {
             if (insertedQueries.indexOf(query) === -1) {
                 insertedQueries.push(query);
@@ -2597,17 +2786,15 @@
                 for (var i = 0; i < imgs.length; i++) {
                     var img = imgs[i];
                     img.title += ' (';
-                    if (ctrl)
-                        img.title += ctrlorcmd + '+';
-                    if (alt)
-                        img.title += 'Alt+';
-                    if (shift)
-                        img.title += 'Shift+';
+                    if (ctrl) img.title += ctrlorcmd + '+';
+                    if (alt) img.title += 'Alt+';
+                    if (shift) img.title += 'Shift+';
                     img.title += key + ')';
                 }
             }
         }
     }
+
     function keydownHandler(e) {
         // Used as a keydown event handler.
         // Defines all keyboard shortcuts.
@@ -2640,6 +2827,7 @@
         // URL
         insert(e, 'K', true, false, false, '[url=]', '[/url]', '#bbcode img[title="URL"]');
     }
+
     var textAreas = document.querySelectorAll('textarea');
     // inserts shortcuts into title text on load, rather than
     // doing it when first key is pressed.
@@ -2647,6 +2835,7 @@
     for (var i = 0; i < textAreas.length; i++) {
         textAreas[i].addEventListener('keydown', keydownHandler, false);
     }
+
     function mutationHandler(mutations, observer) {
         _debug && console.log(mutations);
         if (mutations[0].addedNodes.length) {
@@ -2656,6 +2845,7 @@
             }
         }
     }
+
     // Watch for new textareas (e.g. forum edit post)
     var mutationObserver = new MutationObserver(mutationHandler);
     mutationObserver.observe(document.querySelector('body'), { childList: true, subtree: true });
@@ -2672,12 +2862,18 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Forums title inverter by Potatoe
 // Inverts the forums titles.
 (function ABTitleInverter() {
-    var _enabled = delicious.settings.basicScriptCheckbox('delicioustitleflip', 'Delicious Title Flip', 'Flips the tab title.');
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioustitleflip',
+        'Delicious Title Flip',
+        'Flips the tab title.'
+    );
     if (!_enabled)
         return;
+
     if (document.title.indexOf(' > ') !== -1) {
         document.title = document.title.split(" :: ")[0].split(" > ").reverse().join(" < ") + " :: AnimeBytes";
     }
@@ -2693,12 +2889,18 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Title Notifications by Megure
 // Will prepend the number of notifications to the title
 (function ABTitleNotifications() {
-    var _enabled = delicious.settings.basicScriptCheckbox('delicioustitlenotifications', 'Delicious Title Notifications', 'Display number of notifications in the tab title.');
+    var _enabled = delicious.settings.basicScriptCheckbox(
+        'delicioustitlenotifications',
+        'Delicious Title Notifications',
+        'Display number of notifications in the tab title.'
+    );
     if (!_enabled)
         return;
+
     var new_count = 0, _i, cnt, notifications = document.querySelectorAll('#alerts .new_count'), _len = notifications.length;
     for (_i = 0; _i < _len; _i++) {
         cnt = parseInt(notifications[_i].textContent, 10);
@@ -2719,13 +2921,19 @@
 // @grant       GM_getValue
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Yen per X and ratio milestones, by Megure, Lemma, NSC, et al.
 (function ABYenStats() {
-    delicious.settings.basicScriptCheckbox('deliciousyenperx', 'Delicious Yen Per X', 'Shows how much yen you receive per X and as upload equivalent.');
-    delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio', 'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
+    delicious.settings.basicScriptCheckbox('deliciousyenperx', 'Delicious Yen Per X',
+        'Shows how much yen you receive per X and as upload equivalent.');
+    delicious.settings.basicScriptCheckbox('deliciousratio', 'Delicious Ratio',
+        'Shows ratio, raw ratio and how much upload/download you need for certain ratio milestones.');
+
     var _debug = false;
+
     if (!/user\.php\?id=/i.test(document.URL))
         return;
+
     function compoundInterest(years) {
         return (Math.pow(2, years) - 1) / Math.log(2);
     }
@@ -2765,8 +2973,7 @@
         }
     }
     function humancount(num) {
-        if (num == 0)
-            return '0 B';
+        if (num == 0) return '0 B';
         var i = Math.floor(Math.log(Math.abs(num)) / Math.log(1024));
         num = (num / Math.pow(1024, i)).toFixed(2);
         switch (i) {
@@ -2792,8 +2999,7 @@
         dt = document.createElement('dt');
         dt.appendChild(document.createTextNode(definition));
         dd = document.createElement('dd');
-        if (cclass !== undefined)
-            dd.className += cclass;
+        if (cclass !== undefined) dd.className += cclass;
         dd.appendChild(document.createTextNode(value));
         after.parentNode.insertBefore(dd, after.nextElementSibling.nextSibling);
         after.parentNode.insertBefore(dt, after.nextElementSibling.nextSibling);
@@ -2803,8 +3009,7 @@
         dt = document.createElement('dt');
         dt.appendChild(document.createTextNode(definition));
         dd = document.createElement('dd');
-        if (cclass !== undefined)
-            dd.className += cclass;
+        if (cclass !== undefined) dd.className += cclass;
         dd.appendChild(document.createTextNode(value));
         before.parentNode.insertBefore(dt, before);
         before.parentNode.insertBefore(dd, before);
@@ -2814,25 +3019,21 @@
         var tw, regExp = /([0-9,.]+)\s*([A-Z]+)/i;
         // Find text with raw stats
         tw = document.createTreeWalker(document, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Uploaded:/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var rawUpMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
         tw = document.createTreeWalker(tw.currentNode.parentNode.parentNode, NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^Raw Downloaded:/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var rawDownMatch = tw.currentNode.nextElementSibling.textContent.match(regExp);
         tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Ratio/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var ratioNode = tw.currentNode.parentNode;
         tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Uploaded/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var ulNode = tw.currentNode.parentNode;
         tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /^\s*Downloaded/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var dlNode = tw.currentNode.parentNode;
+
         var ul = ulNode.nextElementSibling.textContent.match(regExp);
         var dl = dlNode.nextElementSibling.textContent.match(regExp);
         _debug && console.log(ul);
@@ -2844,6 +3045,7 @@
         var rawRatio = Infinity;
         if (bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase()) > 0)
             rawRatio = (bytecount(parseFloat(rawUpMatch[1].replace(/,/g, '')), rawUpMatch[2].toUpperCase()) / bytecount(parseFloat(rawDownMatch[1].replace(/,/g, '')), rawDownMatch[2].toUpperCase())).toFixed(2);
+
         // Color ratio
         var color = 'r99';
         if (rawRatio < 1)
@@ -2852,6 +3054,7 @@
             color = 'r20';
         else if (rawRatio < 99)
             color = 'r50';
+
         // Add to user stats after ratio
         var hr = document.createElement('hr');
         hr.style.clear = 'both';
@@ -2861,11 +3064,12 @@
         addDefinitionAfter(ratioNode, 'Raw Uploaded:', rawUpMatch[0]);
         ratioNode.nextElementSibling.title = 'Ratio\t  Buffer';
         rawRatioNode.nextElementSibling.title = 'Raw ratio\t Raw Buffer';
+
         function printBuffer(u, d, r) {
             if (u / r - d >= 0)
-                return '\n' + r.toFixed(1) + '\t' + (humancount(u / r - d)).slice(-10) + '    \tcan be downloaded';
+                return '\n' + r.toFixed(1) + '\t' + (humancount(u / r - d)).slice(-10) + '    \tcan be downloaded'
             else
-                return '\n' + r.toFixed(1) + '\t' + (humancount(d * r - u)).slice(-10) + '    \tmust be uploaded';
+                return '\n' + r.toFixed(1) + '\t' + (humancount(d * r - u)).slice(-10) + '    \tmust be uploaded'
         }
         for (var i = 0; i < 10; i++) {
             var myRatio = [0.2, 0.5, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 5.0, 10.0][i];
@@ -2876,8 +3080,7 @@
     function addYenPerStats() {
         var dpy = 365.256363; // days per year
         var tw = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT, { acceptNode: function (node) { return /Yen per day/i.test(node.data); } });
-        if (tw.nextNode() == null)
-            return;
+        if (tw.nextNode() == null) return;
         var ypdNode = tw.currentNode.parentNode;
         var ypy = parseInt(ypdNode.nextElementSibling.textContent.replace(/[,¥]/g, ''), 10) * dpy; // Yen per year
         addDefinitionAfter(ypdNode, 'Yen per year:', formatInteger(Math.round(ypy * compoundInterest(1))));
@@ -2895,17 +3098,4 @@
     if (delicious.settings.get('deliciousyenperx'))
         addYenPerStats();
 })();
-// This file is automatically generated and any changes will be overwritten.
-// Please do not manually edit this file.
-// Template last modified 2020-06-01T07:17:26.937893+00:00.
-/// <reference path="_header.js"/>
-/// <reference path="./src/ab_enhanced_torrent_view.user.js"/>
-/// <reference path="./src/ab_fl_status.user.js"/>
-/// <reference path="./src/ab_forum_search_enhancement.user.js"/>
-/// <reference path="./src/ab_hide_treats.user.js"/>
-/// <reference path="./src/ab_hyper_quote.user.js"/>
-/// <reference path="./src/ab_keyboard_shortcuts.user.js"/>
-/// <reference path="./src/ab_title_inverter.user.js"/>
-/// <reference path="./src/ab_title_notifications.user.js"/>
-/// <reference path="./src/ab_yen_stats.user.js"/>
-//# sourceMappingURL=https://raw.githubusercontent.com/momentary0/AB-Userscripts/master/delicious-userscripts/dist/ab_delicious_scripts.user.js.map
+// Compiled 2022-03-19T11:37:12.116316+00:00.

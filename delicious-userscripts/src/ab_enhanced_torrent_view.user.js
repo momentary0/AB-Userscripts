@@ -3,7 +3,7 @@
 // @namespace   Megure@AnimeBytes.tv
 // @description Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 // @include     http*://animebytes.tv*
-// @version     1.06
+// @version     1.07
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @icon        http://animebytes.tv/favicon.ico
@@ -788,10 +788,18 @@
                 }
                 for (var j = 0; j < torrent_tags.length; j++) {
                     var tag = torrent_tags[j];
-                    // Fucking ISOs...
-                    if (tag.indexOf('ISO') === 0) {
-                        torrent_tags.splice(j + 1, 0, '');
+                    
+                    // Fucking ISOs... (and VOB IFOs...)
+                    if (tag.indexOf('ISO') === 0 || tag.indexOf('VOB IFO') === 0) {
+                        // These usually do not have codecs specified but /sometimes/ they do.
+
+                        var resolutionRegex = /^(\d{2,}x\d{2,}|\d{1,}[ipK])$/; // https://regex101.com/r/siJcrd/1
+                        // If the next tag is a resolution, then codec is NOT specified and we add a blank.
+                        if (resolutionRegex.test(torrent_tags[j+1] || '')) {
+                            torrent_tags.splice(j + 1, 0, '');
+                        }
                     }
+                    
                     if (tag !== '') {
                         if (!available_tags.hasOwnProperty(tag)) {
                             available_tags[tag] = 0;
