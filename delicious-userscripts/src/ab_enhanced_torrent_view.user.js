@@ -11,6 +11,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.23/plugin/customParseFormat.js
 // @require     https://github.com/momentary0/AB-Userscripts/raw/master/delicious-library/src/ab_delicious_library.js
 // ==/UserScript==
+
 // Enhanced Torrent View by Megure
 // Shows how much yen you would receive if you seeded torrents; shows required seeding time; allows sorting and filtering of torrent tables; dynamic loading of transfer history tables
 (function EnhancedTorrentView() {
@@ -20,20 +21,49 @@
         delicious.settings.init(settingsKeys[i], true);
     }
     delicious.settings.init('ABTorrentsYenTimeFrame', '24');
+
     if (delicious.settings.ensureSettingsInserted()) {
         var section = delicious.settings.createCollapsibleSection('Enhanced Torrent View');
         var s = section.querySelector('.settings_section_body');
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsShowYen', 'Show yen generation', 'Show yen generation for torrents, with detailed information when hovered.'));
-        s.appendChild(delicious.settings.createDropDown('ABTorrentsYenTimeFrame', 'Yen time frame', 'Shows yen generated in this amount of time.', [['Hour', '1'],
-            ['Day', '24'],
-            ['Week', '168']], { default: '24' }));
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsReqTime', 'Show required seeding time', 'Shows minimal required seeding time for torrents in their description and when size is hovered.'));
-        s.appendChild(delicious.settings.createCheckbox('ABTorrentsFilter', 'Filter torrents', 'Shows a box above torrent tables, where you can filter the torrents from that table.'));
-        s.appendChild(delicious.settings.createCheckbox('ABSortTorrents', 'Sort torrents', 'Allows torrent tables to be sorted.'));
-        s.appendChild(delicious.settings.createCheckbox('ABHistDynLoad', 'Dynamic history tables', 'Dynamically load more pages into the transfer history page.'));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsShowYen',
+            'Show yen generation',
+            'Show yen generation for torrents, with detailed information when hovered.'
+        ));
+        s.appendChild(delicious.settings.createDropDown(
+            'ABTorrentsYenTimeFrame',
+            'Yen time frame',
+            'Shows yen generated in this amount of time.',
+            [['Hour', '1'],
+                ['Day', '24'],
+                ['Week', '168']],
+            {default: '24'}
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsReqTime',
+            'Show required seeding time',
+            'Shows minimal required seeding time for torrents in their description and when size is hovered.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABTorrentsFilter',
+            'Filter torrents',
+            'Shows a box above torrent tables, where you can filter the torrents from that table.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABSortTorrents',
+            'Sort torrents',
+            'Allows torrent tables to be sorted.'
+        ));
+        s.appendChild(delicious.settings.createCheckbox(
+            'ABHistDynLoad',
+            'Dynamic history tables',
+            'Dynamically load more pages into the transfer history page.'
+        ));
         delicious.settings.insertSection(section);
     }
+
     var _debug = false;
+
     var days_per_year = 365.256363;
     var show_yen = GM_getValue('ABTorrentsShowYen', 'true') === 'true';
     var show_required_time = GM_getValue('ABTorrentsReqTime', 'true') === 'true';
@@ -60,12 +90,11 @@
     var datetime_RegExp = /^(\d+)\-(\d{1,2})\-(\d{1,2})\s+(\d{1,2}):(\d{1,2})$/;
     var abs_datetime_RegExp = /^([a-z]{3}) (\d{2}) (\d{4}) (\d{2}:\d{2}) [a-z]+$/i;
     var currency_RegExp = /^(?:[¥|€|£|\$]\s*)([\d\.]+)$/;
-    var monthNumbers = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+    var monthNumbers = {Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12};
     function unit_prefix(prefix) {
         // If prefix is undefined, the regex failed to match a prefix
         // and we assume it is in bytes.
-        if (typeof prefix === 'undefined')
-            return 1 / 1073741824;
+        if (typeof prefix === 'undefined') return 1 / 1073741824;
         // This is called with only the prefix of the byte unit
         switch (prefix.toUpperCase()) {
             case '':
@@ -161,6 +190,8 @@
     // when displaying yen/week.
     //var f_interest = 24 * days_per_year / time_frame * (Math.pow(2, time_frame / (24 * days_per_year)) - 1) / Math.log(2);
     var f_interest = 1;
+
+
     // The duration factor for yen generation
     // seeding duration is only available on the "Seeding Torrents" page. Assumes 0 on any other.
     // duration is in hours.
@@ -184,8 +215,7 @@
     function f_seeders(seeders) {
         if (seeders > 3) {
             return 3 / Math.sqrt(seeders + 4);
-        }
-        else {
+        } else {
             return 2;
         }
     }
@@ -197,6 +227,7 @@
     if (isNaN(f_age)) {
         f_age = 1;
     }
+
     // Compound function for yen generation
     function f(size, seeders, duration) {
         //console.log("size: " + size + " seed: " + seeders + " dur: " + duration + " f_age: " + f_age + " time_f: " + time_frame + " int: " + f_interest);
@@ -206,6 +237,7 @@
     // Creates title when hovering over yen generation to break down factors
     function yen_generation_title(size, seeders, duration) {
         var title = 'Click to toggle between Yen per ' + time_frame_string + '\nand Yen per ' + time_frame_string + ' per GB of size.\n\n';
+
         // Added f_duration(0) and f_seeders(1) to account for 2017 yen changes.
         // The changes altered the initial values of these and hence altered the 'base' yen/h here.
         title += '¥' + (f_seeders(1) * f_duration(0) * time_frame * f_size(size)).toPrecision(6) + ' \tbase for size';
@@ -230,6 +262,7 @@
         title += '\n\n¥ per ' + time_frame_string + ' \t¥ per ' + time_frame_string + ' per GB\t#seeders\n';
         var start = Math.max(seeders - 1, 3);
         var end = Math.max(seeders + 1, 3);
+
         // edited to <= 3, 2017.
         for (var i = start; i <= end; i++) {
             title += '¥' + f(size, i, duration).toPrecision(6) + '  \t';
@@ -247,9 +280,7 @@
     // Toggle yen generation per time and per time and size
     var yen_per_GB = false;
     function toggle_yen(toggle) {
-        if (toggle === void 0) {
-            toggle = true;
-        }
+        if (toggle === void 0) { toggle = true; }
         return function () {
             if (toggle) {
                 yen_per_GB = yen_per_GB !== true;
@@ -296,14 +327,13 @@
         match = text_content_no_comma.match(abs_datetime_RegExp);
         if (match !== null) {
             var month = monthNumbers[match[1]].toString();
-            if (month.length < 2)
-                month = '0' + month;
+            if (month.length < 2) month = '0'+month;
             var day = match[2];
             var year = match[3];
-            var time = match[4] + ':00';
+            var time = match[4]+':00';
             // convert this absolute timestamp into something JS can parse
             // and parse it. ignore timezones because it's all relative anyway.
-            return Date.parse(year + '-' + month + '-' + day + 'T' + time);
+            return Date.parse(year+'-'+month+'-'+day+'T'+time);
         }
         match = text_content_no_comma.replace(and_RegExp, '').match(duration_RegExp);
         if (match !== null) {
@@ -359,7 +389,7 @@
         // Add required time to size_cell and blockquote in torrent_row
         if (size_index !== null && show_required_time) {
             var seeding_time = Math.max(0, size - 10) * 5 + 72;
-            seeding_time = Math.min(21 * 24, seeding_time); // seeding time is capped at 21 days.
+            seeding_time = Math.min(21*24, seeding_time); // seeding time is capped at 21 days.
             size_cell.title = 'You need to seed this torrent for at least\n' + duration_to_string(seeding_time) + '\nor it will become a hit and run!';
             if (torrent_row !== null) {
                 var block_quote = torrent_row.querySelector('blockquote');
@@ -386,13 +416,17 @@
             td2.addEventListener('click', toggle_yen());
             row.appendChild(td2);
             row.appendChild(td1);
+
             if (location.pathname.indexOf('/torrents2') != -1
                 && !document.getElementById('torrents2_fix')) {
                 var style = document.createElement('style');
                 style.id = 'torrents2_fix';
-                style.appendChild(document.createTextNode('.torrent_properties { width: 60%; }'));
+                style.appendChild(document.createTextNode(
+                    '.torrent_properties { width: 60%; }'
+                ));
                 document.body.appendChild(style);
             }
+
         }
         // Parse row data
         var row_data = [row, torrent_row];
@@ -446,6 +480,7 @@
         for (var i = 0, length = cells.length; i < length; i++) {
             var cell = cells[i];
             //console.log(cell);
+
             // Get rid of non-breakable spaces -.-
             var text_content = cell.textContent.replace(/\u00a0/g, ' ').trim().toLowerCase();
             var title = cell.title.trim().toLowerCase();
@@ -523,9 +558,7 @@
             };
         }
         function sort_by_index(index, toggle) {
-            if (toggle === void 0) {
-                toggle = true;
-            }
+            if (toggle === void 0) { toggle = true; }
             return function (event) {
                 if (event !== null) {
                     event.stopPropagation();
@@ -601,9 +634,7 @@
             var next_anchors = [];
             // Loads the previous or next page into tableData, triggered by MouseEvent
             function load_history_page(prev) {
-                if (prev === void 0) {
-                    prev = false;
-                }
+                if (prev === void 0) { prev = false; }
                 return function (event) {
                     if (event !== null) {
                         event.stopPropagation();
@@ -736,7 +767,6 @@
                 text = text.replace(/^\s*»/i, '').replace(/\d+:\d+/g, '').replace(/Dual Audio/ig, '').replace(/\|(\s*\|)+/g, '|').replace(/^\s*\|/, '').replace(/\|\s*$/, '');
                 // Split text content to get tags
                 var torrent_tags = (text.indexOf('|') >= 0 ? text.split('|') : text.split('/')).map(function (e) { return e.trim(); });
-                console.log(torrent_tags);
                 // Add Dual Audio, Freeleech, and Remastered status, only if torrents with yes and no are available
                 if (dual_audio === 3) {
                     torrent_tags.push(is_dual_audio ? 'Dual Audio' : 'No Dual Audio');
@@ -758,7 +788,7 @@
                 }
                 for (var j = 0; j < torrent_tags.length; j++) {
                     var tag = torrent_tags[j];
-
+                    
                     // Fucking ISOs... (and VOB IFOs...)
                     if (tag.indexOf('ISO') === 0 || tag.indexOf('VOB IFO') === 0) {
                         // These usually do not have codecs specified but /sometimes/ they do.
@@ -769,7 +799,7 @@
                             torrent_tags.splice(j + 1, 0, '');
                         }
                     }
-
+                    
                     if (tag !== '') {
                         if (!available_tags.hasOwnProperty(tag)) {
                             available_tags[tag] = 0;
@@ -785,7 +815,6 @@
                         }
                     }
                 }
-                console.log(torrent_tags);
                 // Hide or show torrent row and corresponding row if deselected tags are found
                 if (to_be_collapsed) {
                     torrent.style.display = 'none';
@@ -800,7 +829,6 @@
                     }
                 }
             }
-            debugger;
             // If we found any tags or anything is deselected, create filter box
             if (values_by_column.length > 0 || Object.keys(deselected).length > 0) {
                 // Only show each tag once, even across multiple columns, so keep track
@@ -900,6 +928,7 @@
             parse_table(table);
         }
     }
+
     // If yen should be shown and user creation is not yet saved, try to get and save it
     if (show_yen && (GM_getValue('creation', '0').toString() === '0' || GM_getValue('creation', '0') === 'null')) {
         // check if we are on a profile page by looking for the "Edit my profile" link.
@@ -921,8 +950,7 @@
                 const no_tz = join_str.trim().replace(TIMEZONE_RE, '$1');
                 // eslint-disable-next-line no-undef
                 const date = dayjs(no_tz, DATE_FORMAT);
-                if (!date.isValid())
-                    return false;
+                if (!date.isValid()) return false;
                 GM_setValue('creation', JSON.stringify(date.valueOf()));
                 return true;
             });
