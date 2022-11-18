@@ -122,6 +122,7 @@ const TRAILING_IMAGES = [
   maybeImage('freeleech', 'flicon', 'Freeleech'),
   maybeImage('hentai', 'hentai', 'Uncensored'),
   maybeImage('hentai', 'hentaic', 'Censored'),
+  maybeImage('sneedex', 'n40di4', 'Sneedex')
 ];
 const fallbackTransformer = basicTransformer('misc', 'misc');
 

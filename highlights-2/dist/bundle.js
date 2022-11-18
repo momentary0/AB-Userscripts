@@ -148,6 +148,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         exports.maybeImage('freeleech', 'flicon', 'Freeleech'),
         exports.maybeImage('hentai', 'hentai', 'Uncensored'),
         exports.maybeImage('hentai', 'hentaic', 'Censored'),
+        exports.maybeImage('sneedex', 'n40di4', 'Sneedex'),
     ];
     const fallbackTransformer = exports.basicTransformer('misc', 'misc');
     const trailingFieldsTransformer = (t, s) => {
