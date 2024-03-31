@@ -1,11 +1,17 @@
 define("types", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.makeBasicToken = (text) => ({ type: 'BASIC', text });
-    exports.makeCompoundToken = (left, right) => ({ type: 'COMPOUND', left, right });
-    exports.makeElementToken = (element) => ({ type: 'ELEMENT', element });
-    exports.makeSpecialToken = (special, text) => ({ type: 'SPECIAL', special, text });
-    exports.makeSeparatorToken = (sep) => ({ type: 'SEPARATOR', sep });
+    exports.DASH = exports.COLONS = exports.ARROW = exports.SNATCHED_TEXT = exports.EPISODE_TEXT = exports.SCENE_TEXT = exports.BookState = exports.GameState = exports.MusicState = exports.AnimeState = exports.SharedState = exports.makeSeparatorToken = exports.makeSpecialToken = exports.makeElementToken = exports.makeCompoundToken = exports.makeBasicToken = void 0;
+    const makeBasicToken = (text) => ({ type: 'BASIC', text });
+    exports.makeBasicToken = makeBasicToken;
+    const makeCompoundToken = (left, right) => ({ type: 'COMPOUND', left, right });
+    exports.makeCompoundToken = makeCompoundToken;
+    const makeElementToken = (element) => ({ type: 'ELEMENT', element });
+    exports.makeElementToken = makeElementToken;
+    const makeSpecialToken = (special, text) => ({ type: 'SPECIAL', special, text });
+    exports.makeSpecialToken = makeSpecialToken;
+    const makeSeparatorToken = (sep) => ({ type: 'SEPARATOR', sep });
+    exports.makeSeparatorToken = makeSeparatorToken;
     var SharedState;
     (function (SharedState) {
         SharedState[SharedState["ARROW"] = 0] = "ARROW";
@@ -18,7 +24,7 @@ define("types", ["require", "exports"], function (require, exports) {
         SharedState[SharedState["COLONS"] = 7] = "COLONS";
         SharedState[SharedState["BEGIN_PARSE"] = 8] = "BEGIN_PARSE";
         SharedState[SharedState["COMMON_TRAILING_FIELDS"] = 9] = "COMMON_TRAILING_FIELDS";
-    })(SharedState = exports.SharedState || (exports.SharedState = {}));
+    })(SharedState || (exports.SharedState = SharedState = {}));
     var AnimeState;
     (function (AnimeState) {
         AnimeState[AnimeState["SOURCE"] = 100] = "SOURCE";
@@ -31,7 +37,7 @@ define("types", ["require", "exports"], function (require, exports) {
         AnimeState[AnimeState["SUBBING_AND_GROUP"] = 107] = "SUBBING_AND_GROUP";
         AnimeState[AnimeState["REMASTER"] = 108] = "REMASTER";
         AnimeState[AnimeState["TRAILING_FIELDS"] = 109] = "TRAILING_FIELDS";
-    })(AnimeState = exports.AnimeState || (exports.AnimeState = {}));
+    })(AnimeState || (exports.AnimeState = AnimeState = {}));
     var MusicState;
     (function (MusicState) {
         MusicState[MusicState["ENCODING"] = 200] = "ENCODING";
@@ -39,7 +45,7 @@ define("types", ["require", "exports"], function (require, exports) {
         MusicState[MusicState["SOURCE"] = 202] = "SOURCE";
         MusicState[MusicState["LOG"] = 203] = "LOG";
         MusicState[MusicState["CUE"] = 204] = "CUE";
-    })(MusicState = exports.MusicState || (exports.MusicState = {}));
+    })(MusicState || (exports.MusicState = MusicState = {}));
     var GameState;
     (function (GameState) {
         GameState[GameState["TYPE"] = 300] = "TYPE";
@@ -47,13 +53,13 @@ define("types", ["require", "exports"], function (require, exports) {
         GameState[GameState["REGION"] = 302] = "REGION";
         GameState[GameState["ARCHIVED"] = 303] = "ARCHIVED";
         GameState[GameState["SCENE"] = 304] = "SCENE";
-    })(GameState = exports.GameState || (exports.GameState = {}));
+    })(GameState || (exports.GameState = GameState = {}));
     var BookState;
     (function (BookState) {
         BookState[BookState["TRANSLATION"] = 400] = "TRANSLATION";
         BookState[BookState["FORMAT"] = 401] = "FORMAT";
         BookState[BookState["ONGOING"] = 402] = "ONGOING";
-    })(BookState = exports.BookState || (exports.BookState = {}));
+    })(BookState || (exports.BookState = BookState = {}));
     exports.SCENE_TEXT = 'Scene';
     exports.EPISODE_TEXT = 'Episode ';
     exports.SNATCHED_TEXT = ' - Snatched';
@@ -64,41 +70,46 @@ define("types", ["require", "exports"], function (require, exports) {
 define("parser", ["require", "exports", "types"], function (require, exports, types_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.span = (key, value, child) => {
+    exports.parse = exports.postParse = exports.mainParse = exports.preParse = exports.TRANSITION_ACTIONS = exports.maybeImage = exports.basename = exports.maybeList = exports.maybeFlag = exports.isSpecial = exports.switchCapture = exports.nullCapture = exports.capture = exports.captureT = exports.captureD = exports.captureDT = exports.toCompoundToken = exports.splitTransformer = exports.basicTransformer = exports.preCapture = exports.span = void 0;
+    const span = (key, value, child) => {
         return { type: 'span', key, value: value || key, child: child !== null && child !== void 0 ? child : value };
     };
-    exports.preCapture = (pre, transformer) => {
+    exports.span = span;
+    const preCapture = (pre, transformer) => {
         return (t, s) => {
             const [t1, s1] = pre(t, s);
             return transformer(t1, s1);
         };
     };
+    exports.preCapture = preCapture;
     function assertBasicToken(t) {
         if (t.type != 'BASIC')
             throw new Error('Expected basic token, got ' + t);
     }
-    exports.basicTransformer = (key1, key2) => {
+    const basicTransformer = (key1, key2) => {
         return (t) => {
             switch (t.type) {
                 case 'BASIC':
-                    return exports.span(key1, t.text);
+                    return (0, exports.span)(key1, t.text);
                 case 'COMPOUND':
                     console.assert(!!key2);
-                    return [exports.span(key1, t.left), ' (', exports.span(key2, t.right), ')'];
+                    return [(0, exports.span)(key1, t.left), ' (', (0, exports.span)(key2, t.right), ')'];
                 default:
                     throw new Error('Expected basic or compound token in basic transformer, got ' + t);
             }
         };
     };
-    exports.splitTransformer = (key1, key2) => {
+    exports.basicTransformer = basicTransformer;
+    const splitTransformer = (key1, key2) => {
         return (t) => {
             assertBasicToken(t);
             const i = t.text.lastIndexOf(' ');
             console.assert(i >= 0);
-            return [exports.span(key1, t.text.substr(0, i)), ' ', exports.span(key2, t.text.slice(i + 1))];
+            return [(0, exports.span)(key1, t.text.substr(0, i)), ' ', (0, exports.span)(key2, t.text.slice(i + 1))];
         };
     };
-    exports.toCompoundToken = (t) => {
+    exports.splitTransformer = splitTransformer;
+    const toCompoundToken = (t) => {
         if (t.type !== 'BASIC')
             return t;
         const paren = t.text.indexOf(' (');
@@ -106,61 +117,74 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             return t;
         const left = t.text.slice(0, paren);
         const right = t.text.slice(paren + 2, t.text.length - 1);
-        return types_1.makeCompoundToken(left, right);
+        return (0, types_1.makeCompoundToken)(left, right);
     };
-    exports.captureDT = (decider, transformer) => {
+    exports.toCompoundToken = toCompoundToken;
+    const captureDT = (decider, transformer) => {
         return (t, s) => [decider(t, s), transformer(t, s)];
     };
-    exports.captureD = (decider, key, key2) => exports.captureDT(decider, exports.basicTransformer(key, key2));
-    exports.captureT = (next, transform) => exports.captureDT(() => next, transform);
-    exports.capture = (next, key, key2) => exports.captureD(() => next, key, key2);
-    exports.nullCapture = (next) => exports.captureT(next, () => null);
-    exports.switchCapture = (predicate, captureTrue, captureFalse) => {
+    exports.captureDT = captureDT;
+    const captureD = (decider, key, key2) => (0, exports.captureDT)(decider, (0, exports.basicTransformer)(key, key2));
+    exports.captureD = captureD;
+    const captureT = (next, transform) => (0, exports.captureDT)(() => next, transform);
+    exports.captureT = captureT;
+    const capture = (next, key, key2) => (0, exports.captureD)(() => next, key, key2);
+    exports.capture = capture;
+    const nullCapture = (next) => (0, exports.captureT)(next, () => null);
+    exports.nullCapture = nullCapture;
+    const switchCapture = (predicate, captureTrue, captureFalse) => {
         return (t, s) => predicate(t, s) ? captureTrue(t, s) : captureFalse(t, s);
     };
-    exports.isSpecial = (type) => (t, s) => t.type === 'SPECIAL' && t.special === type;
-    exports.maybeFlag = (key, expected) => {
+    exports.switchCapture = switchCapture;
+    const isSpecial = (type) => (t, s) => t.type === 'SPECIAL' && t.special === type;
+    exports.isSpecial = isSpecial;
+    const maybeFlag = (key, expected) => {
         return (t) => {
             if (t.type !== 'BASIC' || t.text !== expected)
                 return null;
-            return exports.span(key, expected);
+            return (0, exports.span)(key, expected);
         };
     };
-    exports.maybeList = (key, ...options) => {
+    exports.maybeFlag = maybeFlag;
+    const maybeList = (key, ...options) => {
         const set = new Set(options);
         return (t) => {
             if (t.type !== 'BASIC' || !set.has(t.text))
                 return null;
-            return exports.span(key, t.text);
+            return (0, exports.span)(key, t.text);
         };
     };
-    exports.basename = (url) => url.split('/').slice(-1)[0].split('.')[0];
-    exports.maybeImage = (key, imageFile, value) => {
+    exports.maybeList = maybeList;
+    const basename = (url) => url.split('/').slice(-1)[0].split('.')[0];
+    exports.basename = basename;
+    const maybeImage = (key, imageFile, value) => {
         return (t) => {
             if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG')
                 return null;
-            if (exports.basename(t.element.src) !== imageFile)
+            if (!(0, exports.basename)(t.element.src).startsWith(imageFile))
                 return null;
-            return exports.span(key, value !== null && value !== void 0 ? value : key, t.element);
+            return (0, exports.span)(key, value !== null && value !== void 0 ? value : key, t.element);
         };
     };
+    exports.maybeImage = maybeImage;
     const TRAILING_IMAGES = [
-        exports.maybeImage('freeleech', 'flicon', 'Freeleech'),
-        exports.maybeImage('hentai', 'hentai', 'Uncensored'),
-        exports.maybeImage('hentai', 'hentaic', 'Censored'),
-        exports.maybeImage('sneedex', 'n40di4', 'Sneedex'),
+        (0, exports.maybeImage)('freeleech', 'flicon', 'Freeleech'),
+        (0, exports.maybeImage)('hentai', 'hentai', 'Uncensored'),
+        (0, exports.maybeImage)('hentai', 'hentaic', 'Censored'),
+        // Make highlight script compatible with Sneedex script https://animebytes.tv/forums.php?action=viewthread&threadid=28316
+        (0, exports.maybeImage)('sneedex', 'n40di4', 'Sneedex')
     ];
-    const fallbackTransformer = exports.basicTransformer('misc', 'misc');
+    const fallbackTransformer = (0, exports.basicTransformer)('misc', 'misc');
     const trailingFieldsTransformer = (t, s) => {
         var _a;
         if (t.type === 'SPECIAL' && t.special === 'snatched') {
-            return [' - ', exports.span('snatched', 'Snatched', 'Snatched')];
+            return [' - ', (0, exports.span)('snatched', 'Snatched', 'Snatched')];
         }
         if (t.type === 'BASIC') {
             if (t.text === types_1.SCENE_TEXT)
-                return exports.span('scene', types_1.SCENE_TEXT, types_1.SCENE_TEXT);
+                return (0, exports.span)('scene', types_1.SCENE_TEXT, types_1.SCENE_TEXT);
             if (t.text.startsWith(types_1.EPISODE_TEXT))
-                return exports.span('episode', t.text.replace(types_1.EPISODE_TEXT, ''), t.text);
+                return (0, exports.span)('episode', t.text.replace(types_1.EPISODE_TEXT, ''), t.text);
         }
         if (t.type !== 'ELEMENT')
             return fallbackTransformer(t, s);
@@ -169,7 +193,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
             return imageMatches[0];
         }
         if (t.element.tagName === 'FONT' && ((_a = t.element.textContent) === null || _a === void 0 ? void 0 : _a.trim()) == 'Exclusive!') {
-            return exports.span('exclusive', 'Exclusive', t.element);
+            return (0, exports.span)('exclusive', 'Exclusive', t.element);
         }
         return fallbackTransformer(t, s);
     };
@@ -210,39 +234,39 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
     const BOOK_FORMATS = ['Archived Scans', 'EPUB', 'PDF', 'Unarchived', 'Digital'];
     exports.TRANSITION_ACTIONS = {
         // i'm very sorry for this code.
-        [types_1.SharedState.BBCODE_LEFT]: exports.capture(types_1.SharedState.BBCODE_DASH, 'left'),
-        [types_1.SharedState.BBCODE_DASH]: exports.switchCapture(exports.isSpecial('dash'), exports.captureT(types_1.SharedState.BBCODE_RIGHT, specialTransformer), exports.nullCapture(types_1.SharedState.BBCODE_LBRACKET)),
-        [types_1.SharedState.BBCODE_RIGHT]: exports.capture(types_1.SharedState.BBCODE_LBRACKET, 'right'),
-        [types_1.SharedState.BBCODE_LBRACKET]: exports.switchCapture(exports.isSpecial('lbracket'), exports.captureT(types_1.SharedState.BBCODE_YEAR, specialTransformer), exports.nullCapture(types_1.SharedState.COLONS)),
-        [types_1.SharedState.BBCODE_YEAR]: exports.capture(types_1.SharedState.BBCODE_RBRACKET, 'year'),
-        [types_1.SharedState.BBCODE_RBRACKET]: exports.captureT(types_1.SharedState.COLONS, specialTransformer),
-        [types_1.SharedState.COLONS]: exports.captureT(types_1.SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
-        [types_1.SharedState.ARROW]: exports.captureT(types_1.SharedState.BEGIN_PARSE, arrowTransformer),
+        [types_1.SharedState.BBCODE_LEFT]: (0, exports.capture)(types_1.SharedState.BBCODE_DASH, 'left'),
+        [types_1.SharedState.BBCODE_DASH]: (0, exports.switchCapture)((0, exports.isSpecial)('dash'), (0, exports.captureT)(types_1.SharedState.BBCODE_RIGHT, specialTransformer), (0, exports.nullCapture)(types_1.SharedState.BBCODE_LBRACKET)),
+        [types_1.SharedState.BBCODE_RIGHT]: (0, exports.capture)(types_1.SharedState.BBCODE_LBRACKET, 'right'),
+        [types_1.SharedState.BBCODE_LBRACKET]: (0, exports.switchCapture)((0, exports.isSpecial)('lbracket'), (0, exports.captureT)(types_1.SharedState.BBCODE_YEAR, specialTransformer), (0, exports.nullCapture)(types_1.SharedState.COLONS)),
+        [types_1.SharedState.BBCODE_YEAR]: (0, exports.capture)(types_1.SharedState.BBCODE_RBRACKET, 'year'),
+        [types_1.SharedState.BBCODE_RBRACKET]: (0, exports.captureT)(types_1.SharedState.COLONS, specialTransformer),
+        [types_1.SharedState.COLONS]: (0, exports.captureT)(types_1.SharedState.BEGIN_PARSE, (t, s) => t.type === 'BASIC' ? t.text : null),
+        [types_1.SharedState.ARROW]: (0, exports.captureT)(types_1.SharedState.BEGIN_PARSE, arrowTransformer),
         [types_1.SharedState.BEGIN_PARSE]: initHandler,
-        [types_1.SharedState.COMMON_TRAILING_FIELDS]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
-        [types_1.AnimeState.SOURCE]: exports.capture(types_1.AnimeState.CONTAINER, 'source'),
-        [types_1.AnimeState.CONTAINER]: exports.preCapture((t, s) => [exports.toCompoundToken(t), s], exports.captureD((t) => t.type === 'COMPOUND' ? types_1.AnimeState.ASPECT_RATIO : types_1.AnimeState.VIDEO_CODEC, 'container', 'region')),
-        [types_1.AnimeState.ASPECT_RATIO]: exports.captureD((t, s) => s.source == 'DVD9' || s.source == 'DVD5'
+        [types_1.SharedState.COMMON_TRAILING_FIELDS]: (0, exports.captureT)(types_1.SharedState.COMMON_TRAILING_FIELDS, trailingFieldsTransformer),
+        [types_1.AnimeState.SOURCE]: (0, exports.capture)(types_1.AnimeState.CONTAINER, 'source'),
+        [types_1.AnimeState.CONTAINER]: (0, exports.preCapture)((t, s) => [(0, exports.toCompoundToken)(t), s], (0, exports.captureD)((t) => t.type === 'COMPOUND' ? types_1.AnimeState.ASPECT_RATIO : types_1.AnimeState.VIDEO_CODEC, 'container', 'region')),
+        [types_1.AnimeState.ASPECT_RATIO]: (0, exports.captureD)((t, s) => s.source == 'DVD9' || s.source == 'DVD5'
             ? types_1.AnimeState.RESOLUTION : types_1.AnimeState.VIDEO_CODEC, 'aspectRatio'),
-        [types_1.AnimeState.VIDEO_CODEC]: exports.capture(types_1.AnimeState.RESOLUTION, 'codec'),
-        [types_1.AnimeState.RESOLUTION]: exports.capture(types_1.AnimeState.AUDIO_CODEC, 'resolution'),
-        [types_1.AnimeState.AUDIO_CODEC]: exports.captureT(types_1.AnimeState.DUAL_AUDIO, exports.splitTransformer('audioCodec', 'audioChannels')),
-        [types_1.AnimeState.DUAL_AUDIO]: exports.captureT(types_1.AnimeState.REMASTER, exports.maybeFlag('dualAudio', 'Dual Audio')),
-        [types_1.AnimeState.REMASTER]: exports.captureT(types_1.AnimeState.SUBBING_AND_GROUP, exports.maybeImage('remastered', 'rmstr', 'Remastered')),
-        [types_1.AnimeState.SUBBING_AND_GROUP]: exports.capture(types_1.SharedState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
-        [types_1.MusicState.ENCODING]: exports.capture(types_1.MusicState.BITRATE, 'encoding'),
-        [types_1.MusicState.BITRATE]: exports.capture(types_1.MusicState.SOURCE, 'bitrate'),
-        [types_1.MusicState.SOURCE]: exports.capture(types_1.MusicState.LOG, 'source'),
-        [types_1.MusicState.LOG]: exports.captureT(types_1.MusicState.CUE, exports.maybeFlag('log', 'Log')),
-        [types_1.MusicState.CUE]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, exports.maybeFlag('cue', 'Cue')),
-        [types_1.GameState.TYPE]: exports.capture(types_1.GameState.PLATFORM, 'type'),
-        [types_1.GameState.PLATFORM]: exports.capture(types_1.GameState.REGION, 'platform'),
-        [types_1.GameState.REGION]: exports.captureT(types_1.GameState.ARCHIVED, exports.maybeList('region', ...GAME_REGIONS)),
-        [types_1.GameState.ARCHIVED]: exports.captureT(types_1.GameState.SCENE, exports.maybeList('archived', ...GAME_ARCHIVED)),
-        [types_1.GameState.SCENE]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, exports.maybeFlag('scene', 'Scene')),
-        [types_1.BookState.TRANSLATION]: exports.capture(types_1.BookState.FORMAT, 'translation', 'group'),
-        [types_1.BookState.FORMAT]: exports.captureT(types_1.BookState.ONGOING, exports.maybeList('format', ...BOOK_FORMATS)),
-        [types_1.BookState.ONGOING]: exports.captureT(types_1.SharedState.COMMON_TRAILING_FIELDS, exports.maybeFlag('ongoing', 'Ongoing')),
+        [types_1.AnimeState.VIDEO_CODEC]: (0, exports.capture)(types_1.AnimeState.RESOLUTION, 'codec'),
+        [types_1.AnimeState.RESOLUTION]: (0, exports.capture)(types_1.AnimeState.AUDIO_CODEC, 'resolution'),
+        [types_1.AnimeState.AUDIO_CODEC]: (0, exports.captureT)(types_1.AnimeState.DUAL_AUDIO, (0, exports.splitTransformer)('audioCodec', 'audioChannels')),
+        [types_1.AnimeState.DUAL_AUDIO]: (0, exports.captureT)(types_1.AnimeState.REMASTER, (0, exports.maybeFlag)('dualAudio', 'Dual Audio')),
+        [types_1.AnimeState.REMASTER]: (0, exports.captureT)(types_1.AnimeState.SUBBING_AND_GROUP, (0, exports.maybeImage)('remastered', 'rmstr', 'Remastered')),
+        [types_1.AnimeState.SUBBING_AND_GROUP]: (0, exports.capture)(types_1.SharedState.COMMON_TRAILING_FIELDS, 'subbing', 'group'),
+        [types_1.MusicState.ENCODING]: (0, exports.capture)(types_1.MusicState.BITRATE, 'encoding'),
+        [types_1.MusicState.BITRATE]: (0, exports.capture)(types_1.MusicState.SOURCE, 'bitrate'),
+        [types_1.MusicState.SOURCE]: (0, exports.capture)(types_1.MusicState.LOG, 'source'),
+        [types_1.MusicState.LOG]: (0, exports.captureT)(types_1.MusicState.CUE, (0, exports.maybeFlag)('log', 'Log')),
+        [types_1.MusicState.CUE]: (0, exports.captureT)(types_1.SharedState.COMMON_TRAILING_FIELDS, (0, exports.maybeFlag)('cue', 'Cue')),
+        [types_1.GameState.TYPE]: (0, exports.capture)(types_1.GameState.PLATFORM, 'type'),
+        [types_1.GameState.PLATFORM]: (0, exports.capture)(types_1.GameState.REGION, 'platform'),
+        [types_1.GameState.REGION]: (0, exports.captureT)(types_1.GameState.ARCHIVED, (0, exports.maybeList)('region', ...GAME_REGIONS)),
+        [types_1.GameState.ARCHIVED]: (0, exports.captureT)(types_1.GameState.SCENE, (0, exports.maybeList)('archived', ...GAME_ARCHIVED)),
+        [types_1.GameState.SCENE]: (0, exports.captureT)(types_1.SharedState.COMMON_TRAILING_FIELDS, (0, exports.maybeFlag)('scene', 'Scene')),
+        [types_1.BookState.TRANSLATION]: (0, exports.capture)(types_1.BookState.FORMAT, 'translation', 'group'),
+        [types_1.BookState.FORMAT]: (0, exports.captureT)(types_1.BookState.ONGOING, (0, exports.maybeList)('format', ...BOOK_FORMATS)),
+        [types_1.BookState.ONGOING]: (0, exports.captureT)(types_1.SharedState.COMMON_TRAILING_FIELDS, (0, exports.maybeFlag)('ongoing', 'Ongoing')),
     };
     function preParse(tokens) {
         return tokens;
@@ -312,18 +336,19 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
 define("lexer", ["require", "exports", "types"], function (require, exports, types_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tokenise = exports.mainTokenise = exports.preTokenise = exports.tokeniseElement = exports.tokeniseString = void 0;
     function tokeniseString(input, delim) {
         switch (input) {
             case types_2.ARROW:
-                return [types_2.makeSpecialToken('arrow', types_2.ARROW + ' ')];
+                return [(0, types_2.makeSpecialToken)('arrow', types_2.ARROW + ' ')];
             case types_2.SNATCHED_TEXT:
-                return [types_2.makeSpecialToken('snatched', 'Snatched')];
+                return [(0, types_2.makeSpecialToken)('snatched', 'Snatched')];
             case types_2.DASH:
-                return [types_2.makeSpecialToken('dash', types_2.DASH)];
+                return [(0, types_2.makeSpecialToken)('dash', types_2.DASH)];
             case ' [':
-                return [types_2.makeSpecialToken('lbracket', ' [')];
+                return [(0, types_2.makeSpecialToken)('lbracket', ' [')];
             case ']':
-                return [types_2.makeSpecialToken('rbracket', ']')];
+                return [(0, types_2.makeSpecialToken)('rbracket', ']')];
         }
         const RPAREN_WITH_SEP = ')' + delim;
         const LPAREN_OR_SEP = [
@@ -349,14 +374,14 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
             }
             // if no separator to the right, consume the rest of the string.
             if (marker === null) {
-                output.push(types_2.makeBasicToken(remaining));
+                output.push((0, types_2.makeBasicToken)(remaining));
                 i += remaining.length;
             }
             else if (marker === delim) {
                 // if next is a separator, consume up to that separator.
                 if (markerIndex > 0)
-                    output.push(types_2.makeBasicToken(remaining.slice(0, markerIndex).trim()));
-                output.push(types_2.makeSeparatorToken(delim));
+                    output.push((0, types_2.makeBasicToken)(remaining.slice(0, markerIndex).trim()));
+                output.push((0, types_2.makeSeparatorToken)(delim));
                 i += markerIndex + marker.length;
             }
             else {
@@ -379,9 +404,9 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
                         right = right.substring(0, -1);
                     i += closeSep + RPAREN_WITH_SEP.length;
                 }
-                output.push(types_2.makeCompoundToken(marker.split(' ')[0], right));
+                output.push((0, types_2.makeCompoundToken)(marker.split(' ')[0], right));
                 if (closeSep >= 0) {
-                    output.push(types_2.makeSeparatorToken(delim));
+                    output.push((0, types_2.makeSeparatorToken)(delim));
                 }
             }
         }
@@ -389,7 +414,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
     }
     exports.tokeniseString = tokeniseString;
     function tokeniseElement(input) {
-        return types_2.makeElementToken(input);
+        return (0, types_2.makeElementToken)(input);
     }
     exports.tokeniseElement = tokeniseElement;
     function preTokenise(nodes) {
@@ -473,6 +498,7 @@ define("lexer", ["require", "exports", "types"], function (require, exports, typ
 define("highlighter", ["require", "exports", "parser", "lexer", "types"], function (require, exports, parser_1, lexer_1, types_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.test = exports.main = exports.highlight = void 0;
     function highlight(links, start, className, defaultDelim) {
         const count = (needle, haystack) => { var _a; return ((_a = haystack.match(needle)) !== null && _a !== void 0 ? _a : []).length; };
         const HIGHLIGHT_CLASS = 'userscript-highlight';
@@ -505,8 +531,8 @@ define("highlighter", ["require", "exports", "parser", "lexer", "types"], functi
                     const slashes = count(/ \/ /g, el.textContent);
                     delim = pipes > slashes ? ' | ' : ' / ';
                 }
-                tokens = lexer_1.tokenise(el.childNodes, delim);
-                [output, fields] = parser_1.parse(tokens, start);
+                tokens = (0, lexer_1.tokenise)(el.childNodes, delim);
+                [output, fields] = (0, parser_1.parse)(tokens, start);
                 while (el.hasChildNodes())
                     el.removeChild(el.lastChild);
                 const df = document.createDocumentFragment();
