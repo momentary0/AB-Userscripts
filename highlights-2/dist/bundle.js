@@ -161,9 +161,11 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         return (t) => {
             if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG')
                 return null;
-            if (!(0, exports.basename)(t.element.src).startsWith(imageFile))
+            const srcFile = (0, exports.basename)(t.element.src); // safe cast due to tagName check
+            if (srcFile === imageFile || srcFile.startsWith(imageFile + '-'))
+                return (0, exports.span)(key, value !== null && value !== void 0 ? value : key, t.element);
+            else
                 return null;
-            return (0, exports.span)(key, value !== null && value !== void 0 ? value : key, t.element);
         };
     };
     exports.maybeImage = maybeImage;
