@@ -113,7 +113,7 @@ export const basename = (url: string) => url.split('/').slice(-1)[0].split('.')[
 export const maybeImage = (key: string, imageFile: string, value?: string): TFunction => {
   return (t) => {
     if (t.type !== 'ELEMENT' || t.element.tagName != 'IMG') return null;
-    if (basename((t.element as HTMLImageElement).src) !== imageFile) return null;
+    if (!basename((t.element as HTMLImageElement).src).startsWith(imageFile)) return null;
     return span(key, value ?? key, t.element);
   };
 }
