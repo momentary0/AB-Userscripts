@@ -203,7 +203,7 @@ define("parser", ["require", "exports", "types"], function (require, exports, ty
         'Blu-ray': 'anime', 'Web': 'anime', 'TV': 'anime',
         'DVD': 'anime', 'UHD Blu-ray': 'anime', 'DVD5': 'anime',
         'DVD9': 'anime', 'HD DVD': 'anime', 'VHS': 'anime',
-        'VCD': 'anime', 'LD': 'anime',
+        'VCD': 'anime', 'LD': 'anime', 'DCP': 'anime',
         'MP3': 'music', 'FLAC': 'music', 'AAC': 'music',
         'Game': 'game', 'Patch': 'game', 'DLC': 'game',
         'Raw': 'book', 'Translated': 'book',
