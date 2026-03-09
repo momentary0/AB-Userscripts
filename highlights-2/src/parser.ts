@@ -161,7 +161,7 @@ const FIRST_FIELDS: {[s: string]: keyof typeof START_STATES} = {
   'Blu-ray': 'anime', 'Web': 'anime', 'TV': 'anime',
   'DVD': 'anime', 'UHD Blu-ray': 'anime', 'DVD5': 'anime',
   'DVD9': 'anime', 'HD DVD': 'anime', 'VHS': 'anime',
-  'VCD': 'anime', 'LD': 'anime',
+  'VCD': 'anime', 'LD': 'anime', 'DCP': 'anime',
 
   'MP3': 'music', 'FLAC': 'music', 'AAC': 'music',
 
